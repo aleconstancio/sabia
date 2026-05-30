@@ -1,42 +1,129 @@
-# Space Eye
-https://github.com/user-attachments/assets/1ca37ec4-4120-441a-aee1-41a590b176be
+# SpaceEye
 
-# Sobre o projeto
-O Space Eye é um web app desenvolvido em Python, utilizando Flask e Javascript. O objetivo é auxiliar na busca de imagens de satélite e o processamento das mesmas. No momento, além da lista de imagens disponíveis para a localidade, também é disponibilizado o recorte com base no polígono informado e também o Índice de Vegetação por Diferença Normalizada (NDVI) do raster selecionado.
+> Satellite imagery search, visualization, and processing for Brazil's Earth observation satellite fleet.
 
-As próximas atualizações serão relacionadas a optimização do processo de aquisição das imagens, com o objetivo de diminuir o tempo de download e processamento, além de incluir outras opções de satélites (Amazonas 1, por exemplo) e índices de vegetação (NDDI e NDWI).
+SpaceEye lets you draw a polygon on a map, search for overlapping satellite images from INPE's catalog (CBERS-4A, Amazonia-1, and more), and generate remote sensing products — NDVI, True Color, NDWI — overlaid directly on the map.
 
-# Instalação
-Antes de tudo, crie uma conta nos serviços do INPE `http://queimadas.dgi.inpe.br/catalogo/explore`, em seguida, crie um arquivo `.env` na raiz do projeto e adicione o email cadastrado como variável no seguinte formato:
-```
-email_inpe = EMAIL_CADASTRADO
-```
-
-Crie um ambiente virtual e instale as libs presentes em `requirements.txt`:
-```
-python -m venv env
-```
+## Architecture
 
 ```
-pip install -r requirements.txt
+┌──────────────────────────────────────────────────┐
+│                  SvelteKit SPA                    │
+│  Leaflet Map  ·  Search Menu  ·  Image Gallery   │
+│  Processing Viewer  ·  Progress Overlay          │
+└────────────────────┬─────────────────────────────┘
+                     │ REST + WebSocket
+┌────────────────────▼─────────────────────────────┐
+│                  FastAPI Backend                  │
+│  /api/images/search  ·  /api/process  ·  /api/*  │
+│  Pydantic validation  ·  CORS  ·  OpenAPI docs   │
+└────────┬───────────────────────┬──────────────────┘
+         │                       │
+    ┌────▼────┐           ┌──────▼────────────┐
+    │ PostGIS │           │   Celery Workers  │
+    │  GiST   │           │ Download · Crop    │
+    │ spatial │           │ NDVI · TCI · NDWI │
+    │ queries │           │ Compress to PNG   │
+    └─────────┘           └───────────────────┘
 ```
 
-Para o mapa interativo, foi necessário realizar algumas alterações no plugin Draw da lib Folium. Portanto, copie o conteúdo do arquivo `draw.py` presente na raiz do projeto e cole o mesmo em: `...\env\Lib\site-packages\folium\plugins\draw.py`
+Key design decisions:
+- **Direct Leaflet** — No Folium, no iframe, no `postMessage`. The map runs natively in the SPA.
+- **PostGIS spatial queries** — Image footprints are stored as `GEOMETRY(POLYGON, 4326)` with a GiST index, replacing the old full-table Python scan.
+- **Async background processing** — Band downloads and raster generation run in Celery workers, polled via REST or WebSocket. HTTP handlers stay fast.
+- **STAC collection abstraction** — Each satellite is a `Collection` implementation (CBERS-4A, Amazonia-1, etc.) with its own band mapping and product capabilities.
+- **Product registry** — NDVI, TCI, NDWI are pluggable `RasterProduct` classes. Adding a new product is one file.
 
-O frontend e o backend devem ser iniciados de forma separada, portanto, navegue até o respectivo diretório e utilize o seguinte comando para iniciar as aplicações:
+## Quick Start (Docker)
+
+```bash
+cp .env.example .env
+# Edit .env to add your INPE registered email
+
+docker compose up -d
+# Frontend:  http://localhost
+# API:       http://localhost:8000
+# API docs:  http://localhost:8000/docs
 ```
-python app.py
+
+Then populate the database:
+
+```bash
+docker compose exec backend python pipeline/ingest.py --collection cbers4a
 ```
 
-# Tecnologias utilizadas
-- Python
-- Flask
-- Javascript
+This is a one-time bulk import (~tens of thousands of images, takes a few minutes). After that, run it daily via cron to pick up new catalog items.
 
-- HTML
-- CSS
+## Development Setup
 
-- Rasterio
-- Pandas e Geopandas
+### Backend
 
-- Processamento de imagens multiespectrais
+```bash
+# Python 3.12+ with uv recommended
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+
+# Ensure PostGIS is running
+docker compose up -d postgres redis
+
+# Start FastAPI
+uvicorn backend.main:app --reload --port 8000
+
+# Start Celery worker (separate terminal)
+celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
+```
+
+### Frontend
+
+```bash
+cd apps/spaceeye-web
+bun install      # or npm install
+bun dev          # Vite dev server on :5173
+```
+
+### Database
+
+```bash
+# Apply initial schema
+psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.12+, FastAPI, SQLAlchemy (async), Celery, Redis |
+| Database | PostgreSQL 16 + PostGIS |
+| Frontend | Svelte 5, SvelteKit, Tailwind CSS v4, Leaflet |
+| Processing | Rasterio, NumPy, Matplotlib, PyProj, aiohttp |
+| Infrastructure | Docker, docker-compose, NGINX |
+
+## Satellite Collections
+
+| Collection | Status | Products |
+|-----------|--------|----------|
+| CBERS-4A (WPM) | ✅ Active | NDVI, TCI |
+| Amazonia-1 (WFC) | 🔜 Planned | TCI, NDVI |
+| Landsat 8/9 | 🔜 Planned | NDVI, TCI |
+| Sentinel-2 | 🔜 Planned | NDVI, TCI, NDWI |
+
+## API Overview
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/collections` | GET | List supported satellite collections |
+| `/api/images/search` | POST | Search images by polygon intersection |
+| `/api/images/{id}` | GET | Get image metadata |
+| `/api/process` | POST | Submit async processing task |
+| `/api/tasks/{id}` | GET | Poll task status + result |
+| `/api/tasks/{id}/ws` | WS | Stream task progress |
+| `/api/ibge/uf` | GET | List Brazilian states |
+| `/api/ibge/cidades/{uf}` | GET | List cities in a state |
+
+Full API documentation is available at `/docs` (Swagger UI) when the backend is running.
+
+## License
+
+MIT
