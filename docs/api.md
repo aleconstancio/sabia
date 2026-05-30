@@ -1,5 +1,7 @@
 # API Reference
 
+> *This doc reflects all 27 API endpoints. Interactive docs available at `/docs` when running.*
+
 Base URL: `http://localhost:8000/api`
 
 Interactive docs: `http://localhost:8000/docs` (Swagger UI)

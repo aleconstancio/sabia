@@ -1,26 +1,50 @@
-.PHONY: dev-backend dev-frontend dev-worker dev-db lint check test clean
+UV := uv
+PYTHON := $(shell $(UV) run -- python3 -c "import sys; print(sys.executable)" 2>/dev/null || echo ".venv/bin/python")
+NPM := npm
 
-dev-db:
+.PHONY: setup dev-db dev-backend dev-worker dev-frontend lint check test test-backend test-frontend clean format help
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+setup: ## Full bootstrap (deps + config)
+	@bash scripts/bootstrap.sh
+
+dev-db: ## Start PostGIS and Redis via Docker
 	docker compose up -d postgres redis
 
-dev-backend:
-	uvicorn backend.main:app --reload --port 8000
+dev-backend: ## Start FastAPI dev server with hot reload
+	$(UV) run uvicorn backend.main:app --reload --port 8000
 
-dev-worker:
-	celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
+dev-worker: ## Start Celery worker
+	$(UV) run celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
 
-dev-frontend:
-	cd apps/spaceeye-web && npm run dev
+dev-frontend: ## Start Vite dev server
+	cd apps/spaceeye-web && $(NPM) run dev
 
-lint:
+lint: ## Run Svelte type-check
 	cd apps/spaceeye-web && npx svelte-check --tsconfig ./tsconfig.json
 
-check: lint
+check: lint ## Alias for lint
 
-test:
-	cd apps/spaceeye-web && npm run check || true
+test: test-backend test-frontend ## Run all tests
 
-clean:
+test-backend: ## Run Python tests
+	$(UV) run pytest backend/tests/ -v -x
+
+test-frontend: ## Run frontend tests
+	cd apps/spaceeye-web && $(NPM) run test -- --run
+
+test-frontend-watch: ## Run frontend tests in watch mode
+	cd apps/spaceeye-web && $(NPM) run test
+
+format: ## Format Python code with ruff
+	$(UV) run ruff format backend/ pipeline/
+
+clean: ## Remove build artifacts
 	rm -rf apps/spaceeye-web/build
 	rm -rf apps/spaceeye-web/.svelte-kit
 	rm -rf apps/spaceeye-web/node_modules
+	rm -rf .venv
+	rm -rf __pycache__ backend/__pycache__ pipeline/__pycache__
+	find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true

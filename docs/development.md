@@ -2,138 +2,134 @@
 
 ## Prerequisites
 
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
-- Node.js 20+ / [Bun](https://bun.sh)
-- Docker + docker-compose (for PostGIS + Redis)
-- Make
+- Python 3.12+ with [uv](https://docs.astral.sh/uv/)
+- Node.js 20+ with npm
+- Docker + docker-compose
 
-## Quick Start
+## Setup
 
 ```bash
-# 1. Clone and set up
-git clone https://github.com/your-org/spaceeye
-cd spaceeye
-cp .env.example .env
+# 1. Bootstrap (installs all deps, creates .env)
+make setup
 
-# 2. Edit .env — add your INPE registered email
+# 2. Edit .env with your INPE registered email
 #    (register at http://queimadas.dgi.inpe.br/catalogo/explore)
 
-# 3. Start infrastructure
-docker compose up -d postgres redis
+# 3. Start PostGIS + Redis
+make dev-db
 
-# 4. Run database migration
+# 4. Apply database migration
 psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
 
-# 5. Install backend deps
-uv venv
-source .venv/bin/activate
-uv pip install -e .
+# 5. Start backend (terminal 1)
+make dev-backend
 
-# 6. Start backend
-uvicorn backend.main:app --reload --port 8000
+# 6. Start Celery worker (terminal 2)
+make dev-worker
 
-# 7. Start Celery worker (separate terminal)
-source .venv/bin/activate
-celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
-
-# 8. Install frontend deps
-cd apps/spaceeye-web
-bun install
-
-# 9. Start frontend (separate terminal)
-bun run dev
-```
-
-Open `http://localhost:5173` for the app and `http://localhost:8000/docs` for API docs.
-
-## Initial Database Population
-
-```bash
-# Full CBERS-4A catalog import (takes ~5-10 minutes)
-python pipeline/ingest.py --collection cbers4a
-
-# You can also use Docker:
-docker compose exec backend python pipeline/ingest.py --collection cbers4a
+# 7. Start frontend (terminal 3)
+make dev-frontend
 ```
 
 ## Makefile Targets
 
+| Target | Description |
+|--------|-------------|
+| `make setup` | Full bootstrap (deps + .env) |
+| `make dev-db` | Start PostGIS + Redis |
+| `make dev-backend` | FastAPI with hot reload |
+| `make dev-worker` | Celery worker |
+| `make dev-frontend` | Vite dev server |
+| `make test` | Run all tests |
+| `make test-backend` | Run Python tests |
+| `make test-frontend` | Run frontend tests |
+| `make format` | Format Python with ruff |
+| `make lint` | Svelte type-check |
+| `make clean` | Remove build artifacts |
+
+## Python Package Management
+
+This project uses `uv` for dependency management:
+
 ```bash
-make dev-db         # Start PostGIS + Redis
-make dev-backend    # uvicorn with hot reload
-make dev-worker     # Celery worker
-make dev-frontend   # Vite dev server
-make lint           # Run svelte-check
-make format         # Format frontend code
-make test           # Run tests
-make clean          # Remove build artifacts
+uv sync --dev          # Install all deps (including dev)
+uv add some-package    # Add a new dependency
+uv run python ...      # Run with correct venv
+uv run pytest ...      # Run tests
+```
+
+The `uv.lock` file is committed for reproducible builds.
+
+## Running Tests
+
+```bash
+# Backend (pytest)
+make test-backend
+
+# Frontend (vitest)
+make test-frontend
+
+# Both
+make test
+```
+
+## Project Structure
+
+```
+apps/spaceeye-web/       # SvelteKit SPA
+├── src/lib/
+│   ├── api/             # Typed API client
+│   ├── components/      # SpaceEye components
+│   ├── stores/          # Svelte 5 runes stores
+│   └── ui/              # Vendored design system
+├── src/routes/
+│   └── +page.svelte     # Main map page
+
+backend/                 # FastAPI + Celery
+├── api/                 # Route handlers
+├── domain/              # Business logic
+├── services/            # Download, process, compress
+├── repositories/        # PostGIS queries
+├── models/              # Pydantic + SQLAlchemy
+├── tasks/               # Celery task defs
+├── config.py            # Settings
+└── main.py              # FastAPI app
+
+pipeline/                # Data ingestion
+├── ingest.py            # STAC → PostGIS
+└── cleanup.py           # TTL cache cleanup
+
+sql/                     # Database migrations
+docs/                    # Documentation
+scripts/                 # Bootstrap helpers
 ```
 
 ## Code Style
 
 ### Python
-- Python 3.12+ with type hints everywhere
-- Follow PEP 8 (use `ruff` for linting)
+- Format with `ruff`: `make format`
+- Python 3.12+ with type hints
+- Async for I/O, sync for CPU-bound math
 - Import order: stdlib → third-party → local
-- Async patterns: `async def` for I/O, `sync def` for CPU-bound math (inside Celery tasks)
 
 ### TypeScript / Svelte
-- Svelte 5 runes only (`$state`, `$derived`, `$effect`, `$props`)
-- `$bindable` for two-way binding on form components
-- `createX()` composable pattern for shared state
+- Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`, `$bindable`
+- No `export let` — use `$props()` instead
 - TypeScript strict mode
-- Tailwind CSS v4 utilities, OKLCH color tokens
-- No `@thoth/ui` dependency — UI components are vendored in `lib/ui/`
+- Tailwind CSS v4 utilities
 
-### Git
-- Conventional commits: `feat(scope):`, `fix(scope):`, `chore:`, `docs:`
-- Feature branches: `feat/my-feature`, `fix/bug-description`
+## Adding a New Satellite Collection
 
-## Project Structure Conventions
+1. Implement `Collection` in `backend/domain/catalog.py`
+2. Add STAC URL + parsing in `pipeline/ingest.py`
+3. Register in `_COLLECTIONS` dict
+4. Test with `make test-backend`
 
-```
-apps/spaceeye-web/src/lib/
-  api/       — API client and typed endpoints
-  components — SpaceEye-specific components (PascalCase.svelte)
-  stores/    — Svelte 5 runes state ($state derived from user interaction)
-  ui/        — Vendored design system components (do not add app logic here)
+## Adding a New Spectral Product
 
-backend/
-  api/       — Route handlers only (thin controllers)
-  domain/    — Business logic (no infrastructure imports)
-  services/  — External service integrations (download, GDAL, compression)
-  repositories/ — Database access (PostGIS SQL queries)
-  models/    — Pydantic schemas + SQLAlchemy setup
-  tasks/     — Celery task definitions
-```
-
-## Making Changes
-
-1. **Add a new satellite collection:**
-   - Implement `Collection` in `backend/domain/catalog.py`
-   - Add collection ID to ingestion script at `pipeline/ingest.py`
-   - Test with `python pipeline/ingest.py --collection your_satellite`
-
-2. **Add a new vegetation index / product:**
-   - Implement `RasterProduct` in `backend/domain/products.py`
-   - Register in the `_PRODUCTS` dict
-   - Add the product name to the collection's `available_products`
-
-3. **Add a new API endpoint:**
-   - Define Pydantic schema in `backend/models/schemas.py`
-   - Add route handler in `backend/api/router.py`
-   - Document in `docs/api.md`
-
-## Testing
-
-```bash
-# Backend (pytest — not yet configured)
-pytest backend/tests/
-
-# Frontend (vitest — not yet configured)
-cd apps/spaceeye-web
-bun vitest run
-```
-
-Test infrastructure is set up but no tests exist yet. Contributions welcome!
+1. Implement `RasterProduct` in `backend/domain/products.py`
+2. Register in the `_PRODUCTS` dict
+3. Update `schemas.py` product regex
+4. Add to collection's `available_products`
+5. Update frontend product dropdown
+6. Test with `make test-backend`

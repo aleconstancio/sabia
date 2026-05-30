@@ -73,8 +73,8 @@ Add to your host's crontab (runs daily at 2 AM):
 ### Backend
 
 ```bash
-# Prerequisites: Python 3.12+, PostgreSQL 16+PostGIS, Redis 7+
-pip install -e .
+# Prerequisites: Python 3.12+, PostgreSQL 16+PostGIS, Redis 7+, uv
+uv sync --dev
 
 # Database
 createdb spaceeye
@@ -82,13 +82,13 @@ psql spaceeye -c "CREATE EXTENSION postgis"
 psql spaceeye -f sql/001_init.sql
 
 # Run
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 4
+uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 # Worker
-celery -A backend.tasks.celery_app worker --concurrency=4 --loglevel=info
+uv run celery -A backend.tasks.celery_app worker --concurrency=4 --loglevel=info
 
 # Scheduler (runs once, add to cron)
-python pipeline/ingest.py --collection cbers4a
+uv run python pipeline/ingest.py --collection cbers4a
 ```
 
 ### Frontend

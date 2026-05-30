@@ -1,5 +1,7 @@
 # Architecture
 
+> *This doc reflects the current codebase state. Last updated: May 2026.*
+
 ## Overview
 
 SpaceEye is a single-page application with a Python backend and SvelteKit frontend. The distinguishing architectural choice is that **all geospatial processing happens server-side** (the browser only displays results), while **all map interaction happens client-side** (no server-rendered maps).
