@@ -1,5 +1,6 @@
 <script lang="ts">
   import Button from '$lib/ui/components/Button.svelte';
+  import { addBookmark, removeBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
 
   let {
     onSelect = (coords: number[][][], name: string) => {},
@@ -15,30 +16,18 @@
   let showPanel = $state(false);
 
   function loadBookmarks() {
-    try {
-      const raw = localStorage.getItem('spaceeye_bookmarks');
-      bookmarks = raw ? JSON.parse(raw) : [];
-    } catch { bookmarks = []; }
+    bookmarks = getBookmarks();
   }
 
-  function saveBookmarks() {
-    localStorage.setItem('spaceeye_bookmarks', JSON.stringify(bookmarks));
+  function handleAddBookmark(name: string, coords: number[][][]) {
+    addBookmark(name, coords);
+    bookmarks = getBookmarks();
   }
 
-  function addBookmark(name: string, coords: number[][][]) {
-    bookmarks = [...bookmarks, {
-      id: crypto.randomUUID(),
-      name,
-      coords,
-      created_at: new Date().toISOString(),
-    }];
-    saveBookmarks();
-  }
-
-  function removeBookmark(id: string, e: MouseEvent) {
+  function handleRemoveBookmark(id: string, e: MouseEvent) {
     e.stopPropagation();
-    bookmarks = bookmarks.filter((b: any) => b.id !== id);
-    saveBookmarks();
+    removeBookmark(id);
+    bookmarks = getBookmarks();
   }
 
   function selectBookmark(b: any) {
@@ -71,7 +60,7 @@
             </div>
             <button
               class="text-xs text-destructive bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
-              onclick={(e) => removeBookmark(b.id, e)}
+              onclick={(e) => handleRemoveBookmark(b.id, e)}
             >
               ✕
             </button>

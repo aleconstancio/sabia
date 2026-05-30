@@ -13,6 +13,7 @@
   let cityFilter = $state('');
   let showUfDropdown = $state(false);
   let showCityDropdown = $state(false);
+  let apiError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -29,8 +30,8 @@
     try {
       const resp = await fetch(`${API_URL}/ibge/uf`);
       ufs = await resp.json();
-    } catch (e) {
-      console.error('Failed to load UFs', e);
+    } catch {
+      apiError = 'Falha ao carregar estados';
     }
   });
 
@@ -43,8 +44,9 @@
     try {
       const resp = await fetch(`${API_URL}/ibge/cidades/${uf}`);
       cities = await resp.json();
-    } catch (e) {
+    } catch {
       cities = [];
+      apiError = 'Falha ao carregar cidades';
     }
   }
 
@@ -59,8 +61,8 @@
       if (data.length > 0) {
         navigateToCity(parseFloat(data[0].lat), parseFloat(data[0].lon));
       }
-    } catch (e) {
-      console.error('Geocoding failed', e);
+    } catch {
+      apiError = 'Falha na busca do local';
     }
   }
 
@@ -100,4 +102,7 @@
       </div>
     {/if}
   </div>
+  {#if apiError}
+    <span class="text-xs text-destructive">{apiError}</span>
+  {/if}
 </div>

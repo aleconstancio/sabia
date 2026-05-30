@@ -24,6 +24,7 @@
   let taskIdB = $state('');
   let computingDiff = $state(false);
   let diffOverlay: any = null;
+  let diffError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -76,7 +77,14 @@
       if (!resp.ok) throw new Error('Process request failed');
       const data = await resp.json();
 
+      let remaining = 120;
       const poll = setInterval(async () => {
+        if (--remaining <= 0) {
+          clearInterval(poll);
+          if (side === 'A') { errorA = 'Timeout'; loadingA = false; }
+          else { errorB = 'Timeout'; loadingB = false; }
+          return;
+        }
         try {
           const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
           const status = await sr.json();
@@ -97,7 +105,10 @@
             if (side === 'A') { errorA = status.error || 'Erro'; loadingA = false; }
             else { errorB = status.error || 'Erro'; loadingB = false; }
           }
-        } catch { clearInterval(poll); loadingA = false; loadingB = false; }
+        } catch {
+          clearInterval(poll);
+          if (side === 'A') loadingA = false; else loadingB = false;
+        }
       }, 1000);
     } catch (e: any) {
       if (side === 'A') { errorA = e.message; loadingA = false; }
@@ -118,7 +129,14 @@
         }),
       });
       const data = await resp.json();
+      let remaining = 120;
       const poll = setInterval(async () => {
+        if (--remaining <= 0) {
+          clearInterval(poll);
+          computingDiff = false;
+          diffError = 'Timeout';
+          return;
+        }
         try {
           const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
           const status = await sr.json();
@@ -134,11 +152,13 @@
           } else if (status.status === 'error') {
             clearInterval(poll);
             computingDiff = false;
+            diffError = status.error || 'Erro ao calcular diferença';
           }
-        } catch { clearInterval(poll); computingDiff = false; }
+        } catch { clearInterval(poll); computingDiff = false; diffError = 'Falha na conexão'; }
       }, 2000);
     } catch {
       computingDiff = false;
+      diffError = 'Falha ao iniciar diferença';
     }
   }
 
@@ -185,6 +205,9 @@
       Calcular diferença NDVI
     </button>
   </div>
+{/if}
+{#if diffError}
+  <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1000] bg-destructive/90 text-white text-xs px-2 py-1 rounded">{diffError}</div>
 {/if}
 {#if computingDiff}
   <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-black/60 text-white text-xs px-2 py-1 rounded">

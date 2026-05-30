@@ -20,6 +20,7 @@
   let urlA = $state('');
   let urlB = $state('');
   let bounds: [[number, number], [number, number]] | null = null;
+  let swipeError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -41,7 +42,13 @@
       });
       if (!resp.ok) throw new Error('Process request failed');
       const data = await resp.json();
+      let remaining = 120;
       const poll = setInterval(async () => {
+        if (--remaining <= 0) {
+          clearInterval(poll); loading = false;
+          swipeError = 'Timeout';
+          return;
+        }
         try {
           const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
           const status = await sr.json();
@@ -55,10 +62,11 @@
             loading = false;
           } else if (status.status === 'error') {
             clearInterval(poll); loading = false;
+            swipeError = status.error || 'Erro';
           }
-        } catch { clearInterval(poll); loading = false; }
+        } catch { clearInterval(poll); loading = false; swipeError = 'Falha na conexão'; }
       }, 1000);
-    } catch { loading = false; }
+    } catch { loading = false; swipeError = 'Falha ao iniciar processamento'; }
   }
 
   $effect(() => {
@@ -105,6 +113,9 @@
     <div class="absolute inset-0 bg-black/40 flex items-center justify-center z-[1002]">
       <span class="text-white text-sm">Processando...</span>
     </div>
+  {/if}
+  {#if swipeError}
+    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1002] bg-destructive/90 text-white text-xs px-2 py-1 rounded">{swipeError}</div>
   {/if}
   {#if urlA && urlB}
     <div

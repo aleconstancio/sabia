@@ -14,6 +14,7 @@
   let frameIndex = $state(0);
   let processedIds = $state<Set<string>>(new Set());
   let intervalId: ReturnType<typeof setInterval> | undefined;
+  let processError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -36,7 +37,7 @@
         }
         if (st.status === 'error') return false;
       }
-    } catch { /* ignore */ }
+    } catch { processError = 'Falha ao processar frame'; }
     return false;
   }
 
@@ -98,5 +99,8 @@
       <span>{new Date(images[frameIndex].acquired_at || images[frameIndex].date).toLocaleDateString('pt-BR')}</span>
       <span>nuvem: {images[frameIndex].cloud_cover?.toFixed(0) ?? '?'}%</span>
     </div>
+  {/if}
+  {#if processError}
+    <p class="text-xs text-destructive mt-1">{processError}</p>
   {/if}
 </div>

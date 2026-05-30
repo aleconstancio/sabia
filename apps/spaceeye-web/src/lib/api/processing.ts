@@ -40,6 +40,8 @@ export async function processImage(imageId: string) {
   mapState.showProcessingViewer = true;
 
   let pollInterval: ReturnType<typeof setInterval>;
+  let attempts = 0;
+  const MAX = 120;
 
   try {
     const resp = await fetch(`${API_URL}/process`, {
@@ -59,6 +61,12 @@ export async function processImage(imageId: string) {
       if (!mapState.showProcessingViewer) {
         clearInterval(pollInterval);
         mapState.isLoading = false;
+        return;
+      }
+      if (++attempts >= MAX) {
+        clearInterval(pollInterval);
+        mapState.isLoading = false;
+        mapState.processingPhase = 'Timeout';
         return;
       }
       try {
@@ -90,6 +98,7 @@ export async function processImage(imageId: string) {
       } catch {
         clearInterval(pollInterval);
         mapState.isLoading = false;
+        mapState.processingPhase = 'Falha na conexao';
       }
     }, 1000);
   } catch (e: any) {

@@ -242,7 +242,7 @@
         searchImages().then(() => {
           processImage(image);
         });
-      } catch { /* invalid params */ }
+      } catch(e) { console.warn('Invalid share URL params:', e); }
     }
   });
 </script>

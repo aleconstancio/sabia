@@ -4,6 +4,7 @@
   let { lat = 0, lon = 0, polygonCoords = null as any }: { lat: number; lon: number; polygonCoords?: any } = $props();
   let landcover: any = $state(null);
   let loading = $state(false);
+  let fetchError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
   let debounceTimer: ReturnType<typeof setTimeout>;
@@ -26,7 +27,7 @@
       const body = polygonCoords ? JSON.stringify({ coordinates: polygonCoords }) : undefined;
       const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body });
       if (resp.ok) landcover = await resp.json();
-    } catch {} finally { loading = false; }
+    } catch { fetchError = 'Falha ao carregar cobertura do solo'; } finally { loading = false; }
   }
 
   const classColors: Record<number, string> = {
@@ -61,5 +62,8 @@
     {/if}
   {:else}
     <p class="text-sm text-muted-foreground">Dados de cobertura do solo indisponíveis para esta região.</p>
+  {/if}
+  {#if fetchError}
+    <p class="text-sm text-destructive mt-2">{fetchError}</p>
   {/if}
 </div>
