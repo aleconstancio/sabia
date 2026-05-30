@@ -1,30 +1,18 @@
-import os
-from dotenv import load_dotenv
-import psycopg2
-from psycopg2 import OperationalError
-from contextlib import contextmanager
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import DeclarativeBase
+from backend.config import get_settings
+
+engine = create_async_engine(get_settings().database_url, pool_size=5, max_overflow=10)
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
-load_dotenv()
+class Base(DeclarativeBase):
+    pass
 
-class Database:
 
-    def __init__(self):
-        self.connection = {
-            "host": os.getenv("host"),
-            "database": os.getenv("database"),
-            "user": os.getenv("user"),
-            "password": os.getenv("password"),
-            "port": os.getenv("port"),
-        }
-
-    @contextmanager
-    def conn(self):
-        conn = psycopg2.connect(**self.connection)
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
         try:
-            yield conn
-        except Exception:
-            conn.rollback()
-            raise
+            yield session
         finally:
-            conn.close()
+            await session.close()
