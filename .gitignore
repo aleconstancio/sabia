@@ -33,4 +33,4 @@ todo.txt
 # IDE
 .idea/
 .vscode/
-*.swp
+*.swpdump.rdb
