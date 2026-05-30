@@ -24,5 +24,6 @@
   }
 }
 
-#map { height: 100vh; width: 100vw; }
+html, body { height: 100%; margin: 0; }
+#map { flex: 1; min-height: 0; }
 .leaflet-container { background: #111; }

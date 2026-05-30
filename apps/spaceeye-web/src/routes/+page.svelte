@@ -248,8 +248,8 @@
   });
 </script>
 
-<div class="absolute top-0 left-0 z-[1000] w-full">
-  <div class="flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 shadow-sm">
+<div class="flex flex-1 min-h-0 flex-col">
+  <div class="flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 shadow-sm shrink-0">
     <div class="flex items-center gap-4">
       <h1 class="text-xl font-bold text-emerald-800 dark:text-emerald-400">SpaceEye</h1>
       <SearchMenu {navigateToCity} />
@@ -301,7 +301,8 @@
   </div>
 </div>
 
-<div bind:this={mapContainer} id="map"></div>
+<div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
+</div>
 
 <MapToolbar
   bind:showLegend={mapState.showLegend}

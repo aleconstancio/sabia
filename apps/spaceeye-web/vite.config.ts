@@ -11,8 +11,12 @@ export default defineConfig({
     noExternal: ['bits-ui', 'mode-watcher', 'svelte-sonner'],
   },
   server: {
-    fs: {
-      allow: ['..'],
+    fs: { allow: ['..'] },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 });
