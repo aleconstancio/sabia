@@ -12,14 +12,12 @@
 
   let {
     navigateToCity = (lat: number, lng: number) => {},
-    onToggleSidebar = () => {},
     onToggleCompare = () => {},
     onToggleTimelapse = () => {},
     onClearOverlay = () => {},
     onExportPdf = () => {},
     showCompare = false,
     showTimelapse = false,
-    sidebarOpen = true,
   } = $props();
 
   function copyShareLink() {
@@ -51,7 +49,7 @@
   <div class="flex items-center justify-between gap-4 px-4 py-2">
     <div class="flex items-center gap-3 min-w-0">
       <button
-        onclick={onToggleSidebar}
+        onclick={() => mapState.sidebarOpen = !mapState.sidebarOpen}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none"
         style="color: var(--muted-foreground);"
       >

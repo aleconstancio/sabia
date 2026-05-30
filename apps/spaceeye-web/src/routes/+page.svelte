@@ -257,7 +257,6 @@
 
   <Header
     {navigateToCity}
-    onToggleSidebar={() => {}}
     onToggleCompare={toggleCompare}
     onToggleTimelapse={() => showTimelapse = !showTimelapse}
     onClearOverlay={clearOverlay}
