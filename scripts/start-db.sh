@@ -73,7 +73,13 @@ for i in $(seq 1 10); do
   sleep 0.5
 done
 
-# ── Create database + extensions ──
+# ── Create database + postgres role + extensions ──
+echo "→ Creating 'postgres' role if missing..."
+"$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -tc \
+  "SELECT 1 FROM pg_roles WHERE rolname='postgres'" | grep -q 1 || \
+  "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c \
+  "CREATE ROLE postgres LOGIN SUPERUSER;" 2>/dev/null || true
+
 echo "→ Creating 'spaceeye' database..."
 "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -tc \
   "SELECT 1 FROM pg_database WHERE datname='spaceeye'" | grep -q 1 || \

@@ -17,6 +17,7 @@ dependencies = [
     "rasterio>=1.4.0",
     "numpy>=2.1.0",
     "pandas>=2.2.0",
+    "greenlet>=3.1.0",
     "geopandas>=1.0.0",
     "shapely>=2.0.0",
     "matplotlib>=3.9.0",

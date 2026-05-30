@@ -36,6 +36,16 @@ html, body { height: 100%; margin: 0; }
 #map { flex: 1; min-height: 0; }
 .leaflet-container { background: #111; }
 
+/* Leaflet control positioning — Tailwind v4 reset overrides Leaflet's inline styles */
+.leaflet-pane { z-index: 1; }
+.leaflet-top, .leaflet-bottom { position: absolute; z-index: 1000; pointer-events: none; }
+.leaflet-top { top: 0; }
+.leaflet-bottom { bottom: 0; }
+.leaflet-left { left: 0; }
+.leaflet-right { right: 0; }
+.leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
+.leaflet-control-zoom { position: relative !important; }
+
 /* Bottom sheet backdrop */
 .bottom-sheet-backdrop {
   position: fixed; inset: 0; z-index: var(--z-bottom-sheet);

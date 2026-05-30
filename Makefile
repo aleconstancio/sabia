@@ -1,6 +1,15 @@
 UV := $(shell command -v uv 2>/dev/null || which uv 2>/dev/null || echo "")
 NPM := npm
 
+# Find libstdc++.so.6 for greenlet (needed on NixOS and some systems)
+LIBSTDCXX_PATH := $(shell find /nix/store -maxdepth 4 -path '*/gcc-*-lib/lib/libstdc++.so.6' 2>/dev/null | head -1)
+ifneq ($(LIBSTDCXX_PATH),)
+LIBSTDCXX_DIR := $(dir $(LIBSTDCXX_PATH))
+# Export LD_LIBRARY_PATH with the libstdc++ directory prepended
+export LD_LIBRARY_PATH
+endif
+LD_LIBRARY_PATH := $(LIBSTDCXX_DIR)$(LD_LIBRARY_PATH)
+
 # Fallback: use pip+python if uv not available
 ifeq ($(UV),)
 PYTHON := python3

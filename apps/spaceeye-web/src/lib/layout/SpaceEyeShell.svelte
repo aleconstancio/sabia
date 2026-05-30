@@ -16,7 +16,7 @@
 <div class="flex h-full w-full" style="background: var(--background);">
   <!-- Sidebar -->
   <aside
-    class="flex flex-col border-r shrink-0 overflow-hidden transition-all duration-300 contain-layout"
+    class="flex flex-col border-r shrink-0 transition-all duration-300 contain-layout"
     style="width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}; min-width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}; background: var(--card); border-color: var(--border);"
   >
     {#if sidebarContent}
