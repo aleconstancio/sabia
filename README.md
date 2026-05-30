@@ -15,18 +15,17 @@
 
 ## Quick Start
 
-Prerequisites: `uv` · `docker` · `node` 20+
+Prerequisites: `uv` · `node` 20+ · PostgreSQL 16 (with PostGIS) · Redis 7
 
 ```bash
 # One-command setup (creates .env, installs all deps)
 make setup
 
-# Apply database schema (first time only)
-psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
-
-# Start everything (PostGIS + backend + worker + frontend)
+# Start everything (Postgres + Redis + backend + worker + frontend)
 make dev
 ```
+
+`make dev` starts local Postgres and Redis (no Docker required), the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
 
 Once running, open http://localhost:5173.
 

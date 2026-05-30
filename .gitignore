@@ -27,6 +27,9 @@ todo.txt
 !uv.lock
 !package-lock.json
 
+# Project data
+.spaceeye/
+
 # IDE
 .idea/
 .vscode/

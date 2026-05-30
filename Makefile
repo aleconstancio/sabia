@@ -22,28 +22,28 @@ setup: ## Full bootstrap (deps + config)
 dev: ## Start all dev services in one terminal
 	@echo "━━━ Starting SpaceEye dev environment ━━━"
 	@echo ""
-	@trap 'echo ""; echo "→ Stopping..."; docker compose stop 2>/dev/null; kill $$BACKEND_PID $$WORKER_PID 2>/dev/null; exit 0' INT TERM; \
-	docker compose up -d postgres redis 2>/dev/null; \
-	echo "→ PostGIS + Redis started"; \
+	@trap 'echo ""; echo "→ Stopping..."; kill $$BACKEND_PID $$WORKER_PID 2>/dev/null; pkill -f "postgres.*5432" 2>/dev/null; pkill -f "redis.*6379" 2>/dev/null; exit 0' INT TERM; \
+	bash scripts/start-db.sh; \
+	echo "→ Databases ready"; \
 	$(RUN) uvicorn backend.main:app --reload --port 8000 &
 	BACKEND_PID=$$!; \
-	sleep 1; \
+	sleep 2; \
 	$(RUN) celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4 &
 	WORKER_PID=$$!; \
 	sleep 1; \
 	echo "→ Backend (PID $$BACKEND_PID) + Worker (PID $$WORKER_PID) started"; \
-	echo "→ Starting Vite dev server..."; \
+	echo "→ Starting Vite..."; \
 	echo ""; \
 	cd apps/spaceeye-web && $(NPM) run dev; \
 	STATUS=$$?; \
-	echo ""; \
-	echo "→ Stopping background processes..."; \
+	echo "→ Stopping..."; \
 	kill $$BACKEND_PID $$WORKER_PID 2>/dev/null; \
-	docker compose stop 2>/dev/null; \
+	pkill -f "postgres.*5432" 2>/dev/null; \
+	pkill -f "redis.*6379" 2>/dev/null; \
 	exit $$STATUS
 
-dev-db: ## Start PostGIS and Redis via Docker
-	docker compose up -d postgres redis
+dev-db: ## Start Postgres + Redis (no Docker needed)
+	@bash scripts/start-db.sh
 
 dev-backend: ## Start FastAPI dev server with hot reload
 	$(RUN) uvicorn backend.main:app --reload --port 8000
