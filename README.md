@@ -119,6 +119,9 @@ psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
 | `/api/process` | POST | Submit async processing task |
 | `/api/tasks/{id}` | GET | Poll task status + result |
 | `/api/tasks/{id}/ws` | WS | Stream task progress |
+| `/api/process/batch` | POST | Process multiple images for time-series |
+| `/api/difference` | POST | Compute NDVI difference (change detection) |
+| `/api/download/{id}` | GET | Download processed raster (PNG) |
 | `/api/ibge/uf` | GET | List Brazilian states |
 | `/api/ibge/cidades/{uf}` | GET | List cities in a state |
 

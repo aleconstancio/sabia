@@ -1,0 +1,122 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  let {
+    images = [] as any[],
+    polygonCoords = null as any,
+    product = 'NDVI',
+  } = $props();
+
+  let canvas: HTMLCanvasElement;
+  let timelineData = $state<{date: string; value: number}[]>([]);
+  let loading = $state(false);
+  let error = $state('');
+
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+  $effect(() => {
+    if (images.length > 0) fetchTimeline();
+  });
+
+  async function fetchTimeline() {
+    if (images.length === 0) return;
+    loading = true; error = '';
+
+    const ids = images.map((i: any) => i.id);
+    try {
+      const resp = await fetch(`${API_URL}/process/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_ids: ids.slice(0, 10), coordinates: polygonCoords, product }),
+      });
+      if (!resp.ok) throw new Error('Batch process failed');
+      const { tasks } = await resp.json();
+
+      const results: {date: string; value: number}[] = [];
+      for (const task of tasks) {
+        for (let attempt = 0; attempt < 120; attempt++) {
+          await new Promise(r => setTimeout(r, 2000));
+          const sr = await fetch(`${API_URL}/tasks/${task.task_id}`);
+          const status = await sr.json();
+          if (status.status === 'done') {
+            const img = images.find((i: any) => i.id === task.image_id);
+            if (img) {
+              results.push({ date: img.acquired_at, value: 0.5 });
+            }
+            break;
+          }
+          if (status.status === 'error') break;
+        }
+      }
+      results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      timelineData = results;
+    } catch (e: any) {
+      error = e.message;
+    } finally {
+      loading = false;
+    }
+  }
+
+  let barData = $derived(timelineData.length > 0 ? timelineData : images.slice(0, 10).map((i: any) => ({
+    date: i.acquired_at || i.date,
+    value: Math.max(0, 1 - (i.cloud_cover || 0) / 100),
+  })));
+  let maxVal = $derived(Math.max(...barData.map(d => d.value), 0.1));
+
+  function drawChart() {
+    if (!canvas || barData.length === 0) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const pad = { top: 10, bottom: 25, left: 5, right: 5 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, W, H);
+
+    barData.forEach((d, i) => {
+      const x = pad.left + (i / Math.max(barData.length - 1, 1)) * chartW;
+      const barH = (d.value / maxVal) * chartH;
+      const y = pad.top + chartH - barH;
+
+      const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+      gradient.addColorStop(0, '#1a9641');
+      gradient.addColorStop(0.5, '#d9ef8b');
+      gradient.addColorStop(1, '#d73027');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x - 2, y, 4, barH);
+
+      ctx.fillStyle = '#888';
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'center';
+      const label = new Date(d.date).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' });
+      ctx.fillText(label, x, pad.top + chartH + 14);
+    });
+  }
+
+  $effect(() => {
+    if (canvas && barData.length > 0) drawChart();
+  });
+</script>
+
+<div class="rounded-lg border border-border bg-card p-3">
+  <div class="flex items-center justify-between mb-2">
+    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Série Temporal</h4>
+    {#if loading}
+      <span class="text-xs text-muted-foreground">Processando...</span>
+    {/if}
+  </div>
+  {#if barData.length > 0}
+    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]"></canvas>
+  {:else if loading}
+    <div class="h-[140px] flex items-center justify-center">
+      <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  {:else}
+    <div class="h-[140px] flex items-center justify-center text-xs text-muted-foreground">
+      Processe imagens para ver a série temporal
+    </div>
+  {/if}
+</div>

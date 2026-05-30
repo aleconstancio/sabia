@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment';
   import L from 'leaflet';
   import 'leaflet-draw';
   import Button from '$lib/ui/components/Button.svelte';
@@ -18,6 +19,9 @@
   import RegionComparison from '$lib/components/RegionComparison.svelte';
   import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
   import TimeSlider from '$lib/components/TimeSlider.svelte';
+  import NdviTimeline from '$lib/components/NdviTimeline.svelte';
+  import Bookmarks from '$lib/components/Bookmarks.svelte';
+  import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map;
@@ -200,17 +204,20 @@
     }
   }
 
-  async function exportPdf(imageId: string, cloudCover: number | null) {
+  async function exportPdf(imageId: string, cloudCover: number | null, overlayPath?: string) {
+    const weather = polygonCentroid ? { temperature: '', humidity: '', precipitation: '' } : {};
+    const body: any = {
+      image_id: imageId,
+      product: selectedProduct,
+      date: new Date().toISOString(),
+      cloud_cover: cloudCover,
+      weather,
+    };
+    if (overlayPath) body.overlay_path = overlayPath;
     const resp = await fetch(`${API_URL}/export/pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image_id: imageId,
-        product: selectedProduct,
-        date: new Date().toISOString(),
-        cloud_cover: cloudCover,
-        weather: { temperature: '', humidity: '', precipitation: '' },
-      }),
+      body: JSON.stringify(body),
     });
     if (resp.ok) {
       const blob = await resp.blob();
@@ -222,6 +229,70 @@
       URL.revokeObjectURL(url);
     }
   }
+
+  function updateShareUrl(imageId: string) {
+    if (!browser || !drawnPolygon) return;
+    const params = new URLSearchParams();
+    params.set('coords', JSON.stringify(drawnPolygon));
+    params.set('image', imageId);
+    params.set('product', selectedProduct);
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', url);
+  }
+
+  function copyShareLink() {
+    if (!browser || !drawnPolygon || !taskId) return;
+    const params = new URLSearchParams();
+    params.set('coords', JSON.stringify(drawnPolygon));
+    params.set('image', taskId);
+    params.set('product', selectedProduct);
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+  }
+
+  function restoreBookmark(coords: number[][][], name: string) {
+    drawnPolygon = coords;
+    if (map && drawnPolygon) {
+      const polygon = L.polygon(drawnPolygon[0].map((c: number[]) => [c[1], c[0]]));
+      map.addLayer(polygon);
+      map.fitBounds(polygon.getBounds());
+      const center = polygon.getCenter();
+      polygonCentroid = { lat: center.lat, lon: center.lng };
+      showPolygonModal = true;
+    }
+  }
+
+  function saveCurrentPolygon() {
+    if (!drawnPolygon) return;
+    const name = prompt('Nome para este local:');
+    if (name) addBookmark(name, drawnPolygon);
+  }
+
+  $effect(() => {
+    if (!browser) return;
+    const params = new URLSearchParams(window.location.search);
+    const coords = params.get('coords');
+    const image = params.get('image');
+    const product = params.get('product');
+
+    if (coords && image && product) {
+      try {
+        const parsed = JSON.parse(coords);
+        drawnPolygon = parsed;
+        selectedProduct = product;
+        if (map && drawnPolygon) {
+          const polygon = L.polygon(drawnPolygon[0].map((c: number[]) => [c[1], c[0]]));
+          map.addLayer(polygon);
+          map.fitBounds(polygon.getBounds());
+          const center = polygon.getCenter();
+          polygonCentroid = { lat: center.lat, lon: center.lng };
+        }
+        searchImages().then(() => {
+          processImage(image);
+        });
+      } catch { /* invalid params */ }
+    }
+  });
 </script>
 
 <div class="absolute top-0 left-0 z-[1000] w-full">
@@ -231,6 +302,7 @@
       <SearchMenu {navigateToCity} />
     </div>
     <div class="flex items-center gap-2">
+      <Bookmarks onSelect={restoreBookmark} currentCoords={drawnPolygon} />
       {#if rasterOverlay}
         <Button variant="ghost" size="sm" onclick={clearOverlay}>Limpar overlay</Button>
       {/if}
@@ -240,6 +312,7 @@
         </Button>
       {/if}
       {#if hasOverlay}
+        <Button variant="ghost" size="sm" onclick={() => copyShareLink()}>Copiar link</Button>
         <Button variant="ghost" size="sm" onclick={() => exportPdf(taskId, null)}>Exportar PDF</Button>
       {/if}
       <Badge>CBERS-4A</Badge>
@@ -281,6 +354,7 @@
   </div>
   {#snippet actions()}
     <Button variant="ghost" onclick={() => showPolygonModal = false}>Cancelar</Button>
+    <Button variant="ghost" onclick={saveCurrentPolygon}>Salvar local</Button>
     <Button onclick={searchImages} loading={isLoading}>Buscar imagens</Button>
   {/snippet}
 </Dialog>
@@ -328,7 +402,8 @@
 {/if}
 
 {#if imageResults.length > 0 && !showImageGallery && !showProcessingViewer}
-  <div class="absolute left-4 bottom-4 z-[999] w-72">
+  <div class="absolute left-4 bottom-4 z-[999] w-72 space-y-2">
+    <NdviTimeline images={imageResults} polygonCoords={drawnPolygon} product={selectedProduct} />
     <TimeSlider images={imageResults} onSelect={(id) => {
       const img = imageResults.find(i => i.id === id);
       if (img) processImage(img.id);

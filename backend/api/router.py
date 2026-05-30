@@ -239,12 +239,26 @@ async def export_pdf(data: dict):
     if cc is not None:
         c.drawString(50, y - 60, f"Nuvem: {cc:.1f}%")
 
+    # Embed processed image overlay if available
+    overlay_path = data.get('overlay_path', '')
+    overlay_y = y - 80
+    if overlay_path and os.path.exists(overlay_path):
+        try:
+            from reportlab.lib.utils import ImageReader
+            img = ImageReader(overlay_path)
+            c.drawImage(img, 50, y - 260, width=400, height=200, preserveAspectRatio=True)
+            overlay_y = y - 280
+        except Exception:
+            c.drawString(50, overlay_y, "(Imagem overlay não disponível)")
+            overlay_y -= 20
+
     weather = data.get('weather')
     if weather:
-        c.drawString(50, y - 100, "Clima:")
-        c.drawString(70, y - 120, f"Temperatura: {weather.get('temperature', 'N/A')}°C")
-        c.drawString(70, y - 140, f"Umidade: {weather.get('humidity', 'N/A')}%")
-        c.drawString(70, y - 160, f"Precipitação: {weather.get('precipitation', 'N/A')} mm")
+        weather_y = overlay_y
+        c.drawString(50, weather_y, "Clima:")
+        c.drawString(70, weather_y - 20, f"Temperatura: {weather.get('temperature', 'N/A')}°C")
+        c.drawString(70, weather_y - 40, f"Umidade: {weather.get('humidity', 'N/A')}%")
+        c.drawString(70, weather_y - 60, f"Precipitação: {weather.get('precipitation', 'N/A')} mm")
 
     c.setFont("Helvetica", 8)
     c.drawString(50, 30, f"Gerado em: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M')}")
@@ -258,6 +272,60 @@ async def export_pdf(data: dict):
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=spaceeye-report.pdf"},
     )
+
+
+@router.post("/process/batch")
+async def process_batch(req: dict):
+    """Process multiple images for the same polygon and return task IDs."""
+    image_ids = req.get("image_ids", [])
+    coordinates = req.get("coordinates")
+    product = req.get("product", "NDVI")
+
+    from backend.tasks.processing import process_image_task
+
+    task_ids = []
+    for img_id in image_ids:
+        task = process_image_task.delay(
+            image_id=img_id,
+            polygon_coords=coordinates,
+            product=product,
+            band_urls={},
+        )
+        task_ids.append({"image_id": img_id, "task_id": task.id})
+
+    return {"tasks": task_ids}
+
+
+@router.post("/difference")
+async def compute_difference(req: dict):
+    """Compute NDVI difference between two processed images."""
+    task_id_a = req.get("task_id_a")
+    task_id_b = req.get("task_id_b")
+
+    from backend.tasks.processing import compute_difference_task
+
+    task = compute_difference_task.delay(
+        task_id_a=task_id_a,
+        task_id_b=task_id_b,
+    )
+    return {"task_id": task.id}
+
+
+@router.get("/download/{task_id}")
+async def download_result(task_id: str):
+    """Download the processed raster (PNG) for a completed task."""
+    from celery.result import AsyncResult
+    from backend.tasks.celery_app import celery_app
+
+    result = AsyncResult(task_id, app=celery_app)
+    if result.state != "SUCCESS":
+        raise HTTPException(404, "Task not found or not yet complete")
+
+    path = result.result.get("path", "")
+    if not path or not os.path.exists(path):
+        raise HTTPException(404, "Result file not found")
+
+    return FileResponse(path, media_type="image/png", filename=os.path.basename(path))
 
 
 @router.post("/images/timeline")

@@ -111,6 +111,26 @@ The old code loaded every image from the `images` table, parsed its coordinates 
 
 PostGIS `ST_Intersects` uses a GiST index — the R-tree index prunes non-overlapping geometries in logarithmic time. Same query: ~2ms regardless of catalog size.
 
+## New Feature Modules (v0.3)
+
+### NDVI Time-Series
+The batch processing endpoint (`/api/process/batch`) allows processing multiple images against
+the same polygon. The NdviTimeline component charts NDVI values over time, enabling vegetation
+monitoring across dates.
+
+### NDVI Change Detection
+The difference endpoint (`/api/difference`) computes `NDVI_B - NDVI_A` between two processed
+results and returns a change-detection overlay with a diverging (RdBu) colormap. Red indicates
+vegetation loss, blue indicates vegetation gain.
+
+### Bookmarks
+LocalStorage-based saved polygons. Users save named polygon collections client-side with
+zero backend dependency.
+
+### Shareable URLs
+Polygon coordinates, image ID, and product are encoded in URL query parameters. Loading a
+shared URL restores the map state and triggers processing automatically.
+
 ## Why Async Tasks Instead of Sync?
 
 Downloading 4 spectral bands at ~200MB each takes 30-120 seconds. In the old code, Flask's single thread was blocked for the entire duration, meaning one user could block all others.
