@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { mapState } from '$lib/stores/map.svelte';
+import { addRecord } from '$lib/stores/history.svelte.ts';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -72,6 +73,15 @@ export async function processImage(imageId: string) {
           mapState.showProcessingViewer = false;
           mapState.completedTaskIds = [...mapState.completedTaskIds, data.task_id];
           showOverlayResult(status.result);
+          addRecord({
+            imageId: imageId,
+            product: mapState.selectedProduct,
+            collection: mapState.selectedCollection || 'unknown',
+            cloudCover: null,
+            polygonCoords: mapState.polygonCoords || [],
+            centroid: mapState.polygonCentroid,
+            stats: status.result?.statistics,
+          });
         } else if (status.status === 'error') {
           clearInterval(pollInterval);
           mapState.isLoading = false;

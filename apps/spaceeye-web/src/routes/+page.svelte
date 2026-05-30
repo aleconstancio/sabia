@@ -28,6 +28,8 @@
   import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
   import SwipeComparison from '$lib/components/SwipeComparison.svelte';
+  import HistoryPanel from '$lib/components/HistoryPanel.svelte';
+  import MonitoringPanel from '$lib/components/MonitoringPanel.svelte';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
@@ -39,6 +41,7 @@
   let showTimelapse = $state(false);
   let timelapseOverlay = $state<any>(null);
   let useSwipe = $state(false);
+  let drawnItemsGroup = $state<L.FeatureGroup | null>(null);
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -61,14 +64,15 @@
 
     mapState.map = map;
 
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    drawnItemsGroup = drawnItems;
+
     map.on('mousemove', (e: any) => {
       if (measureMode) {
         mouseCoords = { lat: e.latlng.lat.toFixed(4), lng: e.latlng.lng.toFixed(4) };
       }
     });
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
 
     const drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
@@ -84,7 +88,6 @@
     map.addControl(drawControl);
 
     map.on(L.Draw.Event.CREATED, (e: any) => {
-      drawnItems.clearLayers();
       drawnItems.addLayer(e.layer);
       mapState.polygonCoords = e.layer.toGeoJSON().geometry.coordinates;
       const center = e.layer.getCenter();
@@ -202,6 +205,22 @@
     if (name) addBookmark(name, mapState.polygonCoords);
   }
 
+  function unionPolygons() {
+    if (!drawnItemsGroup) return;
+    const layers = drawnItemsGroup.getLayers();
+    if (layers.length < 2) return;
+
+    const bounds = drawnItemsGroup.getBounds();
+    const polygon = L.rectangle(bounds);
+
+    drawnItemsGroup.clearLayers();
+    drawnItemsGroup.addLayer(polygon);
+
+    const geoJSON = polygon.toGeoJSON();
+    mapState.polygonCoords = geoJSON.geometry.coordinates;
+    mapState.polygonCentroid = { lat: polygon.getCenter().lat, lon: polygon.getCenter().lng };
+  }
+
   $effect(() => {
     if (!browser) return;
     const params = new URLSearchParams(window.location.search);
@@ -236,6 +255,17 @@
       <SearchMenu {navigateToCity} />
     </div>
     <div class="flex items-center gap-2">
+      <HistoryPanel onRestore={(r) => {
+        mapState.polygonCoords = r.polygonCoords;
+        if (mapState.map && r.polygonCoords) {
+          const polygon = L.polygon(r.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
+          mapState.map.addLayer(polygon);
+          mapState.map.fitBounds(polygon.getBounds());
+          mapState.polygonCentroid = r.centroid;
+        }
+        processImage(r.imageId);
+      }} />
+      <MonitoringPanel />
       <Bookmarks onSelect={restoreBookmark} currentCoords={mapState.polygonCoords} />
       <Button size="sm" variant="ghost" onclick={toggleMode} class="!w-8 !h-8 !p-0">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -290,8 +320,8 @@
 {#if mapState.polygonCentroid && (mapState.showImageGallery || mapState.hasOverlay)}
   <div class="absolute right-4 top-20 z-[999] w-72 space-y-3">
     <WeatherPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} {onWeatherData} />
-    <SoilPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} />
-    <LandCoverPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} />
+    <SoilPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />
+    <LandCoverPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />
   </div>
 {/if}
 
@@ -313,6 +343,9 @@
   { value: 'NDMI', label: 'NDMI - Moisture' },
 ]} />
     </div>
+    {#if drawnItemsGroup && drawnItemsGroup.getLayers().length > 1}
+      <Button variant="ghost" onclick={unionPolygons}>Unir áreas</Button>
+    {/if}
     {#if mapState.searchError}
       <div class="flex items-center gap-2 mt-2">
         <p class="text-destructive text-sm flex-1">{mapState.searchError}</p>

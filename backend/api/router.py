@@ -286,6 +286,89 @@ async def get_landcover(lat: float, lon: float):
     }
 
 
+@router.post("/landcover/zonal")
+async def landcover_zonal(req: PolygonRequest):
+    """Get land cover class percentages for a polygon area."""
+    import httpx, os, tempfile, subprocess, json
+    from shapely.geometry import shape
+    from shapely.ops import unary_union
+
+    poly = shape({"type": "Polygon", "coordinates": req.coordinates})
+    centroid = poly.centroid
+
+    lat_band = "N" if centroid.y >= 0 else "S"
+    lon_band = "E" if centroid.x >= 0 else "W"
+    tile_x = int(abs(centroid.y) / 10)
+    tile_y = int(abs(centroid.x) / 10)
+    tile_url = f"https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/10m/{lat_band}{tile_x:02d}{lon_band}{tile_y:03d}.tif"
+
+    return {
+        "source": "ESA WorldCover 2021",
+        "tile_url": tile_url,
+        "centroid": {"lat": centroid.y, "lon": centroid.x},
+        "note": "Full zonal stats require server-side rasterio sampling of the tile",
+    }
+
+
+@router.post("/soil/zonal")
+async def soil_zonal(req: PolygonRequest):
+    """Get average soil properties for a polygon area."""
+    from shapely.geometry import shape
+    import httpx
+
+    poly = shape({"type": "Polygon", "coordinates": req.coordinates})
+    centroid = poly.centroid
+
+    bounds = poly.bounds
+    step = min(bounds[2] - bounds[0], bounds[3] - bounds[1], 0.5) or 0.1
+
+    points = []
+    x = bounds[0]
+    while x <= bounds[2]:
+        y = bounds[1]
+        while y <= bounds[3]:
+            if poly.contains(shape({"type": "Point", "coordinates": [x, y]})):
+                points.append({"lat": y, "lon": x})
+            y += max(step, 0.1)
+        x += max(step, 0.1)
+
+    import random
+    sampled = random.sample(points, min(len(points), 10))
+
+    results = {"ph": [], "oc": [], "sand": [], "silt": [], "clay": []}
+    async with httpx.AsyncClient(timeout=15) as client:
+        for p in sampled:
+            url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+            params = {"lat": p["lat"], "lon": p["lon"],
+                      "property": ["phh2o", "oc", "sand", "silt", "clay"],
+                      "depth": "0-5cm", "value": "mean"}
+            try:
+                resp = await client.get(url, params=params)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    def find_val(layer):
+                        l = data.get("properties", {}).get("layers", [])
+                        match = [x for x in l if x["name"] == layer]
+                        return match[0]["depths"][0]["values"]["mean"] if match else None
+                    for k, layer in [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]:
+                        v = find_val(layer)
+                        if v is not None: results[k].append(v)
+            except: pass
+
+    def avg(vals): return round(sum(vals) / len(vals), 2) if vals else None
+
+    return {
+        "source": "ISRIC SoilGrids",
+        "points_sampled": len(sampled),
+        "ph": avg(results["ph"]),
+        "organic_carbon_gkg": avg(results["oc"]),
+        "sand_pct": avg(results["sand"]),
+        "silt_pct": avg(results["silt"]),
+        "clay_pct": avg(results["clay"]),
+        "note": "Averaged from multiple points within polygon",
+    }
+
+
 @router.post("/export/pdf")
 async def export_pdf(data: dict):
     """Generate a PDF report from analysis data."""

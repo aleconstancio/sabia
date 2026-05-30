@@ -1,0 +1,40 @@
+<script lang="ts">
+  import { getHistory, clearHistory } from '$lib/stores/history.svelte.ts';
+  import Button from '$lib/ui/components/Button.svelte';
+
+  let { onRestore = (r: any) => {} } = $props();
+  let history = $state<any[]>([]);
+  let show = $state(false);
+
+  function refresh() { history = getHistory(); }
+
+  $effect(() => { if (show) refresh(); });
+</script>
+
+<div class="relative">
+  <Button size="sm" variant="ghost" onclick={() => { show = !show; refresh(); }} class="!text-xs">Histórico</Button>
+  {#if show}
+    <div class="absolute top-full right-0 mt-1 w-80 rounded-lg border border-border bg-card shadow-lg p-2 z-[1000] max-h-80 overflow-y-auto">
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h4 class="text-xs font-semibold text-muted-foreground uppercase">Análises Recentes</h4>
+        <button class="text-xs text-destructive bg-transparent border-none cursor-pointer hover:underline" onclick={() => { clearHistory(); refresh(); }}>Limpar</button>
+      </div>
+      {#if history.length === 0}
+        <p class="text-xs text-muted-foreground p-2">Nenhuma análise ainda. Processe uma imagem para vê-la aqui.</p>
+      {:else}
+        {#each history as r}
+          <button class="w-full text-left px-2 py-1.5 rounded hover:bg-muted cursor-pointer bg-transparent border-none" onclick={() => { onRestore(r); show = false; }}>
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-mono truncate flex-1">{r.imageId?.slice(0, 24)}...</span>
+              <span class="text-xs text-muted-foreground ml-2">{r.product}</span>
+            </div>
+            <div class="flex justify-between text-xs text-muted-foreground">
+              <span>{new Date(r.timestamp).toLocaleString('pt-BR')}</span>
+              <span>{r.collection}</span>
+            </div>
+          </button>
+        {/each}
+      {/if}
+    </div>
+  {/if}
+</div>
