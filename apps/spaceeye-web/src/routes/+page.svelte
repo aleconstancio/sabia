@@ -60,6 +60,7 @@
       center: [-3.359202, -23.211370],
       zoom: 3,
       layers: [tileLayer],
+      keyboard: false,
     });
 
     mapState.map = map;
@@ -249,7 +250,7 @@
 </script>
 
 <div class="flex flex-1 min-h-0 flex-col">
-  <div class="flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 shadow-sm shrink-0">
+  <div class="flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 shadow-sm shrink-0" style="position: relative; z-index: 1000">
     <div class="flex items-center gap-4">
       <h1 class="text-xl font-bold text-emerald-800 dark:text-emerald-400">SpaceEye</h1>
       <SearchMenu {navigateToCity} />
