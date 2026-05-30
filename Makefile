@@ -1,6 +1,15 @@
-UV := uv
-PYTHON := $(shell $(UV) run -- python3 -c "import sys; print(sys.executable)" 2>/dev/null || echo ".venv/bin/python")
+UV := $(shell command -v uv 2>/dev/null || which uv 2>/dev/null || echo "")
 NPM := npm
+
+# Fallback: use pip+python if uv not available
+ifeq ($(UV),)
+PYTHON := python3
+PIP := $(PYTHON) -m pip
+RUN :=
+else
+PYTHON := $(shell $(UV) run -- python3 -c "import sys; print(sys.executable)" 2>/dev/null || echo ".venv/bin/python")
+RUN := $(UV) run
+endif
 
 .PHONY: setup dev-db dev-backend dev-worker dev-frontend lint check test test-backend test-frontend clean format help
 
@@ -14,10 +23,10 @@ dev-db: ## Start PostGIS and Redis via Docker
 	docker compose up -d postgres redis
 
 dev-backend: ## Start FastAPI dev server with hot reload
-	$(UV) run uvicorn backend.main:app --reload --port 8000
+	$(RUN) uvicorn backend.main:app --reload --port 8000
 
 dev-worker: ## Start Celery worker
-	$(UV) run celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
+	$(RUN) celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
 
 dev-frontend: ## Start Vite dev server
 	cd apps/spaceeye-web && $(NPM) run dev
@@ -30,7 +39,7 @@ check: lint ## Alias for lint
 test: test-backend test-frontend ## Run all tests
 
 test-backend: ## Run Python tests
-	$(UV) run pytest backend/tests/ -v -x
+	$(RUN) pytest backend/tests/ -v -x
 
 test-frontend: ## Run frontend tests
 	cd apps/spaceeye-web && $(NPM) run test -- --run
@@ -39,7 +48,7 @@ test-frontend-watch: ## Run frontend tests in watch mode
 	cd apps/spaceeye-web && $(NPM) run test
 
 format: ## Format Python code with ruff
-	$(UV) run ruff format backend/ pipeline/
+	$(RUN) ruff format backend/ pipeline/
 
 clean: ## Remove build artifacts
 	rm -rf apps/spaceeye-web/build
