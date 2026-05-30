@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "━━━ SpaceEye Bootstrap ━━━"
+# Resolve project root (script lives in scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
+echo "━━━ SpaceEye Bootstrap ── $PROJECT_ROOT"
 echo ""
 
 # ── Find uv (handles Nix/non-standard paths) ──
@@ -23,8 +28,7 @@ if [ -z "$UV" ]; then
   fi
   PIP_INSTALL="$PYTHON -m pip install"
 else
-  echo "→ Using $UV"
-  UV_SYNC="$UV sync"
+  echo "→ Using $(basename "$UV") $(basename "$(dirname "$(dirname "$UV")")" | sed 's/.*-uv-//')"
 fi
 
 # ── Check other prerequisites ──
@@ -40,8 +44,9 @@ fi
 
 # ── Python backend ──
 if [ -n "$UV" ]; then
-  echo "→ Installing Python dependencies (uv)..."
-  $UV sync 2>&1 | tail -3
+  echo "→ Installing Python dependencies (uv sync)..."
+  "$UV" sync 2>&1 | tail -3
+  echo "→ Done. Run 'uv run python ...' to use the virtualenv."
 else
   echo "→ Installing Python dependencies (pip)..."
   $PIP_INSTALL -e ".[dev]" 2>&1 | tail -3
@@ -51,11 +56,11 @@ fi
 echo "→ Installing frontend dependencies (npm)..."
 cd apps/spaceeye-web
 npm install --legacy-peer-deps 2>/dev/null || npm install
-cd ../..
+cd "$PROJECT_ROOT"
 
 # ── Done ──
 echo ""
-echo "━━━ Bootstrap complete ── run: ━━━"
+echo "━━━ Bootstrap complete ── run from project root: ━━━"
 echo ""
 echo "  make dev-db         # Start PostGIS + Redis"
 echo "  make dev-backend    # Start FastAPI (port 8000)"
