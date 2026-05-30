@@ -11,7 +11,11 @@ export async function searchImages() {
     const resp = await fetch(`${API_URL}/images/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ coordinates: mapState.polygonCoords, limit: 50 })
+      body: JSON.stringify({
+        coordinates: mapState.polygonCoords,
+        limit: 50,
+        collections: mapState.selectedCollection ? [mapState.selectedCollection] : undefined,
+      })
     });
     if (!resp.ok) throw new Error(await resp.text());
     const data = await resp.json();

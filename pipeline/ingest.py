@@ -25,8 +25,9 @@ load_dotenv()
 
 STAC_URLS = {
     "cbers4a": "http://www.dgi.inpe.br/lgi-stac/collections/CBERS4A_WPM_L4_DN/items",
-    # Add more collections as STAC endpoints become available
-    # "amazonia1": "...",
+    "sentinel2": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items",
+    "landsat8": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
+    "landsat9": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
 }
 
 
@@ -49,22 +50,27 @@ def insert_param(link: str) -> str:
 
 def parse_item(item: dict, collection: str) -> Optional[dict]:
     try:
+        assets = item.get("assets", {})
+        
+        metadata_assets = {}
+        if collection == "cbers4a":
+            for k in ("pan", "blue", "green", "red", "nir"):
+                url = insert_param(assets.get(k, {}).get("href", ""))
+                metadata_assets[k] = url
+        elif collection == "sentinel2":
+            mapping = {"B02": "blue", "B03": "green", "B04": "red", "B08": "nir"}
+            for stac_key, internal_key in mapping.items():
+                metadata_assets[internal_key] = assets.get(stac_key, {}).get("href", "")
+        elif collection in ("landsat8", "landsat9"):
+            mapping = {"B2": "blue", "B3": "green", "B4": "red", "B5": "nir", "B6": "swir1", "B7": "swir2", "B8": "pan"}
+            for stac_key, internal_key in mapping.items():
+                metadata_assets[internal_key] = assets.get(stac_key, {}).get("href", "")
+        
         footprint_coords = item["geometry"]["coordinates"][0]
         footprint_geojson = json.dumps({
             "type": "Polygon",
             "coordinates": [footprint_coords],
         })
-        
-        assets = item.get("assets", {})
-        metadata = {
-            "assets": {
-                "pan": insert_param(assets.get("pan", {}).get("href", "")),
-                "blue": insert_param(assets.get("blue", {}).get("href", "")),
-                "green": insert_param(assets.get("green", {}).get("href", "")),
-                "red": insert_param(assets.get("red", {}).get("href", "")),
-                "nir": insert_param(assets.get("nir", {}).get("href", "")),
-            }
-        }
         
         acquired_at = item["properties"].get("datetime") or item["properties"].get("created")
         if acquired_at:
@@ -74,9 +80,9 @@ def parse_item(item: dict, collection: str) -> Optional[dict]:
             "id": item["id"],
             "collection": collection,
             "footprint_geojson": footprint_geojson,
-            "cloud_cover": item["properties"].get("cloud_cover", 0),
+            "cloud_cover": item["properties"].get("eo:cloud_cover", item["properties"].get("cloud_cover", 0)),
             "acquired_at": acquired_at,
-            "metadata": json.dumps(metadata),
+            "metadata": json.dumps({"assets": metadata_assets}),
             "thumbnail_url": assets.get("thumbnail", {}).get("href", ""),
         }
     except (KeyError, IndexError, TypeError) as e:
@@ -94,16 +100,13 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
     cursor = conn.cursor()
     total_inserted = 0
     total_skipped = 0
+    next_url = stac_url
     
     for page in range(1, max_pages + 1):
         print(f"Fetching {collection_id} page {page}...")
         for attempt in range(3):
             try:
-                resp = requests.get(
-                    stac_url,
-                    params={"page": page, "limit": 1000},
-                    timeout=60,
-                )
+                resp = requests.get(next_url, timeout=60)
                 resp.raise_for_status()
                 data = resp.json()
                 features = data.get("features", [])
@@ -118,6 +121,13 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
         if not features:
             print("  No more features. Done.")
             break
+        
+        links = data.get("links", [])
+        next_link = next((l["href"] for l in links if l.get("rel") == "next"), None)
+        if next_link:
+            next_url = next_link
+        else:
+            next_url = None
         
         records = []
         for item in features:
@@ -155,6 +165,9 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
         
         total_skipped += len(features) - len(records)
         print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
+        
+        if not next_url:
+            break
     
     cursor.close()
     conn.close()

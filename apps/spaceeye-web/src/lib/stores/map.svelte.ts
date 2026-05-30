@@ -20,6 +20,7 @@ let _comparisonSecond = $state<any>(null);
 let _selectedIds = $state<string[]>([]);
 let _lastWeatherData = $state<any>(null);
 let _lastOverlayPath = $state('');
+let _selectedCollection = $state('cbers4a');
 
 export const mapState = {
   get map() { return _map; },
@@ -66,4 +67,6 @@ export const mapState = {
   set lastWeatherData(v) { _lastWeatherData = v; },
   get lastOverlayPath() { return _lastOverlayPath; },
   set lastOverlayPath(v) { _lastOverlayPath = v; },
+  get selectedCollection() { return _selectedCollection; },
+  set selectedCollection(v) { _selectedCollection = v; },
 };

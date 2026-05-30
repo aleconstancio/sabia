@@ -208,7 +208,12 @@
         <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>Baixar GeoTIFF</Button>
         <Button variant="ghost" size="sm" onclick={doExportPdf}>Exportar PDF</Button>
       {/if}
-      <Badge>CBERS-4A</Badge>
+      <Select bind:value={mapState.selectedCollection} options={[
+        { value: 'cbers4a', label: 'CBERS-4A' },
+        { value: 'sentinel2', label: 'Sentinel-2' },
+        { value: 'landsat8', label: 'Landsat 8' },
+        { value: 'landsat9', label: 'Landsat 9' },
+      ]} class="!w-32 !text-xs" />
     </div>
   </div>
 </div>

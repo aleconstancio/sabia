@@ -33,6 +33,21 @@ List supported satellite collections and their capabilities.
     "id": "amazonia1",
     "bands": ["red", "green", "blue", "nir"],
     "products": ["TCI", "NDVI"]
+  },
+  {
+    "id": "sentinel2",
+    "bands": ["red", "green", "blue", "nir"],
+    "products": ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
+  },
+  {
+    "id": "landsat8",
+    "bands": ["pan", "red", "green", "blue", "nir", "swir1", "swir2"],
+    "products": ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
+  },
+  {
+    "id": "landsat9",
+    "bands": ["pan", "red", "green", "blue", "nir", "swir1", "swir2"],
+    "products": ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
   }
 ]
 ```
