@@ -1,4 +1,4 @@
-.PHONY: dev-backend dev-frontend dev-worker dev-db lint format check test clean
+.PHONY: dev-backend dev-frontend dev-worker dev-db lint check test clean
 
 dev-db:
 	docker compose up -d postgres redis
@@ -10,18 +10,15 @@ dev-worker:
 	celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
 
 dev-frontend:
-	cd apps/spaceeye-web && bun run dev
+	cd apps/spaceeye-web && npm run dev
 
 lint:
-	cd apps/spaceeye-web && bunx svelte-check --tsconfig ./tsconfig.json
-
-format:
-	cd apps/spaceeye-web && bunx prettier --write .
+	cd apps/spaceeye-web && npx svelte-check --tsconfig ./tsconfig.json
 
 check: lint
 
 test:
-	cd apps/spaceeye-web && bun run check || true
+	cd apps/spaceeye-web && npm run check || true
 
 clean:
 	rm -rf apps/spaceeye-web/build

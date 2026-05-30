@@ -116,12 +116,19 @@ psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
 | `/api/collections` | GET | List supported satellite collections |
 | `/api/images/search` | POST | Search images by polygon intersection |
 | `/api/images/{id}` | GET | Get image metadata |
+| `/api/images/timeline` | POST | List images chronologically for a polygon |
 | `/api/process` | POST | Submit async processing task |
+| `/api/process/batch` | POST | Process multiple images for time-series |
 | `/api/tasks/{id}` | GET | Poll task status + result |
 | `/api/tasks/{id}/ws` | WS | Stream task progress |
-| `/api/process/batch` | POST | Process multiple images for time-series |
 | `/api/difference` | POST | Compute NDVI difference (change detection) |
 | `/api/download/{id}` | GET | Download processed raster (PNG) |
+| `/api/overlay/{filename}` | GET | Serve processed overlay PNG |
+| `/api/export/pdf` | POST | Generate PDF analysis report |
+| `/api/weather/{lat}/{lon}` | GET | Current weather + 7-day forecast |
+| `/api/soil/{lat}/{lon}` | GET | Soil properties (pH, texture, CEC) |
+| `/api/landcover/{lat}/{lon}` | GET | ESA WorldCover land use classes |
+| `/api/geocode` | GET | Nominatim geocoding proxy |
 | `/api/ibge/uf` | GET | List Brazilian states |
 | `/api/ibge/cidades/{uf}` | GET | List cities in a state |
 

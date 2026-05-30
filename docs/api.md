@@ -292,3 +292,106 @@ Proxy for Nominatim geocoding. Search for a location by text.
 | `q` | string | ✅ | Search query (e.g., "São Paulo-SP") |
 
 **Response 200:** Array of geocoding results (Nominatim format)
+
+---
+
+## `GET /api/weather/{lat}/{lon}`
+
+Fetch weather data from Open-Meteo (free, no API key). Returns current conditions and 7-day forecast.
+
+**Path Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `lat` | float | Latitude |
+| `lon` | float | Longitude |
+
+**Response 200:**
+```json
+{
+  "current": { "temperature_2m": 27.5, "relative_humidity_2m": 65, "precipitation": 0, "soil_moisture_0_to_7cm": 0.23 },
+  "daily": { "temperature_2m_max": [30.1], "precipitation_sum": [2.5] }
+}
+```
+
+---
+
+## `GET /api/soil/{lat}/{lon}`
+
+Fetch soil properties from ISRIC SoilGrids REST API (free, no key). Returns pH, organic carbon, nitrogen, texture at 250m resolution.
+
+**Path Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `lat` | float | Latitude |
+| `lon` | float | Longitude |
+
+**Response 200:** SoilGrids properties response with layers for pH, OC, nitrogen, CEC, sand/silt/clay.
+
+---
+
+## `GET /api/landcover/{lat}/{lon}`
+
+Get ESA WorldCover 2021 land cover classes for a point.
+
+**Path Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `lat` | float | Latitude |
+| `lon` | float | Longitude |
+
+**Response 200:**
+```json
+{
+  "source": "ESA WorldCover 2021",
+  "resolution": "10m",
+  "classes": { "10": "Tree cover", "20": "Shrubland", "40": "Cropland", ... },
+  "tile_url": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/..."
+}
+```
+
+---
+
+## `GET /api/overlay/{filename}`
+
+Serve a processed overlay PNG by filename. Used by the frontend to display NDVI/TCI overlays on the Leaflet map.
+
+**Response 200:** PNG image
+**Response 404:** File not found or expired
+
+---
+
+## `POST /api/export/pdf`
+
+Generate a downloadable PDF report with image metadata, weather data, and embedded processed raster.
+
+**Request Body:**
+```json
+{
+  "image_id": "CBERS4A_...",
+  "product": "NDVI",
+  "date": "2025-01-01T00:00:00Z",
+  "cloud_cover": 12.5,
+  "weather": { "temperature": 27.5, "humidity": 65, "precipitation": 0 },
+  "overlay_path": "/tmp/spaceeye/cache/NDVI_CBERS4A_...png"
+}
+```
+
+**Response 200:** PDF file download (`spaceeye-report.pdf`)
+
+---
+
+## `POST /api/images/timeline`
+
+Get available images for a polygon, sorted chronologically. Used by the time-slider component.
+
+**Request Body:** Same as `/api/images/search` but with `limit` defaulting to 100.
+
+**Response 200:**
+```json
+{
+  "timeline": [
+    { "id": "CBERS4A_...", "date": "2025-01-01T12:00:00Z", "cloud_cover": 12.5, "thumbnail_url": "..." }
+  ],
+  "total": 50
+}
+```

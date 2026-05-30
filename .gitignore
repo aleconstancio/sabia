@@ -7,7 +7,7 @@ todo.txt
 *.env
 __pycache__/
 *.pyc
-*.sh
+*.log
 node_modules/
 .svelte-kit/
 build/

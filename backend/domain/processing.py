@@ -8,7 +8,6 @@ from shapely.geometry import mapping, shape
 import geopandas as gpd
 from backend.config import get_settings
 from backend.services.downloader import download_bands
-from backend.services.raster_processor import crop_raster_to_polygon
 from backend.services.compressor import compress_to_png
 
 from backend.exceptions import ProcessingError
