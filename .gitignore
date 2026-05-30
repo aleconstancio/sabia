@@ -34,3 +34,5 @@ todo.txt
 .idea/
 .vscode/
 *.swpdump.rdb
+# Redis
+dump.rdb
