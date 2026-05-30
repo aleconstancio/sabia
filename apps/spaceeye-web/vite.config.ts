@@ -4,4 +4,16 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  optimizeDeps: {
+    exclude: ['bits-ui', 'mode-watcher', 'svelte-sonner'],
+  },
+  ssr: {
+    noExternal: ['bits-ui', 'mode-watcher', 'svelte-sonner'],
+  },
+  server: {
+    fs: {
+      allow: ['..'],
+    },
+  },
 });
+
