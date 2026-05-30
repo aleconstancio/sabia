@@ -19,12 +19,10 @@ def compress_to_png(raster_path: str, product_name: str) -> dict:
         if crs is None:
             crs = "EPSG:4326"
 
-        if product_name == "NDVI":
+        if product_name in ("NDVI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "NDMI", "NBR"):
             return _compress_ndvi(img, bounds, crs)
-        elif product_name == "TCI":
+        elif product_name in ("TCI", "CIR", "MNDWI"):
             return _compress_tci(img, bounds, crs)
-        elif product_name in ("NDWI",):
-            return _compress_ndvi(img, bounds, crs)
         else:
             return _compress_tci(img, bounds, crs)
 

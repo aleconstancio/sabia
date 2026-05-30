@@ -22,7 +22,7 @@
 
 {#if showLegend}
   <div class="absolute left-4 bottom-8 z-[999] rounded-lg border border-border bg-card p-3 shadow-lg">
-    {#if product === 'NDVI' || product === 'NDWI'}
+    {#if product === 'NDVI' || product === 'NDWI' || product === 'SAVI' || product === 'EVI' || product === 'MSAVI2' || product === 'VARI' || product === 'NDMI' || product === 'NBR'}
       <p class="text-xs font-semibold mb-1">{product}</p>
       <div class="w-4 h-40 rounded" style="background: linear-gradient(to top, #d73027, #fc8d59, #fee08b, #d9ef8b, #91cf60, #1a9641);"></div>
       <div class="flex justify-between text-xs text-muted-foreground w-4"><span style="position: relative; left: -16px;">1</span></div>

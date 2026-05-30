@@ -236,10 +236,18 @@
     <div>
       <label class="text-sm font-medium">Produto</label>
       <Select bind:value={mapState.selectedProduct} options={[
-        { value: 'NDVI', label: 'NDVI' },
-        { value: 'TCI', label: 'TCI' },
-        { value: 'NDWI', label: 'NDWI' }
-      ]} />
+  { value: 'NDVI', label: 'NDVI - Veg. Index' },
+  { value: 'TCI', label: 'TCI - True Color' },
+  { value: 'NDWI', label: 'NDWI - Water Index' },
+  { value: 'SAVI', label: 'SAVI - Soil Adj. Veg.' },
+  { value: 'EVI', label: 'EVI - Enhanced Veg.' },
+  { value: 'MSAVI2', label: 'MSAVI2 - Mod. SAVI' },
+  { value: 'VARI', label: 'VARI - Visible Atmos.' },
+  { value: 'MNDWI', label: 'MNDWI - Mod. Water' },
+  { value: 'CIR', label: 'CIR - Color Infrared' },
+  { value: 'NBR', label: 'NBR - Burn Ratio' },
+  { value: 'NDMI', label: 'NDMI - Moisture' },
+]} />
     </div>
     {#if mapState.searchError}
       <div class="flex items-center gap-2 mt-2">

@@ -32,7 +32,7 @@ class Cbers4ACollection(Collection):
     id = "cbers4a"
     stac_url = "http://www.dgi.inpe.br/lgi-stac/collections/CBERS4A_WPM_L4_DN/items"
     available_bands = ["pan", "red", "green", "blue", "nir"]
-    available_products = ["NDVI", "TCI"]
+    available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
     def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
         mapping = {"pan": "pan", "red": "red", "green": "green", "blue": "blue", "nir": "nir"}
@@ -46,7 +46,7 @@ class Amazonia1Collection(Collection):
     id = "amazonia1"
     stac_url = ""
     available_bands = ["red", "green", "blue", "nir"]
-    available_products = ["TCI", "NDVI"]
+    available_products = ["TCI", "NDVI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
     def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
         return None
