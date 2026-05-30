@@ -27,7 +27,7 @@ class ImageSearchResponse(BaseModel):
 class ProcessRequest(BaseModel):
     image_id: str
     coordinates: list[list[list[float]]]
-    product: str = Field(pattern="^(NDVI|TCI|NDWI|NDDI)$")
+    product: str = Field(pattern="^(NDVI|TCI|NDWI)$")
 
 
 class TaskStatusResponse(BaseModel):

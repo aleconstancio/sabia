@@ -12,6 +12,7 @@ import argparse
 import os
 import sys
 import json
+import time
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -40,7 +41,7 @@ def get_db_connection():
 
 
 def insert_param(link: str) -> str:
-    email = os.getenv("email_inpe")
+    email = os.getenv("email_inpe") or os.getenv("EMAIL_INPE")
     if email:
         return f"{link}?email={email}"
     return link
@@ -96,61 +97,64 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
     
     for page in range(1, max_pages + 1):
         print(f"Fetching {collection_id} page {page}...")
-        try:
-            resp = requests.get(
-                stac_url,
-                params={"page": page, "limit": 1000},
-                timeout=60,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            features = data.get("features", [])
-            
-            if not features:
-                print("  No more features. Done.")
-                break
-            
-            records = []
-            for item in features:
-                parsed = parse_item(item, collection_id)
-                if parsed:
-                    records.append((
-                        parsed["id"],
-                        parsed["collection"],
-                        parsed["footprint_geojson"],
-                        parsed["cloud_cover"],
-                        parsed["acquired_at"],
-                        parsed["metadata"],
-                        parsed["thumbnail_url"],
-                    ))
-            
-            if records:
-                sql = """
-                    INSERT INTO images (id, collection, footprint, cloud_cover, acquired_at, metadata, thumbnail_url)
-                    VALUES %s
-                    ON CONFLICT (id) DO UPDATE SET
-                        cloud_cover = EXCLUDED.cloud_cover,
-                        acquired_at = EXCLUDED.acquired_at,
-                        metadata = EXCLUDED.metadata,
-                        thumbnail_url = EXCLUDED.thumbnail_url,
-                        updated_at = now()
-                """
-                execute_values(
-                    cursor,
-                    sql,
-                    records,
-                    template="(%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s, %s::timestamptz, %s::jsonb, %s)",
+        for attempt in range(3):
+            try:
+                resp = requests.get(
+                    stac_url,
+                    params={"page": page, "limit": 1000},
+                    timeout=60,
                 )
-                conn.commit()
-                total_inserted += len(records)
-            
-            total_skipped += len(features) - len(records)
-            print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
-            
-        except requests.RequestException as e:
-            print(f"  Error on page {page}: {e}")
-            conn.rollback()
+                resp.raise_for_status()
+                data = resp.json()
+                features = data.get("features", [])
+                break
+            except requests.RequestException:
+                if attempt == 2:
+                    print(f"  Error on page {page} after 3 attempts")
+                    conn.rollback()
+                    return
+                time.sleep(5)
+        
+        if not features:
+            print("  No more features. Done.")
             break
+        
+        records = []
+        for item in features:
+            parsed = parse_item(item, collection_id)
+            if parsed:
+                records.append((
+                    parsed["id"],
+                    parsed["collection"],
+                    parsed["footprint_geojson"],
+                    parsed["cloud_cover"],
+                    parsed["acquired_at"],
+                    parsed["metadata"],
+                    parsed["thumbnail_url"],
+                ))
+        
+        if records:
+            sql = """
+                INSERT INTO images (id, collection, footprint, cloud_cover, acquired_at, metadata, thumbnail_url)
+                VALUES %s
+                ON CONFLICT (id) DO UPDATE SET
+                    cloud_cover = EXCLUDED.cloud_cover,
+                    acquired_at = EXCLUDED.acquired_at,
+                    metadata = EXCLUDED.metadata,
+                    thumbnail_url = EXCLUDED.thumbnail_url,
+                    updated_at = now()
+            """
+            execute_values(
+                cursor,
+                sql,
+                records,
+                template="(%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s, %s::timestamptz, %s::jsonb, %s)",
+            )
+            conn.commit()
+            total_inserted += len(records)
+        
+        total_skipped += len(features) - len(records)
+        print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
     
     cursor.close()
     conn.close()

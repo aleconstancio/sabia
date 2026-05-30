@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet-draw';
   import Button from '$lib/ui/components/Button.svelte';
@@ -12,6 +12,9 @@
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import SearchMenu from '$lib/components/SearchMenu.svelte';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
+  import WeatherPanel from '$lib/components/WeatherPanel.svelte';
+  import SoilPanel from '$lib/components/SoilPanel.svelte';
+  import MapToolbar from '$lib/components/MapToolbar.svelte';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map;
@@ -27,8 +30,12 @@
   let taskId = $state('');
   let rasterOverlay: any = $state(null);
   let searchError = $state('');
+  let polygonCentroid = $state<{lat: number, lon: number} | null>(null);
+  let showLegend = $state(false);
+  let hasOverlay = $state(false);
+  let pollInterval: ReturnType<typeof setInterval>;
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   onMount(() => {
     map = L.map(mapContainer, {
@@ -62,8 +69,14 @@
       drawnItems.clearLayers();
       drawnItems.addLayer(e.layer);
       drawnPolygon = e.layer.toGeoJSON().geometry.coordinates;
+      const center = e.layer.getCenter();
+      polygonCentroid = { lat: center.lat, lon: center.lng };
       showPolygonModal = true;
     });
+  });
+
+  onDestroy(() => {
+    if (pollInterval) clearInterval(pollInterval);
   });
 
   async function searchImages() {
@@ -104,7 +117,7 @@
       const data = await resp.json();
       taskId = data.task_id;
 
-      const pollInterval = setInterval(async () => {
+      pollInterval = setInterval(async () => {
         const statusResp = await fetch(`${API_URL}/tasks/${taskId}`);
         const status = await statusResp.json();
         processingProgress = status.progress || 0;
@@ -129,9 +142,12 @@
   function showOverlayResult(result: any) {
     if (!result || !map) return;
     const imageBounds = result.bounds as [[number, number], [number, number]];
-    const overlay = L.imageOverlay(result.path, imageBounds, { opacity: 0.8 });
+    const filename = result.path.split('/').pop();
+    const overlayUrl = `${API_URL}/overlay/${filename}`;
+    const overlay = L.imageOverlay(overlayUrl, imageBounds, { opacity: 0.8 });
     map.addLayer(overlay);
     rasterOverlay = overlay;
+    hasOverlay = true;
     map.fitBounds(imageBounds);
     showProcessingViewer = false;
   }
@@ -144,6 +160,7 @@
     if (rasterOverlay) {
       map.removeLayer(rasterOverlay);
       rasterOverlay = null;
+      hasOverlay = false;
     }
   }
 </script>
@@ -164,6 +181,21 @@
 </div>
 
 <div bind:this={mapContainer} id="map"></div>
+
+<MapToolbar
+  bind:showLegend
+  onZoomIn={() => map.zoomIn()}
+  onZoomOut={() => map.zoomOut()}
+  onClearOverlay={clearOverlay}
+  {hasOverlay}
+/>
+
+{#if polygonCentroid && showImageGallery}
+  <div class="absolute right-4 top-20 z-[999] w-72 space-y-3">
+    <WeatherPanel lat={polygonCentroid.lat} lon={polygonCentroid.lon} />
+    <SoilPanel lat={polygonCentroid.lat} lon={polygonCentroid.lon} />
+  </div>
+{/if}
 
 <Dialog bind:open={showPolygonModal} title="Buscar imagens deste local?">
   <div class="space-y-4">
@@ -189,7 +221,7 @@
   {#if imageResults.length === 0}
     <EmptyState title="Nenhuma imagem" description="Não encontramos imagens para esta localidade." />
   {:else}
-    <ImageGallery {images} {selectedProduct} {processImage} />
+    <ImageGallery images={imageResults} {selectedProduct} {processImage} />
   {/if}
 </Dialog>
 

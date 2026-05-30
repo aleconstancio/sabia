@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 import numpy as np
 import pyproj
@@ -8,6 +7,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+from backend.config import get_settings
 
 
 def compress_to_png(raster_path: str, product_name: str) -> dict:
@@ -22,7 +23,7 @@ def compress_to_png(raster_path: str, product_name: str) -> dict:
             return _compress_ndvi(img, bounds, crs)
         elif product_name == "TCI":
             return _compress_tci(img, bounds, crs)
-        elif product_name in ("NDWI", "NDDI"):
+        elif product_name in ("NDWI",):
             return _compress_ndvi(img, bounds, crs)
         else:
             return _compress_tci(img, bounds, crs)
@@ -42,13 +43,22 @@ def _bounds_to_wgs84(bounds, src_crs):
 
 
 def _compress_ndvi(img, bounds, crs):
+    settings = get_settings()
     data = img.read(1).astype(np.float32)
-    data = np.where(data == 0, np.nan, data)
+    nodata = img.nodata
+    if nodata is not None:
+        data = np.where(data == nodata, np.nan, data)
+    else:
+        data = np.where(data == 0, np.nan, data)
+
+    if np.all(np.isnan(data)):
+        data = np.zeros_like(data)
 
     bounds2 = _bounds_to_wgs84(bounds, crs)
 
-    fd, temp_path = tempfile.mkstemp(suffix=".png")
-    os.close(fd)
+    cache_dir = os.path.join(settings.temp_dir, "cache")
+    os.makedirs(cache_dir, exist_ok=True)
+    temp_path = os.path.join(cache_dir, f"ndvi_{os.urandom(4).hex()}.png")
 
     plt.imsave(temp_path, data, cmap="RdYlGn", vmin=-1, vmax=1)
 
@@ -56,22 +66,32 @@ def _compress_ndvi(img, bounds, crs):
 
 
 def _compress_tci(img, bounds, crs):
+    settings = get_settings()
     red = img.read(1).astype(np.float32)
     green = img.read(2).astype(np.float32)
     blue = img.read(3).astype(np.float32)
 
     rgb = np.dstack((red, green, blue))
-    mask = np.all(rgb == 0, axis=-1)
+    nodata = img.nodata
+    if nodata is not None:
+        mask = np.all(rgb == nodata, axis=-1)
+    else:
+        mask = np.all(rgb == 0, axis=-1)
 
     rgb_min = np.nanmin(rgb)
     rgb_max = np.nanmax(rgb)
-    rgb = ((rgb - rgb_min) / max((rgb_max - rgb_min), 1e-10) * 255).astype(np.uint8)
+    denom = max((rgb_max - rgb_min), 1e-10)
+    if denom == 0:
+        rgb = np.zeros_like(rgb, dtype=np.uint8)
+    else:
+        rgb = ((rgb - rgb_min) / denom * 255).astype(np.uint8)
     rgb[mask] = [255, 255, 255]
 
     bounds2 = _bounds_to_wgs84(bounds, crs)
 
-    fd, temp_path = tempfile.mkstemp(suffix=".png")
-    os.close(fd)
+    cache_dir = os.path.join(settings.temp_dir, "cache")
+    os.makedirs(cache_dir, exist_ok=True)
+    temp_path = os.path.join(cache_dir, f"tci_{os.urandom(4).hex()}.png")
 
     plt.imsave(temp_path, rgb)
 

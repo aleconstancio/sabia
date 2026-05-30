@@ -4,12 +4,14 @@ import numpy as np
 import rasterio
 from rasterio.mask import mask as rio_mask
 from rasterio.warp import reproject, Resampling
-from shapely.geometry import mapping
+from shapely.geometry import mapping, shape
 import geopandas as gpd
 from backend.config import get_settings
 from backend.services.downloader import download_bands
 from backend.services.raster_processor import crop_raster_to_polygon
 from backend.services.compressor import compress_to_png
+
+from backend.exceptions import ProcessingError
 
 
 async def process_image(
@@ -55,6 +57,17 @@ def _compute_product(
 
     product = get_product(product_name)
 
+    # Edge case detection
+    poly = shape({"type": "Polygon", "coordinates": polygon_coords})
+    from pyproj import Geod
+    g = Geod(ellps="WGS84")
+    poly_area_m2, _ = g.geometry_area_perimeter(poly)
+    poly_area_km2 = abs(poly_area_m2) / 1_000_000
+    if poly_area_km2 < 0.0001:
+        raise ProcessingError("Polygon is too small. Minimum area: 0.0001 km²")
+    if poly_area_km2 > 10000:
+        raise ProcessingError("Polygon is too large. Maximum area: 10,000 km²")
+
     band_data = {}
     transform = None
     crs = None
@@ -83,45 +96,42 @@ def _compute_product(
     if geom is None:
         raise RuntimeError("No valid bands to process")
 
-    if "pan" in band_paths and "nir" in band_data and "red" in band_data:
-        with rasterio.open(band_paths["pan"]) as pan_src:
-            pan_crop, _ = rio_mask(pan_src, geom, crop=True, nodata=0)
-            pan_data = pan_crop[0].astype(np.float32)
+    if "pan" in band_paths:
+        pan_path = band_paths["pan"]
+        if pan_path and any(b in band_data for b in ("red", "nir", "green", "blue")):
+            with rasterio.open(pan_path) as pan_src:
+                pan_crop, _ = rio_mask(pan_src, geom, crop=True, nodata=0)
+                pan_data = pan_crop[0].astype(np.float32)
 
-            red_resampled = np.zeros_like(pan_data, dtype=np.float32)
-            nir_resampled = np.zeros_like(pan_data, dtype=np.float32)
+            band_resampled = set()
+            for band_name in ("red", "nir", "green", "blue"):
+                if band_name not in band_data or band_name in band_resampled:
+                    continue
+                bpath = band_paths.get(band_name)
+                if not bpath:
+                    continue
+                resampled = np.zeros_like(pan_data, dtype=np.float32)
+                with rasterio.open(bpath) as src:
+                    reproject(
+                        source=rasterio.band(src, 1),
+                        destination=resampled,
+                        src_transform=src.transform,
+                        src_crs=src.crs,
+                        dst_transform=pan_src.transform,
+                        dst_crs=pan_src.crs,
+                        resampling=Resampling.bilinear,
+                    )
+                band_data[band_name] = resampled
+                band_resampled.add(band_name)
 
-            with rasterio.open(band_paths["red"]) as red_src:
-                reproject(
-                    source=rasterio.band(red_src, 1),
-                    destination=red_resampled,
-                    src_transform=red_src.transform,
-                    src_crs=red_src.crs,
-                    dst_transform=pan_src.transform,
-                    dst_crs=pan_src.crs,
-                    resampling=Resampling.bilinear,
-                )
-
-            with rasterio.open(band_paths["nir"]) as nir_src:
-                reproject(
-                    source=rasterio.band(nir_src, 1),
-                    destination=nir_resampled,
-                    src_transform=nir_src.transform,
-                    src_crs=nir_src.crs,
-                    dst_transform=pan_src.transform,
-                    dst_crs=pan_src.crs,
-                    resampling=Resampling.bilinear,
-                )
-
-            soma = red_resampled + nir_resampled
+            soma = sum(band_data[b] for b in band_data if b != "pan")
             mask_soma = soma != 0
-            red_ps = np.zeros_like(pan_data)
-            nir_ps = np.zeros_like(pan_data)
-            red_ps[mask_soma] = (red_resampled[mask_soma] / soma[mask_soma]) * pan_data[mask_soma]
-            nir_ps[mask_soma] = (nir_resampled[mask_soma] / soma[mask_soma]) * pan_data[mask_soma]
-
-            band_data["red"] = red_ps
-            band_data["nir"] = nir_ps
+            for bname in list(band_data.keys()):
+                if bname == "pan":
+                    continue
+                ps = np.zeros_like(pan_data)
+                ps[mask_soma] = (band_data[bname][mask_soma] / soma[mask_soma]) * pan_data[mask_soma]
+                band_data[bname] = ps
 
     band_data_for_product = {k: v for k, v in band_data.items() if k != "pan"}
 

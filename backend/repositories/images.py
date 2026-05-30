@@ -12,7 +12,7 @@ async def find_images_by_polygon(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict], int]:
-    geojson_str = str({"type": "Polygon", "coordinates": polygon_coords})
+    geojson_str = json.dumps({"type": "Polygon", "coordinates": polygon_coords})
 
     conditions = "ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON(:geom), 4326))"
     params = {"geom": geojson_str, "limit": limit, "offset": offset}

@@ -39,6 +39,8 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       EMAIL_INPE: ${EMAIL_INPE:-}
       CORS_ORIGINS: '["http://localhost:80"]'
+    volumes:
+      - spaceeye_cache:/tmp/spaceeye
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,6 +58,8 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       EMAIL_INPE: ${EMAIL_INPE:-}
+    volumes:
+      - spaceeye_cache:/tmp/spaceeye
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,3 +77,4 @@ services:
 
 volumes:
   pgdata:
+  spaceeye_cache:

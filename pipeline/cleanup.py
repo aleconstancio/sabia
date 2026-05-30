@@ -20,12 +20,15 @@ def cleanup_directory(cache_dir: str, ttl_days: int):
     size_freed = 0
     
     for f in Path(cache_dir).rglob("*"):
-        if f.is_file() and f.suffix.lower() in (".tif", ".png", ".tiff"):
+        if f.is_file() and f.suffix.lower() in (".tif", ".png", ".tiff", ".part"):
             mtime = f.stat().st_mtime
             if mtime < cutoff:
                 size_freed += f.stat().st_size
-                f.unlink()
-                removed += 1
+                try:
+                    f.unlink()
+                    removed += 1
+                except PermissionError:
+                    pass
     
     return removed, size_freed
 

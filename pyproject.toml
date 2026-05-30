@@ -24,8 +24,12 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "geopy>=2.4.0",
     "pillow>=10.0.0",
+    "httpx>=0.28.0",
 ]
 
 [build-system]
 requires = ["setuptools>=75.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["backend*"]

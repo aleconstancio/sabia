@@ -2,12 +2,18 @@ import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db
 from backend.models.schemas import PolygonRequest, ProcessRequest
+from backend.config import get_settings
 
 router = APIRouter()
+
+_datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
+with open(_datasets_path, "r", encoding="utf-8") as f:
+    _cidades_data = json.load(f)
 
 
 @router.get("/health")
@@ -138,15 +144,54 @@ async def task_websocket(websocket: WebSocket, task_id: str):
 
 @router.get("/ibge/uf")
 async def list_ufs():
-    datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
-    with open(datasets_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return list(data.keys())
+    return list(_cidades_data.keys())
 
 
 @router.get("/ibge/cidades/{uf}")
 async def list_cidades(uf: str):
-    datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
-    with open(datasets_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return list(data.get(uf.upper(), []))
+    return list(_cidades_data.get(uf.upper(), []))
+
+
+@router.get("/overlay/{filename}")
+async def serve_overlay(filename: str):
+    path = os.path.join(get_settings().temp_dir, "cache", filename)
+    if not os.path.exists(path):
+        raise HTTPException(404, "Overlay not found")
+    return FileResponse(path, media_type="image/png")
+
+
+@router.get("/weather/{lat}/{lon}")
+async def get_weather(lat: float, lon: float):
+    """Fetch weather data from Open-Meteo (free, no API key needed)."""
+    import httpx
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "precipitation", "weather_code", "soil_moisture_0_to_7cm"],
+        "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "precipitation_hours"],
+        "timezone": "America/Sao_Paulo",
+        "forecast_days": 7,
+    }
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://api.open-meteo.com/v1/forecast", params=params)
+        resp.raise_for_status()
+        return resp.json()
+
+
+@router.get("/soil/{lat}/{lon}")
+async def get_soil(lat: float, lon: float):
+    """Fetch soil data from ISRIC SoilGrids REST API (free, no key needed)."""
+    import httpx
+    url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "property": ["phh2o", "oc", "nitrogen", "cec", "bdod", "cfvo", "sand", "silt", "clay", "wv0010", "wv0033", "wv1500"],
+        "depth": "0-5cm",
+        "value": "mean",
+    }
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, params=params)
+        if resp.status_code == 200:
+            return resp.json()
+        return {}

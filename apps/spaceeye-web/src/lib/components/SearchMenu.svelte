@@ -15,7 +15,7 @@
   let showUfDropdown = $state(false);
   let showCityDropdown = $state(false);
 
-  const API_URL = 'http://localhost:5001/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   onMount(async () => {
     try {

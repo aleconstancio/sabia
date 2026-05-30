@@ -1,7 +1,10 @@
 FROM node:22-alpine AS builder
+
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
 WORKDIR /app
 COPY apps/spaceeye-web/package.json apps/spaceeye-web/package-lock.json* ./
-RUN npm ci
+RUN npm install
 COPY apps/spaceeye-web/ .
 RUN npm run build
 
