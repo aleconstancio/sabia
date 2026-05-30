@@ -173,7 +173,16 @@ def _compute_product(
             "max": float(np.nanmax(result)),
             "std": float(np.nanstd(result)),
         }
+        percentiles = np.percentile(result[np.isfinite(result)], [10, 20, 30, 40, 50, 60, 70, 80, 90])
+        stats["histogram"] = {
+            "deciles": [float(p) for p in percentiles],
+            "p10": float(percentiles[0]),
+            "p25": float(np.percentile(result[np.isfinite(result)], 25)),
+            "p50": float(percentiles[4]),
+            "p75": float(np.percentile(result[np.isfinite(result)], 75)),
+            "p90": float(percentiles[8]),
+        }
     else:
-        stats = {"mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
+        stats = {"mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0, "histogram": {}}
 
     return {"path": output_path, "statistics": stats}

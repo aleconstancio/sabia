@@ -98,6 +98,20 @@
     });
   }
 
+  function exportCsv() {
+    if (barData.length === 0) return;
+    const headers = 'date,value\n';
+    const rows = barData.map(d => `${d.date},${d.value.toFixed(4)}`).join('\n');
+    const csv = headers + rows;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ndvi_timeline.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   $effect(() => {
     if (canvas && barData.length > 0) drawChart();
   });
@@ -112,6 +126,12 @@
   </div>
   {#if barData.length > 0}
     <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]"></canvas>
+    <button
+      class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none mt-1"
+      onclick={exportCsv}
+    >
+      Baixar CSV
+    </button>
   {:else if loading}
     <div class="h-[140px] flex items-center justify-center">
       <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />

@@ -6,6 +6,11 @@ from datetime import datetime
 class PolygonRequest(BaseModel):
     coordinates: list[list[list[float]]]
     collections: Optional[list[str]] = None
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    max_cloud: Optional[float] = Field(default=None, ge=0, le=100)
+    sort_by: str = Field(default="acquired_at", pattern="^(acquired_at|cloud_cover)$")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$")
     limit: int = Field(default=50, le=100)
     offset: int = Field(default=0, ge=0)
 

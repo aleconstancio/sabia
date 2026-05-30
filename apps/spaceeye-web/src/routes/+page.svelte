@@ -21,26 +21,46 @@
   import TimeSlider from '$lib/components/TimeSlider.svelte';
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
   import Bookmarks from '$lib/components/Bookmarks.svelte';
+  import FilterBar from '$lib/components/FilterBar.svelte';
+  import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf, downloadGeotiff } from '$lib/api/processing';
   import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
+  let measureMode = $state(false);
+  let mouseCoords = $state({ lat: 0, lng: 0 });
+  let currentBasemap = $state('satellite');
+  let layerOpacity = $state(0.8);
+  let tileLayer: L.TileLayer | null = $state(null);
+
+  const tileLayers: Record<string, string> = {
+    satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    dark: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+  };
+  const tileAttributions: Record<string, string> = {
+    satellite: 'Tiles &copy; Esri',
+    osm: '&copy; OpenStreetMap contributors',
+    dark: '&copy; Stadia Maps',
+  };
 
   onMount(() => {
+    tileLayer = L.tileLayer(tileLayers.satellite, { attribution: tileAttributions.satellite, maxZoom: 19 });
     map = L.map(mapContainer, {
       center: [-3.359202, -23.211370],
       zoom: 3,
-      layers: [
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles &copy; Esri',
-          maxZoom: 19,
-        })
-      ]
+      layers: [tileLayer],
     });
 
     mapState.map = map;
+
+    map.on('mousemove', (e: any) => {
+      if (measureMode) {
+        mouseCoords = { lat: e.latlng.lat.toFixed(4), lng: e.latlng.lng.toFixed(4) };
+      }
+    });
 
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -70,6 +90,28 @@
 
   function navigateToCity(lat: number, lng: number) {
     map?.flyTo([lat, lng], 15, { duration: 1.5 });
+  }
+
+  function toggleMeasure() {
+    measureMode = !measureMode;
+    if (map) {
+      map.getContainer().style.cursor = measureMode ? 'crosshair' : '';
+    }
+  }
+
+  function switchBasemap(b: string) {
+    currentBasemap = b;
+    if (map && tileLayer) {
+      map.removeLayer(tileLayer);
+      tileLayer = L.tileLayer(tileLayers[b], { attribution: tileAttributions[b], maxZoom: 19 }).addTo(map);
+    }
+  }
+
+  function setOpacity(o: number) {
+    layerOpacity = o;
+    if (mapState.rasterOverlay) {
+      (mapState.rasterOverlay as any).setOpacity(o);
+    }
   }
 
   function clearOverlay() {
@@ -225,8 +267,13 @@
   onZoomIn={() => map?.zoomIn()}
   onZoomOut={() => map?.zoomOut()}
   onClearOverlay={clearOverlay}
+  onMeasure={toggleMeasure}
   hasOverlay={mapState.hasOverlay}
   product={mapState.selectedProduct}
+  basemap={currentBasemap}
+  onBasemapChange={switchBasemap}
+  opacity={layerOpacity}
+  onOpacityChange={setOpacity}
 />
 
 {#if mapState.polygonCentroid && (mapState.showImageGallery || mapState.hasOverlay)}
@@ -274,6 +321,13 @@
     <EmptyState title="Nenhuma imagem" description="Não encontramos imagens para esta localidade." />
   {:else}
     <div class="space-y-2">
+      <FilterBar
+        bind:dateFrom={mapState.filterDateFrom}
+        bind:dateTo={mapState.filterDateTo}
+        bind:maxCloud={mapState.filterMaxCloud}
+        bind:sortBy={mapState.filterSortBy}
+        bind:sortOrder={mapState.filterSortOrder}
+      />
       {#if mapState.showComparison}
         <p class="text-xs text-muted-foreground px-2">Selecione duas imagens para comparar</p>
       {/if}
@@ -295,9 +349,18 @@
     <p class="text-muted-foreground">{mapState.processingPhase || 'Iniciando...'}</p>
     <Progress value={mapState.processingProgress} />
       <p class="text-sm text-muted-foreground">{mapState.processingProgress}%</p>
+    {#if mapState.lastStats}
+      <HistogramPanel stats={mapState.lastStats} product={mapState.selectedProduct} />
+    {/if}
     </div>
   </div>
 </Dialog>
+
+{#if measureMode}
+  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 text-white text-xs px-3 py-1 rounded-full font-mono">
+    {mouseCoords.lat}, {mouseCoords.lng}
+  </div>
+{/if}
 
 {#if mapState.showComparison && mapState.comparisonFirst && mapState.comparisonSecond}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">

@@ -9,6 +9,11 @@ async def find_images_by_polygon(
     db: AsyncSession,
     polygon_coords: list[list[list[float]]],
     collections: Optional[list[str]] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    max_cloud: Optional[float] = None,
+    sort_by: str = "acquired_at",
+    sort_order: str = "desc",
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict], int]:
@@ -23,14 +28,27 @@ async def find_images_by_polygon(
         for i, c in enumerate(collections):
             params[f"col_{i}"] = c
 
+    if date_from:
+        conditions += " AND acquired_at >= :date_from"
+        params["date_from"] = date_from
+    if date_to:
+        conditions += " AND acquired_at <= :date_to"
+        params["date_to"] = date_to
+    if max_cloud is not None:
+        conditions += " AND (cloud_cover IS NULL OR cloud_cover <= :max_cloud)"
+        params["max_cloud"] = max_cloud
+
+    order = "DESC" if sort_order == "desc" else "ASC"
+    sort_col = "cloud_cover" if sort_by == "cloud_cover" else "acquired_at"
+
     count_query = text(f"SELECT COUNT(*) FROM images WHERE {conditions}")
     total = (await db.execute(count_query, params)).scalar()
 
     data_query = text(f"""
-        SELECT id, collection, ST_AsGeoJSON(footprint) as footprint_json, 
+        SELECT id, collection, ST_AsGeoJSON(footprint) as footprint_json,
                cloud_cover, acquired_at, thumbnail_url
         FROM images WHERE {conditions}
-        ORDER BY acquired_at DESC
+        ORDER BY {sort_col} {order}
         LIMIT :limit OFFSET :offset
     """)
     rows = (await db.execute(data_query, params)).fetchall()

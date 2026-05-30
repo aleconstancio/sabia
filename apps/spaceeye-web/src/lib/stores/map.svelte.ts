@@ -21,6 +21,12 @@ let _selectedIds = $state<string[]>([]);
 let _lastWeatherData = $state<any>(null);
 let _lastOverlayPath = $state('');
 let _selectedCollection = $state('cbers4a');
+let _filterDateFrom = $state('');
+let _filterDateTo = $state('');
+let _filterMaxCloud = $state<number | undefined>(undefined);
+let _filterSortBy = $state('acquired_at');
+let _filterSortOrder = $state('desc');
+let _lastStats = $state<any>(null);
 
 export const mapState = {
   get map() { return _map; },
@@ -69,4 +75,16 @@ export const mapState = {
   set lastOverlayPath(v) { _lastOverlayPath = v; },
   get selectedCollection() { return _selectedCollection; },
   set selectedCollection(v) { _selectedCollection = v; },
+  get filterDateFrom() { return _filterDateFrom; },
+  set filterDateFrom(v) { _filterDateFrom = v; },
+  get filterDateTo() { return _filterDateTo; },
+  set filterDateTo(v) { _filterDateTo = v; },
+  get filterMaxCloud() { return _filterMaxCloud; },
+  set filterMaxCloud(v) { _filterMaxCloud = v; },
+  get filterSortBy() { return _filterSortBy; },
+  set filterSortBy(v) { _filterSortBy = v; },
+  get filterSortOrder() { return _filterSortOrder; },
+  set filterSortOrder(v) { _filterSortOrder = v; },
+  get lastStats() { return _lastStats; },
+  set lastStats(v) { _lastStats = v; },
 };

@@ -8,14 +8,18 @@ export async function searchImages() {
   mapState.isLoading = true;
   mapState.searchError = '';
   try {
+    const body: any = { coordinates: mapState.polygonCoords, limit: 50 };
+    if (mapState.selectedCollection) body.collections = [mapState.selectedCollection];
+    if (mapState.filterDateFrom) body.date_from = mapState.filterDateFrom;
+    if (mapState.filterDateTo) body.date_to = mapState.filterDateTo;
+    if (mapState.filterMaxCloud !== undefined) body.max_cloud = mapState.filterMaxCloud;
+    body.sort_by = mapState.filterSortBy || 'acquired_at';
+    body.sort_order = mapState.filterSortOrder || 'desc';
+
     const resp = await fetch(`${API_URL}/images/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        coordinates: mapState.polygonCoords,
-        limit: 50,
-        collections: mapState.selectedCollection ? [mapState.selectedCollection] : undefined,
-      })
+      body: JSON.stringify(body),
     });
     if (!resp.ok) throw new Error(await resp.text());
     const data = await resp.json();
@@ -93,6 +97,7 @@ export function showOverlayResult(result: any) {
   mapState.rasterOverlay = overlay;
   mapState.hasOverlay = true;
   mapState.lastOverlayPath = result.path;
+  mapState.lastStats = result.statistics || null;
   map.flyToBounds(bounds, { duration: 1.5 });
 }
 

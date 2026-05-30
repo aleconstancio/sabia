@@ -36,7 +36,12 @@ async def search_images(
 ):
     from backend.repositories.images import find_images_by_polygon
 
-    images, total = await find_images_by_polygon(db, req.coordinates, req.collections, req.limit, req.offset)
+    images, total = await find_images_by_polygon(
+        db, req.coordinates, req.collections,
+        date_from=req.date_from, date_to=req.date_to,
+        max_cloud=req.max_cloud, sort_by=req.sort_by,
+        sort_order=req.sort_order, limit=req.limit, offset=req.offset,
+    )
     return {"images": images, "total": total}
 
 
