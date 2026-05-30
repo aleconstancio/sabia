@@ -10,17 +10,18 @@
 
 ```bash
 # 1. Bootstrap (installs all deps, creates .env)
-make setup
+make setup          # or: ./scripts/make.sh setup
 
 # 2. Edit .env with your INPE registered email
 #    (register at http://queimadas.dgi.inpe.br/catalogo/explore)
 
-# 3. Apply database migration (first time only)
-psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
-
-# 4. Start everything in one terminal
-make dev
+# 3. Start everything in one terminal
+make dev            # or: ./scripts/make.sh dev
 ```
+
+`make dev` starts Postgres, Redis, the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop.
+
+If `make` is not installed, use `./scripts/make.sh` as a drop-in replacement — it finds `make` anywhere (Nix store, Homebrew, system packages).
 
 `make dev` starts PostGIS, Redis, the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
 

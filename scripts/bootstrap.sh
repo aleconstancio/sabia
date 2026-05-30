@@ -31,8 +31,26 @@ else
   echo "→ Using $(basename "$UV") $(basename "$(dirname "$(dirname "$UV")")" | sed 's/.*-uv-//')"
 fi
 
+# ── Find make (handles Nix/non-standard paths) ──
+MAKE=""
+for candidate in "$(command -v make 2>/dev/null)" /nix/store/*-gnumake-*/bin/make /nix/store/*make*/bin/make; do
+  if [ -x "$candidate" ]; then
+    MAKE="$candidate"
+    break
+  fi
+done
+
+if [ -z "$MAKE" ]; then
+  echo "! 'make' not found. Use scripts/make.sh as a drop-in replacement:"
+  echo "    ./scripts/make.sh dev"
+  echo "    ./scripts/make.sh setup"
+  echo "  Or install make via your package manager."
+  echo "  (On NixOS: nix-shell -p gnumake)"
+else
+  echo "→ Using $(basename "$MAKE") $("$MAKE" --version 2>&1 | head -1 | grep -oP '[\d.]+' | head -1)"
+fi
+
 # ── Check other prerequisites ──
-command -v docker >/dev/null 2>&1 || echo "! 'docker' not found. Install Docker first."
 command -v node >/dev/null 2>&1 || { echo "ERROR: 'node' not found. Install Node.js 20+."; exit 1; }
 
 # ── .env ──
@@ -62,5 +80,9 @@ cd "$PROJECT_ROOT"
 echo ""
 echo "━━━ Bootstrap complete ━━━"
 echo ""
-echo "  make dev    # Start everything (single terminal)"
+if [ -n "$MAKE" ]; then
+  echo "  $MAKE dev    # Start everything"
+else
+  echo "  ./scripts/make.sh dev    # Start everything"
+fi
 echo "  Then open  http://localhost:5173"
