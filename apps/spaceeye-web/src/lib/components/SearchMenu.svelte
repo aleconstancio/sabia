@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import Input from '$lib/ui/components/Input.svelte';
 
   let {
     navigateToCity = (lat: number, lng: number) => {}
@@ -71,21 +70,32 @@
 
 <div class="flex items-center gap-2">
   <div class="relative uf-container">
-    <Input bind:value={ufFilter} placeholder="UF" class="!w-20" onfocus={() => showUfDropdown = true} />
+    <input
+      bind:value={ufFilter}
+      placeholder="UF"
+      class="!w-20 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+      onfocus={() => showUfDropdown = true}
+    />
     {#if showUfDropdown && filteredUfs.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-20">
         {#each filteredUfs as uf}
-          <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted" onclick={() => onUfSelect(uf)}>{uf}</button>
+          <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted cursor-pointer bg-transparent border-none" onclick={() => onUfSelect(uf)}>{uf}</button>
         {/each}
       </div>
     {/if}
   </div>
   <div class="relative city-container">
-    <Input bind:value={cityFilter} placeholder="Cidade" class="!w-48" onfocus={() => showCityDropdown = true} disabled={!selectedUf} />
+    <input
+      bind:value={cityFilter}
+      placeholder="Cidade"
+      class="!w-48 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+      onfocus={() => showCityDropdown = true}
+      disabled={!selectedUf}
+    />
     {#if showCityDropdown && filteredCities.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-48">
         {#each filteredCities as city}
-          <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted" onclick={() => onCitySelect(city)}>{city}</button>
+          <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted cursor-pointer bg-transparent border-none" onclick={() => onCitySelect(city)}>{city}</button>
         {/each}
       </div>
     {/if}
