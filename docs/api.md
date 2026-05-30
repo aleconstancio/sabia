@@ -218,3 +218,77 @@ HTTP status codes:
 - `400` — Invalid input (malformed polygon, invalid product name)
 - `404` — Image or resource not found
 - `500` — Internal server error (processing failure, database error)
+
+---
+
+## `POST /api/process/batch`
+
+Process multiple images for the same polygon. Returns task IDs for each.
+
+**Request Body:**
+```json
+{
+  "image_ids": ["CBERS4A_...", "CBERS4A_..."],
+  "coordinates": [[[-50.0, -20.0], ...]],
+  "product": "NDVI"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `image_ids` | `string[]` | ✅ | Image IDs to process |
+| `coordinates` | `[[[lon, lat]]]` | ✅ | GeoJSON Polygon coordinates |
+| `product` | `string` | ❌ | Product name (default: `NDVI`) |
+
+**Response 200:**
+```json
+{
+  "tasks": [
+    {"image_id": "CBERS4A_...", "task_id": "8f7a2b1c-..."},
+    {"image_id": "CBERS4A_...", "task_id": "9a8b7c6d-..."}
+  ]
+}
+```
+
+---
+
+## `POST /api/difference`
+
+Compute NDVI difference between two processed results (result_B - result_A).
+
+**Request Body:**
+```json
+{
+  "task_id_a": "8f7a2b1c-...",
+  "task_id_b": "9a8b7c6d-..."
+}
+```
+
+**Response 200:**
+```json
+{ "task_id": "7e6d5c4b-..." }
+```
+
+Poll `/api/tasks/{task_id}` for completion. The result contains `type: "diff"` with bounds and overlay path.
+
+---
+
+## `GET /api/download/{task_id}`
+
+Download the processed raster (PNG) for a completed task.
+
+**Response 200:** PNG file download
+**Response 404:** Task not found or not yet complete
+
+---
+
+## `GET /api/geocode`
+
+Proxy for Nominatim geocoding. Search for a location by text.
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `q` | string | ✅ | Search query (e.g., "São Paulo-SP") |
+
+**Response 200:** Array of geocoding results (Nominatim format)

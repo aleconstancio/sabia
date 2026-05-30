@@ -20,6 +20,10 @@
   let overlayB: any = null;
   let errorA = $state('');
   let errorB = $state('');
+  let taskIdA = $state('');
+  let taskIdB = $state('');
+  let computingDiff = $state(false);
+  let diffOverlay: any = null;
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -86,7 +90,8 @@
               map.flyToBounds(bounds, { duration: 1 });
               if (side === 'A') overlayA = overlay; else overlayB = overlay;
             }
-            if (side === 'A') loadingA = false; else loadingB = false;
+            if (side === 'A') { taskIdA = data.task_id; loadingA = false; }
+            else { taskIdB = data.task_id; loadingB = false; }
           } else if (status.status === 'error') {
             clearInterval(poll);
             if (side === 'A') { errorA = status.error || 'Erro'; loadingA = false; }
@@ -97,6 +102,43 @@
     } catch (e: any) {
       if (side === 'A') { errorA = e.message; loadingA = false; }
       else { errorB = e.message; loadingB = false; }
+    }
+  }
+
+  async function computeDifference() {
+    if (!taskIdA || !taskIdB) return;
+    computingDiff = true;
+    try {
+      const resp = await fetch(`${API_URL}/difference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task_id_a: taskIdA,
+          task_id_b: taskIdB,
+        }),
+      });
+      const data = await resp.json();
+      const poll = setInterval(async () => {
+        try {
+          const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
+          const status = await sr.json();
+          if (status.status === 'done') {
+            clearInterval(poll);
+            computingDiff = false;
+            const bounds = status.result.bounds as [[number, number], [number, number]];
+            const overlay = L.imageOverlay(`${API_URL}/overlay/${status.result.path.split('/').pop()}`, bounds, { opacity: 0.7 });
+            if (diffOverlay) { mapA.removeLayer(diffOverlay); mapB.removeLayer(diffOverlay); }
+            mapA.addLayer(overlay);
+            mapB.addLayer(overlay);
+            diffOverlay = overlay;
+          } else if (status.status === 'error') {
+            clearInterval(poll);
+            computingDiff = false;
+          }
+        } catch { clearInterval(poll); computingDiff = false; }
+      }, 2000);
+    } catch {
+      computingDiff = false;
     }
   }
 
@@ -134,3 +176,18 @@
     {/if}
   </div>
 </div>
+{#if overlayA && overlayB && !computingDiff}
+  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000]">
+    <button
+      class="bg-primary text-primary-foreground text-xs font-medium h-8 px-3 rounded-md cursor-pointer hover:opacity-90"
+      onclick={computeDifference}
+    >
+      Calcular diferença NDVI
+    </button>
+  </div>
+{/if}
+{#if computingDiff}
+  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-black/60 text-white text-xs px-2 py-1 rounded">
+    Calculando diferença...
+  </div>
+{/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { toggleMode } from 'mode-watcher';
+  import { browser } from '$app/environment';
   import L from 'leaflet';
   import 'leaflet-draw';
   import Button from '$lib/ui/components/Button.svelte';
@@ -18,8 +19,11 @@
   import RegionComparison from '$lib/components/RegionComparison.svelte';
   import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
   import TimeSlider from '$lib/components/TimeSlider.svelte';
+  import NdviTimeline from '$lib/components/NdviTimeline.svelte';
+  import Bookmarks from '$lib/components/Bookmarks.svelte';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
+  import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
@@ -112,6 +116,70 @@
   async function doExportPdf() {
     await exportPdf(mapState.taskId, null);
   }
+
+  function updateShareUrl(imageId: string) {
+    if (!browser || !mapState.polygonCoords) return;
+    const params = new URLSearchParams();
+    params.set('coords', JSON.stringify(mapState.polygonCoords));
+    params.set('image', imageId);
+    params.set('product', mapState.selectedProduct);
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', url);
+  }
+
+  function copyShareLink() {
+    if (!browser || !mapState.polygonCoords || !mapState.taskId) return;
+    const params = new URLSearchParams();
+    params.set('coords', JSON.stringify(mapState.polygonCoords));
+    params.set('image', mapState.taskId);
+    params.set('product', mapState.selectedProduct);
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+  }
+
+  function restoreBookmark(coords: number[][][], name: string) {
+    mapState.polygonCoords = coords;
+    if (map && mapState.polygonCoords) {
+      const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
+      map.addLayer(polygon);
+      map.fitBounds(polygon.getBounds());
+      const center = polygon.getCenter();
+      mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
+      mapState.showPolygonModal = true;
+    }
+  }
+
+  function saveCurrentPolygon() {
+    if (!mapState.polygonCoords) return;
+    const name = prompt('Nome para este local:');
+    if (name) addBookmark(name, mapState.polygonCoords);
+  }
+
+  $effect(() => {
+    if (!browser) return;
+    const params = new URLSearchParams(window.location.search);
+    const coords = params.get('coords');
+    const image = params.get('image');
+    const product = params.get('product');
+
+    if (coords && image && product) {
+      try {
+        const parsed = JSON.parse(coords);
+        mapState.polygonCoords = parsed;
+        mapState.selectedProduct = product;
+        if (map && mapState.polygonCoords) {
+          const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
+          map.addLayer(polygon);
+          map.fitBounds(polygon.getBounds());
+          const center = polygon.getCenter();
+          mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
+        }
+        searchImages().then(() => {
+          processImage(image);
+        });
+      } catch { /* invalid params */ }
+    }
+  });
 </script>
 
 <div class="absolute top-0 left-0 z-[1000] w-full">
@@ -121,6 +189,7 @@
       <SearchMenu {navigateToCity} />
     </div>
     <div class="flex items-center gap-2">
+      <Bookmarks onSelect={restoreBookmark} currentCoords={mapState.polygonCoords} />
       <Button size="sm" variant="ghost" onclick={toggleMode} class="!w-8 !h-8 !p-0">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -135,6 +204,7 @@
         </Button>
       {/if}
       {#if mapState.hasOverlay}
+        <Button variant="ghost" size="sm" onclick={copyShareLink}>Copiar link</Button>
         <Button variant="ghost" size="sm" onclick={doExportPdf}>Exportar PDF</Button>
       {/if}
       <Badge>CBERS-4A</Badge>
@@ -180,6 +250,7 @@
   </div>
   {#snippet actions()}
     <Button variant="ghost" onclick={() => mapState.showPolygonModal = false}>Cancelar</Button>
+    <Button variant="ghost" onclick={saveCurrentPolygon}>Salvar local</Button>
     <Button onclick={searchImages} loading={mapState.isLoading}>Buscar imagens</Button>
   {/snippet}
 </Dialog>
@@ -227,7 +298,8 @@
 {/if}
 
 {#if mapState.results.length > 0 && !mapState.showImageGallery && !mapState.showProcessingViewer}
-  <div class="absolute left-4 bottom-4 z-[999] w-72">
+  <div class="absolute left-4 bottom-4 z-[999] w-72 space-y-2">
+    <NdviTimeline images={mapState.results} polygonCoords={mapState.polygonCoords} product={mapState.selectedProduct} />
     <TimeSlider images={mapState.results} onSelect={(id) => {
       const img = mapState.results.find(i => i.id === id);
       if (img) processImage(img.id);
