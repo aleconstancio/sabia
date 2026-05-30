@@ -1,6 +1,6 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = createApiClient({ baseUrl: API_URL });
 

@@ -1,5 +1,4 @@
 import os
-import asyncio
 import numpy as np
 import rasterio
 from rasterio.mask import mask as rio_mask

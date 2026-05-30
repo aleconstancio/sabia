@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { toggleMode } from 'mode-watcher';
   import { browser } from '$app/environment';
   import L from 'leaflet';
@@ -396,7 +396,6 @@
     {#if mapState.lastStats}
       <HistogramPanel stats={mapState.lastStats} product={mapState.selectedProduct} />
     {/if}
-    </div>
   </div>
 </Dialog>
 

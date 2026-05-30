@@ -493,19 +493,6 @@ async def compute_difference(req: dict):
     return {"task_id": task.id}
 
 
-@router.get("/download/{task_id}")
-async def download_result(task_id: str):
-    """Download the processed raster (PNG) for a completed task."""
-    from celery.result import AsyncResult
-    from backend.tasks.celery_app import celery_app
-
-    result = AsyncResult(task_id, app=celery_app)
-    if result.state != "SUCCESS":
-        raise HTTPException(404, "Task not found or not yet complete")
-
-    path = result.result.get("path", "")
-    if not path or not os.path.exists(path):
-        raise HTTPException(404, "Result file not found")
 
     return FileResponse(path, media_type="image/png", filename=os.path.basename(path))
 
