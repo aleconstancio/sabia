@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import L from 'leaflet';
-  import 'leaflet-draw';
   import SpaceEyeShell from '$lib/layout/SpaceEyeShell.svelte';
   import Header from '$lib/layout/Header.svelte';
   import { SearchPanel, ResultsPanel, AnalyticsPanel, HistorySidebar } from '$lib/components/sidebar';
@@ -52,7 +51,8 @@
     dark: '&copy; Stadia Maps',
   };
 
-  onMount(() => {
+  onMount(async () => {
+    await import('leaflet-draw');
     tileLayer = L.tileLayer(tileLayers.satellite, { attribution: tileAttributions.satellite, maxZoom: 19 });
     map = L.map(mapContainer, {
       center: [-3.359202, -23.211370],

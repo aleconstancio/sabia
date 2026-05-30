@@ -1,19 +1,16 @@
 <script lang="ts">
+  import '$lib/components/sidebar/sidebar.css';
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
+  import { restorePolygonOnMap } from '$lib/utils/map-helpers';
   import { mapState } from '$lib/stores/map.svelte.ts';
 
   let expanded = $state(true);
 
-  function handleRestore(r: any) {
-    if (mapState.map && r.polygonCoords) {
+  async function handleRestore(r: any) {
+    if (r?.polygonCoords) {
       mapState.polygonCoords = r.polygonCoords;
-      import('leaflet').then(L => {
-        const polygon = L.default.polygon(r.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
-        (mapState.map as any).addLayer(polygon);
-        (mapState.map as any).fitBounds(polygon.getBounds());
-        mapState.polygonCentroid = r.centroid;
-        mapState.showPolygonModal = true;
-      });
+      await restorePolygonOnMap(r.polygonCoords);
+      mapState.showPolygonModal = true;
     }
   }
 </script>
@@ -31,13 +28,3 @@
   {/if}
 </div>
 
-<style>
-  .sidebar-section { margin-bottom: 1rem; }
-  .sidebar-section-header {
-    display: flex; align-items: center; width: 100%;
-    padding: 0.5rem; border-radius: var(--radius);
-    cursor: pointer; transition: background 150ms;
-    background: transparent; border: none; color: inherit;
-  }
-  .sidebar-section-header:hover { background: var(--muted); }
-</style>

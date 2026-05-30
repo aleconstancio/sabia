@@ -7,6 +7,7 @@
   import Bookmarks from '$lib/components/Bookmarks.svelte';
   import Select from '$lib/ui/components/Select.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import { restorePolygonOnMap } from '$lib/utils/map-helpers';
   import { mapState } from '$lib/stores/map.svelte.ts';
   import { downloadGeotiff } from '$lib/api/processing';
 
@@ -29,15 +30,10 @@
     navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?${params.toString()}`);
   }
 
-  function handleRestore(r: any) {
-    if (mapState.map && r.polygonCoords) {
+  async function handleRestore(r: any) {
+    if (r?.polygonCoords) {
       mapState.polygonCoords = r.polygonCoords;
-      import('leaflet').then(L => {
-        const polygon = L.default.polygon(r.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
-        (mapState.map as any).addLayer(polygon);
-        (mapState.map as any).fitBounds(polygon.getBounds());
-        mapState.polygonCentroid = r.centroid;
-      });
+      await restorePolygonOnMap(r.polygonCoords);
     }
   }
 </script>

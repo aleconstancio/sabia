@@ -32,7 +32,17 @@
   </aside>
 
   <!-- Main content area -->
-  <div class="flex-1 flex flex-col min-w-0" style="background: var(--background);">
+  <div class="flex-1 flex flex-col min-w-0 relative" style="background: var(--background);">
     {@render children?.()}
   </div>
 </div>
+
+<style>
+  @media (max-width: 640px) {
+    aside {
+      position: absolute !important;
+      z-index: 50 !important;
+      height: 100% !important;
+    }
+  }
+</style>
