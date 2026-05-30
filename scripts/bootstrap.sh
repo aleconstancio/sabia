@@ -80,9 +80,5 @@ cd "$PROJECT_ROOT"
 echo ""
 echo "━━━ Bootstrap complete ━━━"
 echo ""
-if [ -n "$MAKE" ]; then
-  echo "  $MAKE dev    # Start everything"
-else
-  echo "  ./scripts/make.sh dev    # Start everything"
-fi
+echo "  ./make dev    # Start everything (from project root)"
 echo "  Then open  http://localhost:5173"

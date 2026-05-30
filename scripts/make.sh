@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Wrapper: finds `make` anywhere (Nix store, PATH, etc.) and runs it.
+# Defaults to `dev` when no target is given.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Find make in Nix store or PATH
 MAKE=""
@@ -21,4 +23,10 @@ if [ -z "$MAKE" ]; then
   exit 1
 fi
 
-exec "$MAKE" -C "$SCRIPT_DIR/.." "$@"
+# Default to 'dev' when no target specified
+if [ $# -eq 0 ]; then
+  echo "→ No target given. Defaulting to 'dev'. Run '$0 help' for all targets."
+  exec "$MAKE" -C "$PROJECT_ROOT" dev
+fi
+
+exec "$MAKE" -C "$PROJECT_ROOT" "$@"

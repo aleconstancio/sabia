@@ -19,15 +19,15 @@ Prerequisites: `uv` · `node` 20+ · PostgreSQL 16 (with PostGIS) · Redis 7
 
 ```bash
 # One-command setup (creates .env, installs all deps)
-make setup          # or: ./scripts/make.sh setup
+./make setup
 
 # Start everything (Postgres + backend + worker + frontend)
-make dev            # or: ./scripts/make.sh dev
+./make dev
 ```
 
-`make dev` starts local Postgres and Redis (no Docker required), the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
+`./make dev` starts local Postgres, Redis, the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
 
-If `make` is not installed, use `./scripts/make.sh` as a drop-in replacement — it finds the `make` binary anywhere (Nix store, Homebrew, system packages).
+> **No `make` on PATH?** Use `./make` or `./scripts/make.sh` as drop-in replacements — they find GNU Make anywhere (Nix store, Homebrew, system packages).
 
 Once running, open http://localhost:5173.
 
