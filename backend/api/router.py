@@ -191,6 +191,35 @@ async def download_raster(task_id: str):
     return FileResponse(path, filename=filename, media_type="image/png")
 
 
+@router.get("/download/{task_id}/geotiff")
+async def download_geotiff(task_id: str):
+    """Download the processed GeoTIFF (full resolution, with CRS)."""
+    from celery.result import AsyncResult
+    from backend.tasks.celery_app import celery_app
+
+    result = AsyncResult(task_id, app=celery_app)
+    if result.state != "SUCCESS" or not result.result:
+        raise HTTPException(404, "Result not found. Task may still be running.")
+
+    path = result.result.get("path", "")
+    if not path or not os.path.exists(path):
+        raise HTTPException(404, "File not found or expired.")
+
+    tif_path = path.replace(".png", ".tif")
+    if not os.path.exists(tif_path):
+        tif_path = next(
+            (f for f in os.listdir(os.path.dirname(path)) if f.endswith(".tif")),
+            None,
+        )
+        if tif_path:
+            tif_path = os.path.join(os.path.dirname(path), tif_path)
+        else:
+            raise HTTPException(404, "GeoTIFF not available.")
+
+    filename = f"spaceeye_{task_id[:8]}.tif"
+    return FileResponse(tif_path, filename=filename, media_type="image/tiff")
+
+
 @router.get("/weather/{lat}/{lon}")
 async def get_weather(lat: float, lon: float):
     """Fetch weather data from Open-Meteo (free, no API key needed)."""

@@ -40,8 +40,10 @@
           const status = await sr.json();
           if (status.status === 'done') {
             const img = images.find((i: any) => i.id === task.image_id);
+            const rawValue = status.result?.statistics?.mean;
+            const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
             if (img) {
-              results.push({ date: img.acquired_at, value: 0.5 });
+              results.push({ date: img.acquired_at, value });
             }
             break;
           }

@@ -121,3 +121,17 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
     URL.revokeObjectURL(url);
   }
 }
+
+export async function downloadGeotiff(taskId: string) {
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  const resp = await fetch(`${API_URL}/download/${taskId}/geotiff`);
+  if (resp.ok) {
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spaceeye-${taskId.slice(0, 8)}.tif`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}

@@ -22,7 +22,7 @@
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
   import Bookmarks from '$lib/components/Bookmarks.svelte';
   import { mapState } from '$lib/stores/map.svelte';
-  import { searchImages, processImage, exportPdf } from '$lib/api/processing';
+  import { searchImages, processImage, exportPdf, downloadGeotiff } from '$lib/api/processing';
   import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
 
   let mapContainer: HTMLDivElement;
@@ -205,6 +205,7 @@
       {/if}
       {#if mapState.hasOverlay}
         <Button variant="ghost" size="sm" onclick={copyShareLink}>Copiar link</Button>
+        <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>Baixar GeoTIFF</Button>
         <Button variant="ghost" size="sm" onclick={doExportPdf}>Exportar PDF</Button>
       {/if}
       <Badge>CBERS-4A</Badge>

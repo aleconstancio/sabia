@@ -33,7 +33,9 @@ async def process_image(
     output_path = os.path.join(settings.temp_dir, "cache", f"{product_name}_{image_id}.tif")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    result_path = _compute_product(downloaded, polygon_coords, product_name, output_path)
+    result = _compute_product(downloaded, polygon_coords, product_name, output_path)
+    result_path = result["path"]
+    result_stats = result.get("statistics", {})
 
     if progress_callback:
         await progress_callback(80, "compressing")
@@ -43,7 +45,7 @@ async def process_image(
     if progress_callback:
         await progress_callback(100, "done")
 
-    return overlay
+    return {**overlay, "statistics": result_stats}
 
 
 def _compute_product(
@@ -51,7 +53,7 @@ def _compute_product(
     polygon_coords: list[list[list[float]]],
     product_name: str,
     output_path: str,
-) -> str:
+) -> dict:
     from backend.domain.products import get_product
 
     product = get_product(product_name)
@@ -163,4 +165,15 @@ def _compute_product(
         else:
             dst.write(result, 1)
 
-    return output_path
+    valid = result[np.isfinite(result)]
+    if valid.size > 0:
+        stats = {
+            "mean": float(np.nanmean(result)),
+            "min": float(np.nanmin(result)),
+            "max": float(np.nanmax(result)),
+            "std": float(np.nanstd(result)),
+        }
+    else:
+        stats = {"mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0}
+
+    return {"path": output_path, "statistics": stats}
