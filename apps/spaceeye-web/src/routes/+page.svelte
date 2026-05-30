@@ -15,6 +15,9 @@
   import WeatherPanel from '$lib/components/WeatherPanel.svelte';
   import SoilPanel from '$lib/components/SoilPanel.svelte';
   import MapToolbar from '$lib/components/MapToolbar.svelte';
+  import RegionComparison from '$lib/components/RegionComparison.svelte';
+  import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
+  import TimeSlider from '$lib/components/TimeSlider.svelte';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map;
@@ -34,6 +37,11 @@
   let showLegend = $state(false);
   let hasOverlay = $state(false);
   let pollInterval: ReturnType<typeof setInterval>;
+  let showComparison = $state(false);
+  let selectedImages = $state<string[]>([]);
+  let comparisonFirst: any = $state(null);
+  let comparisonSecond: any = $state(null);
+  let showLandCover = $state(false);
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -163,6 +171,57 @@
       hasOverlay = false;
     }
   }
+
+  function toggleCompare() {
+    showComparison = !showComparison;
+    if (!showComparison) {
+      selectedImages = [];
+      comparisonFirst = null;
+      comparisonSecond = null;
+    }
+  }
+
+  function handleToggleSelect(imageId: string) {
+    if (selectedImages.includes(imageId)) {
+      selectedImages = selectedImages.filter(id => id !== imageId);
+    } else {
+      if (selectedImages.length >= 2) {
+        selectedImages = [selectedImages[1], imageId];
+      } else {
+        selectedImages = [...selectedImages, imageId];
+      }
+    }
+    if (selectedImages.length === 2) {
+      comparisonFirst = imageResults.find(i => i.id === selectedImages[0]);
+      comparisonSecond = imageResults.find(i => i.id === selectedImages[1]);
+    } else {
+      comparisonFirst = null;
+      comparisonSecond = null;
+    }
+  }
+
+  async function exportPdf(imageId: string, cloudCover: number | null) {
+    const resp = await fetch(`${API_URL}/export/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_id: imageId,
+        product: selectedProduct,
+        date: new Date().toISOString(),
+        cloud_cover: cloudCover,
+        weather: { temperature: '', humidity: '', precipitation: '' },
+      }),
+    });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `spaceeye-${imageId.slice(0, 20)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
 </script>
 
 <div class="absolute top-0 left-0 z-[1000] w-full">
@@ -174,6 +233,14 @@
     <div class="flex items-center gap-2">
       {#if rasterOverlay}
         <Button variant="ghost" size="sm" onclick={clearOverlay}>Limpar overlay</Button>
+      {/if}
+      {#if imageResults.length > 0}
+        <Button variant={showComparison ? 'default' : 'ghost'} size="sm" onclick={toggleCompare}>
+          {showComparison ? 'Sair' : 'Comparar'}
+        </Button>
+      {/if}
+      {#if hasOverlay}
+        <Button variant="ghost" size="sm" onclick={() => exportPdf(taskId, null)}>Exportar PDF</Button>
       {/if}
       <Badge>CBERS-4A</Badge>
     </div>
@@ -190,10 +257,11 @@
   {hasOverlay}
 />
 
-{#if polygonCentroid && showImageGallery}
+{#if polygonCentroid && (showImageGallery || hasOverlay)}
   <div class="absolute right-4 top-20 z-[999] w-72 space-y-3">
     <WeatherPanel lat={polygonCentroid.lat} lon={polygonCentroid.lon} />
     <SoilPanel lat={polygonCentroid.lat} lon={polygonCentroid.lon} />
+    <LandCoverPanel lat={polygonCentroid.lat} lon={polygonCentroid.lon} />
   </div>
 {/if}
 
@@ -221,7 +289,19 @@
   {#if imageResults.length === 0}
     <EmptyState title="Nenhuma imagem" description="Não encontramos imagens para esta localidade." />
   {:else}
-    <ImageGallery images={imageResults} {selectedProduct} {processImage} />
+    <div class="space-y-2">
+      {#if showComparison}
+        <p class="text-xs text-muted-foreground px-2">Selecione duas imagens para comparar</p>
+      {/if}
+      <ImageGallery
+        images={imageResults}
+        {selectedProduct}
+        {processImage}
+        selectionMode={showComparison}
+        selectedIds={selectedImages}
+        onToggleSelect={handleToggleSelect}
+      />
+    </div>
   {/if}
 </Dialog>
 
@@ -230,6 +310,28 @@
     <Spinner size="lg" />
     <p class="text-muted-foreground">{processingPhase || 'Iniciando...'}</p>
     <Progress value={processingProgress} />
-    <p class="text-sm text-muted-foreground">{processingProgress}%</p>
+      <p class="text-sm text-muted-foreground">{processingProgress}%</p>
+    </div>
   </div>
 </Dialog>
+
+{#if showComparison && comparisonFirst && comparisonSecond}
+  <div class="absolute left-4 right-4 bottom-20 z-[999]">
+    <RegionComparison imageA={comparisonFirst} imageB={comparisonSecond} polygonCoords={drawnPolygon} polygonCentroid={polygonCentroid} />
+  </div>
+{:else if showComparison}
+  <div class="absolute left-4 right-4 bottom-20 z-[999]">
+    <div class="rounded-lg border border-border bg-card p-4 text-center">
+      <p class="text-sm text-muted-foreground">Selecione duas imagens na galeria para comparar</p>
+    </div>
+  </div>
+{/if}
+
+{#if imageResults.length > 0 && !showImageGallery && !showProcessingViewer}
+  <div class="absolute left-4 bottom-4 z-[999] w-72">
+    <TimeSlider images={imageResults} onSelect={(id) => {
+      const img = imageResults.find(i => i.id === id);
+      if (img) processImage(img.id);
+    }} />
+  </div>
+{/if}

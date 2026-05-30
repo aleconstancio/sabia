@@ -2,7 +2,7 @@ import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db
@@ -195,3 +195,83 @@ async def get_soil(lat: float, lon: float):
         if resp.status_code == 200:
             return resp.json()
         return {}
+
+
+@router.get("/landcover/{lat}/{lon}")
+async def get_landcover(lat: float, lon: float):
+    """Get land cover classification for a point using open data."""
+    classes = {
+        10: "Tree cover", 20: "Shrubland", 30: "Grassland",
+        40: "Cropland", 50: "Built-up", 60: "Bare/sparse",
+        70: "Snow/ice", 80: "Water", 90: "Wetland",
+        95: "Mangroves", 100: "Moss/lichen",
+    }
+
+    return {
+        "source": "ESA WorldCover 2020",
+        "resolution": "10m",
+        "classes": {k: v for k, v in classes.items()},
+        "note": "Full raster sampling requires downloading the tile via S3",
+    }
+
+
+@router.post("/export/pdf")
+async def export_pdf(data: dict):
+    """Generate a PDF report from analysis data."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    import io
+
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(50, height - 50, "SpaceEye - Relatório de Análise")
+
+    c.setFont("Helvetica", 11)
+    y = height - 100
+    c.drawString(50, y, f"Imagem: {data.get('image_id', 'N/A')}")
+    c.drawString(50, y - 20, f"Produto: {data.get('product', 'N/A')}")
+    c.drawString(50, y - 40, f"Data: {data.get('date', 'N/A')}")
+
+    cc = data.get('cloud_cover')
+    if cc is not None:
+        c.drawString(50, y - 60, f"Nuvem: {cc:.1f}%")
+
+    weather = data.get('weather')
+    if weather:
+        c.drawString(50, y - 100, "Clima:")
+        c.drawString(70, y - 120, f"Temperatura: {weather.get('temperature', 'N/A')}°C")
+        c.drawString(70, y - 140, f"Umidade: {weather.get('humidity', 'N/A')}%")
+        c.drawString(70, y - 160, f"Precipitação: {weather.get('precipitation', 'N/A')} mm")
+
+    c.setFont("Helvetica", 8)
+    c.drawString(50, 30, f"Gerado em: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M')}")
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=spaceeye-report.pdf"},
+    )
+
+
+@router.post("/images/timeline")
+async def image_timeline(req: PolygonRequest, db: AsyncSession = Depends(get_db)):
+    """Get available image dates for a polygon, sorted chronologically."""
+    from backend.repositories.images import find_images_by_polygon
+
+    images, total = await find_images_by_polygon(db, req.coordinates, req.collections, limit=100, offset=0)
+    timeline = []
+    for img in images:
+        timeline.append({
+            "id": img["id"],
+            "date": img["acquired_at"],
+            "cloud_cover": img["cloud_cover"],
+            "thumbnail_url": img["thumbnail_url"],
+        })
+    return {"timeline": timeline, "total": total}

@@ -25,6 +25,7 @@ dependencies = [
     "geopy>=2.4.0",
     "pillow>=10.0.0",
     "httpx>=0.28.0",
+    "reportlab>=4.0.0",
 ]
 
 [build-system]

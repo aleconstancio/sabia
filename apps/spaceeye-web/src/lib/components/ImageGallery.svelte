@@ -4,19 +4,28 @@
   let {
     images = [] as any[],
     selectedProduct = 'NDVI',
-    processImage = (imageId: string) => {}
+    processImage = (imageId: string) => {},
+    selectionMode = false,
+    selectedIds = [] as string[],
+    onToggleSelect = (imageId: string) => {},
   }: {
     images: any[];
     selectedProduct: string;
     processImage: (imageId: string) => void;
+    selectionMode?: boolean;
+    selectedIds?: string[];
+    onToggleSelect?: (imageId: string) => void;
   } = $props();
 </script>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
   {#each images as img}
     <button
-      class="rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
-      onclick={() => processImage(img.id)}
+      class="relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
+      class:border-emerald-500={selectionMode && selectedIds.includes(img.id)}
+      class:ring-2={selectionMode && selectedIds.includes(img.id)}
+      class:ring-emerald-500={selectionMode && selectedIds.includes(img.id)}
+      onclick={() => selectionMode ? onToggleSelect(img.id) : processImage(img.id)}
     >
       {#if img.thumbnail_url}
         <img src={img.thumbnail_url} alt={img.id} class="w-full h-40 object-cover rounded-md mb-2" loading="lazy" />
@@ -24,6 +33,9 @@
         <div class="w-full h-40 bg-muted rounded-md mb-2 flex items-center justify-center text-muted-foreground text-sm">
           Sem thumbnail
         </div>
+      {/if}
+      {#if selectionMode && selectedIds.includes(img.id)}
+        <div class="absolute top-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold">✓</div>
       {/if}
       <p class="font-mono text-xs truncate mb-1">{img.id}</p>
       <div class="flex items-center justify-between">
