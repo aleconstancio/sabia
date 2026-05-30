@@ -299,9 +299,7 @@
       ]} class="!w-32 !text-xs" />
     </div>
   </div>
-</div>
-
-<div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
+  <div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
 </div>
 
 <MapToolbar
