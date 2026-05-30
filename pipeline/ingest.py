@@ -144,8 +144,20 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
                 ))
         
         if records:
-            sql = """
-                INSERT INTO images (id, collection, footprint, cloud_cover, acquired_at, metadata, thumbnail_url)
+            # Detect which geometry column exists
+            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='images' AND column_name IN ('footprint','footprint_geojson')")
+            geo_col = cursor.fetchone()
+            geo_col = geo_col[0] if geo_col else 'footprint_geojson'
+
+            if geo_col == 'footprint':
+                geo_insert = "footprint"
+                geo_template = "ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)"
+            else:
+                geo_insert = "footprint_geojson"
+                geo_template = "%s"
+
+            sql = f"""
+                INSERT INTO images (id, collection, {geo_insert}, cloud_cover, acquired_at, metadata, thumbnail_url)
                 VALUES %s
                 ON CONFLICT (id) DO UPDATE SET
                     cloud_cover = EXCLUDED.cloud_cover,
@@ -154,12 +166,8 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
                     thumbnail_url = EXCLUDED.thumbnail_url,
                     updated_at = now()
             """
-            execute_values(
-                cursor,
-                sql,
-                records,
-                template="(%s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s, %s::timestamptz, %s::jsonb, %s)",
-            )
+            template = f"(%s, %s, {geo_template}, %s, %s::timestamptz, %s::jsonb, %s)"
+            execute_values(cursor, sql, records, template=template)
             conn.commit()
             total_inserted += len(records)
         
