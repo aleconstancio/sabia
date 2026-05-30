@@ -55,11 +55,11 @@ class Amazonia1Collection(Collection):
 class Sentinel2Collection(Collection):
     id = "sentinel2"
     stac_url = "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items"
-    available_bands = ["red", "green", "blue", "nir"]
+    available_bands = ["red", "green", "blue", "nir", "scl"]
     available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
     def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
-        mapping = {"red": "B04", "green": "B03", "blue": "B02", "nir": "B08"}
+        mapping = {"red": "B04", "green": "B03", "blue": "B02", "nir": "B08", "scl": "SCL"}
         key = mapping.get(band)
         if key and key in item_assets:
             return item_assets[key]["href"]

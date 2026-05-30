@@ -27,6 +27,7 @@ let _filterMaxCloud = $state<number | undefined>(undefined);
 let _filterSortBy = $state('acquired_at');
 let _filterSortOrder = $state('desc');
 let _lastStats = $state<any>(null);
+let _completedTaskIds = $state<string[]>([]);
 
 export const mapState = {
   get map() { return _map; },
@@ -87,4 +88,6 @@ export const mapState = {
   set filterSortOrder(v) { _filterSortOrder = v; },
   get lastStats() { return _lastStats; },
   set lastStats(v) { _lastStats = v; },
+  get completedTaskIds() { return _completedTaskIds; },
+  set completedTaskIds(v) { _completedTaskIds = v; },
 };

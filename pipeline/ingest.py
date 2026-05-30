@@ -58,7 +58,7 @@ def parse_item(item: dict, collection: str) -> Optional[dict]:
                 url = insert_param(assets.get(k, {}).get("href", ""))
                 metadata_assets[k] = url
         elif collection == "sentinel2":
-            mapping = {"B02": "blue", "B03": "green", "B04": "red", "B08": "nir"}
+            mapping = {"B02": "blue", "B03": "green", "B04": "red", "B08": "nir", "SCL": "scl"}
             for stac_key, internal_key in mapping.items():
                 metadata_assets[internal_key] = assets.get(stac_key, {}).get("href", "")
         elif collection in ("landsat8", "landsat9"):

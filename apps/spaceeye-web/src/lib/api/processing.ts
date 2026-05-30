@@ -70,6 +70,7 @@ export async function processImage(imageId: string) {
           clearInterval(pollInterval);
           mapState.isLoading = false;
           mapState.showProcessingViewer = false;
+          mapState.completedTaskIds = [...mapState.completedTaskIds, data.task_id];
           showOverlayResult(status.result);
         } else if (status.status === 'error') {
           clearInterval(pollInterval);
@@ -140,6 +141,24 @@ export async function downloadGeotiff(taskId: string) {
     const a = document.createElement('a');
     a.href = url;
     a.download = `spaceeye-${taskId.slice(0, 8)}.tif`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+export async function downloadBatch(taskIds: string[]) {
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  const resp = await fetch(`${API_URL}/download/batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(taskIds),
+  });
+  if (resp.ok) {
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'spaceeye-batch.zip';
     a.click();
     URL.revokeObjectURL(url);
   }

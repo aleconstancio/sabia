@@ -24,8 +24,10 @@
   import FilterBar from '$lib/components/FilterBar.svelte';
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import { mapState } from '$lib/stores/map.svelte';
-  import { searchImages, processImage, exportPdf, downloadGeotiff } from '$lib/api/processing';
+  import { searchImages, processImage, exportPdf, downloadGeotiff, downloadBatch } from '$lib/api/processing';
   import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
+  import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
+  import SwipeComparison from '$lib/components/SwipeComparison.svelte';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
@@ -34,6 +36,9 @@
   let currentBasemap = $state('satellite');
   let layerOpacity = $state(0.8);
   let tileLayer: L.TileLayer | null = $state(null);
+  let showTimelapse = $state(false);
+  let timelapseOverlay = $state<any>(null);
+  let useSwipe = $state(false);
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -244,11 +249,17 @@
         <Button variant={mapState.showComparison ? 'default' : 'ghost'} size="sm" onclick={toggleCompare}>
           {mapState.showComparison ? 'Sair' : 'Comparar'}
         </Button>
+        <Button variant="ghost" size="sm" onclick={() => showTimelapse = !showTimelapse}>
+          {showTimelapse ? 'Sair' : 'Timelapse'}
+        </Button>
       {/if}
       {#if mapState.hasOverlay}
         <Button variant="ghost" size="sm" onclick={copyShareLink}>Copiar link</Button>
         <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>Baixar GeoTIFF</Button>
         <Button variant="ghost" size="sm" onclick={doExportPdf}>Exportar PDF</Button>
+        {#if mapState.completedTaskIds.length >= 2}
+          <Button variant="ghost" size="sm" onclick={() => downloadBatch(mapState.completedTaskIds)}>Baixar lote</Button>
+        {/if}
       {/if}
       <Select bind:value={mapState.selectedCollection} options={[
         { value: 'cbers4a', label: 'CBERS-4A' },
@@ -364,7 +375,16 @@
 
 {#if mapState.showComparison && mapState.comparisonFirst && mapState.comparisonSecond}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
-    <RegionComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+    <div class="flex justify-end mb-1">
+      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe}>
+        {useSwipe ? 'Lado a lado' : 'Deslizar'}
+      </Button>
+    </div>
+    {#if useSwipe}
+      <SwipeComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+    {:else}
+      <RegionComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+    {/if}
   </div>
 {:else if mapState.showComparison}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
@@ -378,6 +398,15 @@
   <div class="absolute left-4 bottom-4 z-[999] w-72 space-y-2">
     <NdviTimeline images={mapState.results} polygonCoords={mapState.polygonCoords} product={mapState.selectedProduct} />
     <TimeSlider images={mapState.results} onSelect={(id) => {
+      const img = mapState.results.find(i => i.id === id);
+      if (img) processImage(img.id);
+    }} />
+  </div>
+{/if}
+
+{#if showTimelapse && mapState.results.length > 0 && !mapState.showImageGallery && !mapState.showProcessingViewer}
+  <div class="absolute left-4 bottom-36 z-[999] w-72">
+    <TimelapsePlayer images={mapState.results} polygonCoords={mapState.polygonCoords} product={mapState.selectedProduct} onFrameChange={(id) => {
       const img = mapState.results.find(i => i.id === id);
       if (img) processImage(img.id);
     }} />

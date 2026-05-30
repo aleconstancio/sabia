@@ -345,6 +345,34 @@ async def export_pdf(data: dict):
     )
 
 
+@router.post("/download/batch")
+async def download_batch(task_ids: list[str]):
+    """Download multiple processed results as a ZIP archive."""
+    from celery.result import AsyncResult
+    from backend.tasks.celery_app import celery_app
+    import zipfile, io
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for tid in task_ids:
+            result = AsyncResult(tid, app=celery_app)
+            if result.state == "SUCCESS" and result.result:
+                path = result.result.get("path", "")
+                if path and os.path.exists(path):
+                    name = f"{tid[:8]}.png"
+                    zf.write(path, name)
+                    tif_path = path.replace(".png", ".tif")
+                    if os.path.exists(tif_path):
+                        zf.write(tif_path, f"{tid[:8]}.tif")
+
+    buffer.seek(0)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=spaceeye-batch.zip"}
+    )
+
+
 @router.post("/process/batch")
 async def process_batch(req: dict):
     """Process multiple images for the same polygon and return task IDs."""

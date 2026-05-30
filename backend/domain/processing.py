@@ -134,9 +134,23 @@ def _compute_product(
                 ps[mask_soma] = (band_data[bname][mask_soma] / soma[mask_soma]) * pan_data[mask_soma]
                 band_data[bname] = ps
 
-    band_data_for_product = {k: v for k, v in band_data.items() if k != "pan"}
+    band_data_for_product = {k: v for k, v in band_data.items() if k not in ("pan", "scl")}
 
     result = product.compute(band_data_for_product)
+
+    # Cloud masking: if SCL (Scene Classification Layer) is available,
+    # mask out clouds, cloud shadows, and cirrus pixels
+    if "scl" in band_data and result.ndim == 2:
+        scl = band_data["scl"]
+        if scl.shape != result.shape:
+            try:
+                from skimage.transform import resize as skresize
+                scl = skresize(scl.astype(float), result.shape, order=0, preserve_range=True).astype(int)
+            except ImportError:
+                pass
+        if scl.shape == result.shape:
+            cloud_mask = np.isin(scl, [3, 8, 9, 10])
+            result = np.where(cloud_mask, np.nan, result)
 
     if result.ndim == 3:
         count = result.shape[2]
