@@ -21,9 +21,24 @@
     --input: oklch(0.12 0.01 290);
     --ring: var(--primary);
     --radius: 0.5rem;
+
+    /* Z-index scale */
+    --z-sidebar: 20;
+    --z-header: 30;
+    --z-bottom-sheet: 35;
+    --z-overlay: 40;
+    --z-modal: 50;
+    --z-toast: 60;
   }
 }
 
 html, body { height: 100%; margin: 0; }
 #map { flex: 1; min-height: 0; }
 .leaflet-container { background: #111; }
+
+/* Bottom sheet backdrop */
+.bottom-sheet-backdrop {
+  position: fixed; inset: 0; z-index: var(--z-bottom-sheet);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+}

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { toggleMode } from 'mode-watcher';
   import { browser } from '$app/environment';
   import L from 'leaflet';
   import 'leaflet-draw';
+  import SpaceEyeShell from '$lib/layout/SpaceEyeShell.svelte';
+  import Header from '$lib/layout/Header.svelte';
+  import { SearchPanel, ResultsPanel, AnalyticsPanel, HistorySidebar } from '$lib/components/sidebar';
   import Button from '$lib/ui/components/Button.svelte';
   import Dialog from '$lib/ui/components/Dialog.svelte';
   import Spinner from '$lib/ui/components/Spinner.svelte';
@@ -11,7 +13,6 @@
   import Badge from '$lib/ui/components/Badge.svelte';
   import Select from '$lib/ui/components/Select.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
-  import SearchMenu from '$lib/components/SearchMenu.svelte';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
   import WeatherPanel from '$lib/components/WeatherPanel.svelte';
   import SoilPanel from '$lib/components/SoilPanel.svelte';
@@ -20,16 +21,13 @@
   import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
   import TimeSlider from '$lib/components/TimeSlider.svelte';
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
-  import Bookmarks from '$lib/components/Bookmarks.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import { mapState } from '$lib/stores/map.svelte';
-  import { searchImages, processImage, exportPdf, downloadGeotiff, downloadBatch } from '$lib/api/processing';
-  import { addBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
+  import { searchImages, processImage, exportPdf } from '$lib/api/processing';
+  import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
   import SwipeComparison from '$lib/components/SwipeComparison.svelte';
-  import HistoryPanel from '$lib/components/HistoryPanel.svelte';
-  import MonitoringPanel from '$lib/components/MonitoringPanel.svelte';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
@@ -249,59 +247,27 @@
   });
 </script>
 
-<div class="flex flex-1 min-h-0 flex-col">
-  <div class="flex items-center justify-between bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2 shadow-sm shrink-0" style="position: relative; z-index: 1000">
-    <div class="flex items-center gap-4">
-      <h1 class="text-xl font-bold text-emerald-800 dark:text-emerald-400">SpaceEye</h1>
-      <SearchMenu {navigateToCity} />
-    </div>
-    <div class="flex items-center gap-2">
-      <HistoryPanel onRestore={(r) => {
-        mapState.polygonCoords = r.polygonCoords;
-        if (mapState.map && r.polygonCoords) {
-          const polygon = L.polygon(r.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
-          mapState.map.addLayer(polygon);
-          mapState.map.fitBounds(polygon.getBounds());
-          mapState.polygonCentroid = r.centroid;
-        }
-        processImage(r.imageId);
-      }} />
-      <MonitoringPanel />
-      <Bookmarks onSelect={restoreBookmark} currentCoords={mapState.polygonCoords} />
-      <Button size="sm" variant="ghost" onclick={toggleMode} class="!w-8 !h-8 !p-0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </Button>
-      {#if mapState.rasterOverlay}
-        <Button variant="ghost" size="sm" onclick={clearOverlay}>Limpar overlay</Button>
-      {/if}
-      {#if mapState.results.length > 0}
-        <Button variant={mapState.showComparison ? 'default' : 'ghost'} size="sm" onclick={toggleCompare}>
-          {mapState.showComparison ? 'Sair' : 'Comparar'}
-        </Button>
-        <Button variant="ghost" size="sm" onclick={() => showTimelapse = !showTimelapse}>
-          {showTimelapse ? 'Sair' : 'Timelapse'}
-        </Button>
-      {/if}
-      {#if mapState.hasOverlay}
-        <Button variant="ghost" size="sm" onclick={copyShareLink}>Copiar link</Button>
-        <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>Baixar GeoTIFF</Button>
-        <Button variant="ghost" size="sm" onclick={doExportPdf}>Exportar PDF</Button>
-        {#if mapState.completedTaskIds.length >= 2}
-          <Button variant="ghost" size="sm" onclick={() => downloadBatch(mapState.completedTaskIds)}>Baixar lote</Button>
-        {/if}
-      {/if}
-      <Select bind:value={mapState.selectedCollection} options={[
-        { value: 'cbers4a', label: 'CBERS-4A' },
-        { value: 'sentinel2', label: 'Sentinel-2' },
-        { value: 'landsat8', label: 'Landsat 8' },
-        { value: 'landsat9', label: 'Landsat 9' },
-      ]} class="!w-32 !text-xs" />
-    </div>
-  </div>
+<SpaceEyeShell>
+  {#snippet sidebarContent()}
+    <SearchPanel />
+    <ResultsPanel />
+    <AnalyticsPanel />
+    <HistorySidebar />
+  {/snippet}
+
+  <Header
+    {navigateToCity}
+    onToggleSidebar={() => {}}
+    onToggleCompare={toggleCompare}
+    onToggleTimelapse={() => showTimelapse = !showTimelapse}
+    onClearOverlay={clearOverlay}
+    onExportPdf={doExportPdf}
+    showCompare={mapState.showComparison}
+    showTimelapse={showTimelapse}
+  />
+
   <div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
-</div>
+</SpaceEyeShell>
 
 <MapToolbar
   bind:showLegend={mapState.showLegend}

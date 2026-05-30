@@ -7,8 +7,6 @@
 
 <AppProvider>
   <ErrorBoundary>
-    <div class="flex min-h-screen flex-col">
-      {@render children()}
-    </div>
+    {@render children()}
   </ErrorBoundary>
 </AppProvider>

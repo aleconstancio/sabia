@@ -1,0 +1,60 @@
+<script lang="ts">
+  import WeatherPanel from '$lib/components/WeatherPanel.svelte';
+  import SoilPanel from '$lib/components/SoilPanel.svelte';
+  import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
+  import { mapState } from '$lib/stores/map.svelte.ts';
+
+  let expanded = $state(true);
+  let activeTab = $state<'weather' | 'soil' | 'landcover'>('weather');
+  let tabs = [
+    { id: 'weather' as const, label: 'Clima' },
+    { id: 'soil' as const, label: 'Solo' },
+    { id: 'landcover' as const, label: 'Cobertura' },
+  ];
+
+  let centroid = $derived(mapState.polygonCentroid ?? { lat: 0, lon: 0 });
+</script>
+
+<div class="sidebar-section">
+  <button onclick={() => expanded = !expanded} class="sidebar-section-header">
+    <span class="text-lg mr-2">📊</span>
+    <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--muted-foreground);">Análises</span>
+    <svg class="ml-auto w-3 h-3 transition-transform" class:rotate-180={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+  {#if expanded}
+    <div class="mt-2 space-y-2">
+      <!-- Tabs -->
+      <div class="flex rounded-[--radius] overflow-hidden" style="border: 1px solid var(--border);">
+        {#each tabs as tab}
+          <button
+            onclick={() => activeTab = tab.id}
+            class="flex-1 text-xs py-1.5 px-2 transition-colors cursor-pointer bg-transparent border-none"
+            style="background: {activeTab === tab.id ? 'var(--primary)' : 'transparent'}; color: {activeTab === tab.id ? 'var(--primary-foreground)' : 'var(--muted-foreground)'};"
+          >
+            {tab.label}
+          </button>
+        {/each}
+      </div>
+
+      <!-- Tab content -->
+      {#if activeTab === 'weather'}
+        <WeatherPanel lat={centroid.lat} lon={centroid.lon} />
+      {:else if activeTab === 'soil'}
+        <SoilPanel lat={centroid.lat} lon={centroid.lon} polygonCoords={mapState.polygonCoords} />
+      {:else}
+        <LandCoverPanel lat={centroid.lat} lon={centroid.lon} polygonCoords={mapState.polygonCoords} />
+      {/if}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .sidebar-section { margin-bottom: 1rem; }
+  .sidebar-section-header {
+    display: flex; align-items: center; width: 100%;
+    padding: 0.5rem; border-radius: var(--radius);
+    cursor: pointer; transition: background 150ms;
+    background: transparent; border: none; color: inherit;
+  }
+  .sidebar-section-header:hover { background: var(--muted); }
+</style>
