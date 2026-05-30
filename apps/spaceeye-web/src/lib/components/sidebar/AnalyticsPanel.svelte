@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '$lib/components/sidebar/sidebar.css';
   import WeatherPanel from '$lib/components/WeatherPanel.svelte';
   import SoilPanel from '$lib/components/SoilPanel.svelte';
   import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
@@ -48,13 +49,3 @@
   {/if}
 </div>
 
-<style>
-  .sidebar-section { margin-bottom: 1rem; }
-  .sidebar-section-header {
-    display: flex; align-items: center; width: 100%;
-    padding: 0.5rem; border-radius: var(--radius);
-    cursor: pointer; transition: background 150ms;
-    background: transparent; border: none; color: inherit;
-  }
-  .sidebar-section-header:hover { background: var(--muted); }
-</style>

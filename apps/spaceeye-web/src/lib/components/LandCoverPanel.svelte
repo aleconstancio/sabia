@@ -41,7 +41,10 @@
 <div class="rounded-lg border border-border bg-card p-4">
   <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Cobertura do Solo</h3>
   {#if loading}
-    <p class="text-sm text-muted-foreground">Carregando...</p>
+    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span>Carregando...</span>
+    </div>
   {:else if landcover}
     {#if polygonCoords}
       <p class="text-xs text-muted-foreground mb-2">{landcover.source}</p>

@@ -53,7 +53,10 @@
 <div class="rounded-lg border border-border bg-card p-4">
   <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Solo</h3>
   {#if loading}
-    <p class="text-sm text-muted-foreground">Carregando...</p>
+    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span>Carregando...</span>
+    </div>
   {:else if error}
     <p class="text-sm text-destructive">{error}</p>
   {:else if soil}
