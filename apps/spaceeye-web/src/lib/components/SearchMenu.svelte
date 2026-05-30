@@ -77,6 +77,7 @@
       placeholder="UF"
       class="!w-20 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
       onfocus={() => showUfDropdown = true}
+      aria-label="Buscar estado"
     />
     {#if showUfDropdown && filteredUfs.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-20">
@@ -93,6 +94,7 @@
       class="!w-48 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
       onfocus={() => showCityDropdown = true}
       disabled={!selectedUf}
+      aria-label="Buscar cidade"
     />
     {#if showCityDropdown && filteredCities.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-48">

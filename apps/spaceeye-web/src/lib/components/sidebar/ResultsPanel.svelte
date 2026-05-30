@@ -14,7 +14,7 @@
 </script>
 
 <div class="sidebar-section">
-  <button onclick={() => expanded = !expanded} class="sidebar-section-header">
+  <button onclick={() => expanded = !expanded} class="sidebar-section-header" aria-expanded={expanded} aria-label="Resultados">
     <span class="text-lg mr-2">🖼</span>
     <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--muted-foreground);">Resultados</span>
     {#if mapState.results.length > 0}

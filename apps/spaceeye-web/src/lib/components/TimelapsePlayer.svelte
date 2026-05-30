@@ -86,13 +86,14 @@
     <span class="text-xs font-mono">{frameIndex + 1}/{images.length}</span>
   </div>
   <div class="flex items-center gap-2 mb-2">
-    <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0">⏹</Button>
-    <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0">{playing ? '⏸' : '▶'}</Button>
-    <input type="range" min="200" max="5000" step="100" bind:value={speed} class="flex-1 accent-emerald-500 h-1" />
+    <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0" ariaLabel="Parar timelapse">⏹</Button>
+    <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0" ariaLabel={playing ? 'Pausar timelapse' : 'Iniciar timelapse'}>{playing ? '⏸' : '▶'}</Button>
+    <input type="range" min="200" max="5000" step="100" bind:value={speed} class="flex-1 accent-emerald-500 h-1" aria-label="Velocidade do timelapse" />
     <span class="text-xs text-muted-foreground w-10">{(speed / 1000).toFixed(1)}s</span>
   </div>
   <input type="range" min="0" max={Math.max(0, images.length - 1)} bind:value={frameIndex}
     onchange={() => goTo(frameIndex)} class="w-full accent-emerald-500 h-1"
+    aria-label="Frame do timelapse"
   />
   {#if images[frameIndex]}
     <div class="flex justify-between text-xs text-muted-foreground mt-1">

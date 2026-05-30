@@ -16,7 +16,7 @@
 </script>
 
 <div class="sidebar-section">
-  <button onclick={() => expanded = !expanded} class="sidebar-section-header">
+  <button onclick={() => expanded = !expanded} class="sidebar-section-header" aria-expanded={expanded} aria-label="Analises">
     <span class="text-lg mr-2">📊</span>
     <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--muted-foreground);">Análises</span>
     <svg class="ml-auto w-3 h-3 transition-transform" class:rotate-180={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>

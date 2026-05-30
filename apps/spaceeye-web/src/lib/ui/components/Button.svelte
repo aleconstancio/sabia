@@ -13,6 +13,7 @@
     type = 'button' as string,
     href = undefined as string | undefined,
     onclick = undefined as ((e: MouseEvent) => void) | undefined,
+    ariaLabel = undefined as string | undefined,
     children,
   }: {
     variant?: Variant;
@@ -23,6 +24,7 @@
     type?: string;
     href?: string;
     onclick?: (e: MouseEvent) => void;
+    ariaLabel?: string;
     children?: import('svelte').Snippet;
   } = $props();
 
@@ -50,6 +52,7 @@
            {vars[variant]} {sz[size]}"
     class:w-full={fullWidth}
     data-loading={loading || undefined}
+    aria-label={ariaLabel}
   >
     {#if loading}
       <span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
@@ -66,6 +69,7 @@
            disabled:pointer-events-none disabled:opacity-50
            {vars[variant]} {sz[size]} {fullWidth ? 'w-full' : ''}"
     data-loading={loading || undefined}
+    aria-label={ariaLabel}
   >
     {#if loading}
       <span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />

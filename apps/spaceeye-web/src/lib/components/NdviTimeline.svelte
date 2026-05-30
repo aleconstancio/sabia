@@ -125,7 +125,7 @@
     {/if}
   </div>
   {#if barData.length > 0}
-    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]"></canvas>
+    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]" role="img" aria-label="Grafico de serie temporal NDVI"></canvas>
     <button
       class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none mt-1"
       onclick={exportCsv}

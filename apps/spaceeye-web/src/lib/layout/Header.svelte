@@ -52,6 +52,8 @@
         onclick={() => mapState.sidebarOpen = !mapState.sidebarOpen}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none"
         style="color: var(--muted-foreground);"
+        aria-label="Abrir menu lateral"
+        aria-expanded={mapState.sidebarOpen}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6" />
@@ -93,6 +95,7 @@
         onclick={toggleMode}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none"
         style="color: var(--muted-foreground);"
+        aria-label="Alternar tema"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>

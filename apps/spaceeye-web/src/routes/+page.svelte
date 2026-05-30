@@ -373,7 +373,7 @@
 {#if mapState.showComparison && mapState.comparisonFirst && mapState.comparisonSecond}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
     <div class="flex justify-end mb-1">
-      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe}>
+      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe} ariaLabel="Alternar modo de comparacao">
         {useSwipe ? 'Lado a lado' : 'Deslizar'}
       </Button>
     </div>

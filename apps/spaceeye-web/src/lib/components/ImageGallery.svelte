@@ -58,7 +58,7 @@
         {/if}
         <img
           src={img.thumbnail_url}
-          alt={img.id}
+          alt="Satelite {img.collection || 'imagem'} {new Date(img.acquired_at).toLocaleDateString('pt-BR')}"
           class="w-full h-40 object-cover rounded-md mb-2"
           class:hidden={!loadedMap.get(img.id)}
           loading="lazy"
