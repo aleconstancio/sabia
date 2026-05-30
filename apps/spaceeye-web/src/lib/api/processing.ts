@@ -88,25 +88,28 @@ export function showOverlayResult(result: any) {
   map.addLayer(overlay);
   mapState.rasterOverlay = overlay;
   mapState.hasOverlay = true;
+  mapState.lastOverlayPath = result.path;
   map.flyToBounds(bounds, { duration: 1.5 });
 }
 
 export async function exportPdf(imageId: string, cloudCover: number | null) {
   const weather = mapState.lastWeatherData;
+  const body: any = {
+    image_id: imageId,
+    product: mapState.selectedProduct,
+    date: new Date().toISOString(),
+    cloud_cover: cloudCover,
+    weather: weather ? {
+      temperature: weather.current?.temperature_2m,
+      humidity: weather.current?.relative_humidity_2m,
+      precipitation: weather.current?.precipitation,
+    } : {},
+  };
+  if (mapState.lastOverlayPath) body.overlay_path = mapState.lastOverlayPath;
   const resp = await fetch(`${API_URL}/export/pdf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      image_id: imageId,
-      product: mapState.selectedProduct,
-      date: new Date().toISOString(),
-      cloud_cover: cloudCover,
-      weather: weather ? {
-        temperature: weather.current?.temperature_2m,
-        humidity: weather.current?.relative_humidity_2m,
-        precipitation: weather.current?.precipitation,
-      } : {},
-    }),
+    body: JSON.stringify(body),
   });
   if (resp.ok) {
     const blob = await resp.blob();
