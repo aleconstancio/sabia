@@ -6,7 +6,7 @@
 - Node.js 20+ with npm
 - Docker + docker-compose
 
-## Setup
+## Quick Start
 
 ```bash
 # 1. Bootstrap (installs all deps, creates .env)
@@ -15,27 +15,21 @@ make setup
 # 2. Edit .env with your INPE registered email
 #    (register at http://queimadas.dgi.inpe.br/catalogo/explore)
 
-# 3. Start PostGIS + Redis
-make dev-db
-
-# 4. Apply database migration
+# 3. Apply database migration (first time only)
 psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
 
-# 5. Start backend (terminal 1)
-make dev-backend
-
-# 6. Start Celery worker (terminal 2)
-make dev-worker
-
-# 7. Start frontend (terminal 3)
-make dev-frontend
+# 4. Start everything in one terminal
+make dev
 ```
+
+`make dev` starts PostGIS, Redis, the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
 
 ## Makefile Targets
 
 | Target | Description |
 |--------|-------------|
 | `make setup` | Full bootstrap (deps + .env) |
+| `make dev` | Start all services (single terminal) |
 | `make dev-db` | Start PostGIS + Redis |
 | `make dev-backend` | FastAPI with hot reload |
 | `make dev-worker` | Celery worker |

@@ -18,19 +18,14 @@
 Prerequisites: `uv` · `docker` · `node` 20+
 
 ```bash
-# One-command setup (creates .env, installs deps)
+# One-command setup (creates .env, installs all deps)
 make setup
 
-# Start infrastructure
-make dev-db
-
-# Apply database schema
+# Apply database schema (first time only)
 psql -h localhost -U postgres -d spaceeye -f sql/001_init.sql
 
-# Start backend, worker, and frontend (3 terminals)
-make dev-backend
-make dev-worker
-make dev-frontend
+# Start everything (PostGIS + backend + worker + frontend)
+make dev
 ```
 
 Once running, open http://localhost:5173.
