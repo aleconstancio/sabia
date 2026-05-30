@@ -3,8 +3,13 @@ controllers/imgs/
 testes/
 todo.txt
 *.tif
-*mp4
+*.mp4
 *.env
-*/__pycache__/
+__pycache__/
 *.pyc
 *.sh
+node_modules/
+.svelte-kit/
+build/
+dist/
+*.png

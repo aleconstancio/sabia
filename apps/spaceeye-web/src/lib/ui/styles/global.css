@@ -1,0 +1,45 @@
+/* ══════════════════════════════════════════════════
+ * @thoth/ui — Global Styles
+ *
+ * Import this ONCE in your root layout or app.css:
+ * @import "@thoth/ui/styles/global.css";
+ *
+ * Includes: preset (Tailwind token mapping), utilities
+ * (glass-panel, text-gradients, animations), and base
+ * reset (body, scrollbar, focus ring, selection).
+ * ══════════════════════════════════════════════════ */
+
+@import "./preset.css";
+@import "./utilities.css";
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background, oklch(0.05 0.01 290));
+    color: var(--foreground, oklch(0.95 0.01 290));
+    font-family: var(--font-sans, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground, oklch(0.55 0.03 280));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground, oklch(0.95 0.01 290));
+  }
+
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ring, oklch(0.75 0.21 310));
+  }
+
+  ::selection {
+    background: var(--primary, oklch(0.75 0.21 310));
+    color: var(--primary-foreground, oklch(0.15 0 0));
+  }
+}

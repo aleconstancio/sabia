@@ -1,0 +1,59 @@
+/* ══════════════════════════════════════════════════
+ * @thoth/ui — CSS Preset
+ *
+ * Import this file in your app.css to register all
+ * @thoth/ui tokens as Tailwind v4 theme variables.
+ *
+ * Usage: @import "@thoth/ui/preset.css";
+ * ══════════════════════════════════════════════════ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-glass-surface: var(--glass-surface);
+  --color-glass-border: var(--glass-border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
+/* @property rules for typed tokens */
+@property --radius {
+  syntax: "<length>";
+  initial-value: 0.625rem;
+  inherits: true;
+}
+@property --glass-blur {
+  syntax: "<length>";
+  initial-value: 16px;
+  inherits: true;
+}
+@property --duration-snappy {
+  syntax: "<time>";
+  initial-value: 150ms;
+  inherits: true;
+}
+@property --duration-fluid {
+  syntax: "<time>";
+  initial-value: 250ms;
+  inherits: true;
+}
+@property --duration-slow {
+  syntax: "<time>";
+  initial-value: 400ms;
+  inherits: true;
+}

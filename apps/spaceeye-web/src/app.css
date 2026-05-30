@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "./lib/ui/styles/global.css";
+
+@layer tokens.base {
+  :root {
+    --background: oklch(0.05 0.01 290);
+    --foreground: oklch(0.95 0.01 290);
+    --card: oklch(0.1 0.01 290);
+    --card-foreground: oklch(0.95 0.01 290);
+    --primary: oklch(0.6 0.18 160);
+    --primary-foreground: oklch(0.15 0 0);
+    --secondary: oklch(0.15 0.02 290);
+    --secondary-foreground: oklch(0.85 0.02 290);
+    --muted: oklch(0.15 0.01 290);
+    --muted-foreground: oklch(0.6 0.02 290);
+    --accent: oklch(0.15 0.02 290);
+    --accent-foreground: oklch(0.85 0.02 290);
+    --destructive: oklch(0.7 0.2 30);
+    --destructive-foreground: oklch(0.15 0 0);
+    --border: oklch(0.2 0.02 290);
+    --input: oklch(0.12 0.01 290);
+    --ring: var(--primary);
+    --radius: 0.5rem;
+  }
+}
+
+#map { height: 100vh; width: 100vw; }
+.leaflet-container { background: #111; }
