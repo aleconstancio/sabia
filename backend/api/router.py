@@ -152,12 +152,43 @@ async def list_cidades(uf: str):
     return list(_cidades_data.get(uf.upper(), []))
 
 
+@router.get("/geocode")
+async def geocode(q: str):
+    """Proxy for Nominatim geocoding to avoid direct client requests."""
+    import httpx
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"format": "json", "q": q, "limit": 1},
+            headers={"User-Agent": "SpaceEye/0.2.0"},
+        )
+        return resp.json()
+
+
 @router.get("/overlay/{filename}")
 async def serve_overlay(filename: str):
     path = os.path.join(get_settings().temp_dir, "cache", filename)
     if not os.path.exists(path):
         raise HTTPException(404, "Overlay not found")
     return FileResponse(path, media_type="image/png")
+
+
+@router.get("/download/{task_id}")
+async def download_raster(task_id: str):
+    """Download the processed GeoTIFF for a completed task."""
+    from celery.result import AsyncResult
+    from backend.tasks.celery_app import celery_app
+
+    result = AsyncResult(task_id, app=celery_app)
+    if result.state != "SUCCESS" or not result.result:
+        raise HTTPException(404, "Result not found. Task may still be running.")
+
+    path = result.result.get("path", "")
+    if not path or not os.path.exists(path):
+        raise HTTPException(404, "File not found or expired.")
+
+    filename = f"spaceeye_{task_id[:8]}.png"
+    return FileResponse(path, filename=filename, media_type="image/png")
 
 
 @router.get("/weather/{lat}/{lon}")
@@ -200,6 +231,12 @@ async def get_soil(lat: float, lon: float):
 @router.get("/landcover/{lat}/{lon}")
 async def get_landcover(lat: float, lon: float):
     """Get land cover classification for a point using open data."""
+    lat_band = 'N' if lat >= 0 else 'S'
+    lon_band = 'E' if lon >= 0 else 'W'
+    tile_x = int(abs(lat) / 10)
+    tile_y = int(abs(lon) / 10)
+    tile_url = f"https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/10m/{lat_band}{tile_x:02d}{lon_band}{tile_y:03d}.tif"
+
     classes = {
         10: "Tree cover", 20: "Shrubland", 30: "Grassland",
         40: "Cropland", 50: "Built-up", 60: "Bare/sparse",
@@ -208,10 +245,10 @@ async def get_landcover(lat: float, lon: float):
     }
 
     return {
-        "source": "ESA WorldCover 2020",
+        "source": "ESA WorldCover 2021",
         "resolution": "10m",
-        "classes": {k: v for k, v in classes.items()},
-        "note": "Full raster sampling requires downloading the tile via S3",
+        "classes": classes,
+        "tile_url": tile_url,
     }
 
 

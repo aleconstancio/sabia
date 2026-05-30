@@ -1,14 +1,28 @@
 <script lang="ts">
-  let { lat = 0, lon = 0 }: { lat: number; lon: number } = $props();
+  import { onDestroy } from 'svelte';
+
+  let {
+    lat = 0,
+    lon = 0,
+    onWeatherData = (_data: any) => {},
+  }: { lat: number; lon: number; onWeatherData?: (data: any) => void } = $props();
   let weather: any = $state(null);
   let loading = $state(false);
   let error = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let debounceTimer: ReturnType<typeof setTimeout>;
 
   $effect(() => {
-    if (lat && lon) fetchWeather();
+    if (lat && lon) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchWeather();
+      }, 300);
+    }
   });
+
+  onDestroy(() => clearTimeout(debounceTimer));
 
   async function fetchWeather() {
     loading = true; error = '';
@@ -16,6 +30,7 @@
       const resp = await fetch(`${API_URL}/weather/${lat}/${lon}`);
       if (!resp.ok) throw new Error('Weather fetch failed');
       weather = await resp.json();
+      onWeatherData(weather);
     } catch (e: any) {
       error = e.message;
     } finally {

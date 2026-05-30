@@ -49,8 +49,6 @@ async def _download_one(
     filepath: str | None,
     band_name: str,
 ):
-    import asyncio
-
     if filepath is None:
         return
 

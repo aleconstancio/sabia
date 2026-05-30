@@ -23,7 +23,7 @@
       max={Math.max(0, images.length - 1)}
       bind:value={currentIndex}
       class="w-full accent-emerald-500"
-      oninput={() => current && onSelect(current.id)}
+      onchange={() => current && onSelect(current.id)}
     />
     {#if current}
       <div class="flex items-center justify-between mt-2">

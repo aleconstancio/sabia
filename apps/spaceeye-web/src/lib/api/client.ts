@@ -20,7 +20,7 @@ export interface SearchResponse {
 
 export interface TaskResult {
   task_id: string;
-  status: string;
+  status: 'pending' | 'running' | 'done' | 'error';
   progress: number;
   phase: string;
   result?: any;

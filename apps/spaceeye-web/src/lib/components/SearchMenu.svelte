@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import Input from '$lib/ui/components/Input.svelte';
 
   let {
@@ -17,7 +17,16 @@
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+  function handleClickOutside(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.uf-container') && !target.closest('.city-container')) {
+      showUfDropdown = false;
+      showCityDropdown = false;
+    }
+  }
+
   onMount(async () => {
+    document.addEventListener('click', handleClickOutside);
     try {
       const resp = await fetch(`${API_URL}/ibge/uf`);
       ufs = await resp.json();
@@ -25,6 +34,8 @@
       console.error('Failed to load UFs', e);
     }
   });
+
+  onDestroy(() => document.removeEventListener('click', handleClickOutside));
 
   async function onUfSelect(uf: string) {
     selectedUf = uf;
@@ -44,7 +55,7 @@
     showCityDropdown = false;
 
     try {
-      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${city}-${selectedUf}&limit=1`);
+      const resp = await fetch(`${API_URL}/geocode?q=${city}-${selectedUf}`);
       const data = await resp.json();
       if (data.length > 0) {
         navigateToCity(parseFloat(data[0].lat), parseFloat(data[0].lon));
@@ -59,7 +70,7 @@
 </script>
 
 <div class="flex items-center gap-2">
-  <div class="relative">
+  <div class="relative uf-container">
     <Input bind:value={ufFilter} placeholder="UF" class="!w-20" onfocus={() => showUfDropdown = true} />
     {#if showUfDropdown && filteredUfs.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-20">
@@ -69,7 +80,7 @@
       </div>
     {/if}
   </div>
-  <div class="relative">
+  <div class="relative city-container">
     <Input bind:value={cityFilter} placeholder="Cidade" class="!w-48" onfocus={() => showCityDropdown = true} disabled={!selectedUf} />
     {#if showCityDropdown && filteredCities.length > 0}
       <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-48">

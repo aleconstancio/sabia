@@ -1,5 +1,6 @@
 <script lang="ts">
   import Badge from '$lib/ui/components/Badge.svelte';
+  import ImageMetadata from '$lib/components/ImageMetadata.svelte';
 
   let {
     images = [] as any[],
@@ -16,19 +17,54 @@
     selectedIds?: string[];
     onToggleSelect?: (imageId: string) => void;
   } = $props();
+
+  let maxCloud = $state(100);
+  let filteredImages = $derived(images.filter(i => (i.cloud_cover ?? 100) <= maxCloud));
+
+  let loadedMap = $state(new Map<string, boolean>());
+  let errorMap = $state(new Map<string, boolean>());
+  let hoveredImage = $state<any>(null);
+
+  function onImgLoad(id: string) {
+    loadedMap.set(id, true);
+  }
+  function onImgError(id: string) {
+    errorMap.set(id, true);
+    loadedMap.set(id, true);
+  }
 </script>
 
+<div class="flex items-center gap-3 px-2 py-2 border-b border-border mb-2">
+  <label class="text-xs text-muted-foreground whitespace-nowrap">Nuvem max:</label>
+  <input type="range" min="0" max="100" bind:value={maxCloud} class="flex-1 accent-emerald-500" />
+  <span class="text-xs font-mono w-8 text-right">{maxCloud}%</span>
+  <span class="text-xs text-muted-foreground">({filteredImages.length}/{images.length})</span>
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
-  {#each images as img}
+  {#each filteredImages as img}
     <button
       class="relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
       class:border-emerald-500={selectionMode && selectedIds.includes(img.id)}
       class:ring-2={selectionMode && selectedIds.includes(img.id)}
       class:ring-emerald-500={selectionMode && selectedIds.includes(img.id)}
       onclick={() => selectionMode ? onToggleSelect(img.id) : processImage(img.id)}
+      onmouseenter={() => hoveredImage = img}
+      onmouseleave={() => hoveredImage = null}
     >
-      {#if img.thumbnail_url}
-        <img src={img.thumbnail_url} alt={img.id} class="w-full h-40 object-cover rounded-md mb-2" loading="lazy" />
+      {#if img.thumbnail_url && !errorMap.get(img.id)}
+        {#if !loadedMap.get(img.id)}
+          <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse" />
+        {/if}
+        <img
+          src={img.thumbnail_url}
+          alt={img.id}
+          class="w-full h-40 object-cover rounded-md mb-2"
+          class:hidden={!loadedMap.get(img.id)}
+          loading="lazy"
+          onload={() => onImgLoad(img.id)}
+          onerror={() => onImgError(img.id)}
+        />
       {:else}
         <div class="w-full h-40 bg-muted rounded-md mb-2 flex items-center justify-center text-muted-foreground text-sm">
           Sem thumbnail
@@ -46,6 +82,11 @@
           {new Date(img.acquired_at).toLocaleDateString('pt-BR')}
         </span>
       </div>
+      {#if hoveredImage === img}
+        <div class="absolute left-0 right-0 bottom-0 translate-y-full z-50">
+          <ImageMetadata image={img} />
+        </div>
+      {/if}
     </button>
   {/each}
 </div>

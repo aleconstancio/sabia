@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
 
   let {
@@ -7,6 +7,7 @@
     imageB = null as any,
     polygonCoords = null as any,
     polygonCentroid = null as { lat: number; lon: number },
+    product = 'NDVI',
   } = $props();
 
   let mapAContainer: HTMLDivElement;
@@ -46,6 +47,13 @@
     }
   });
 
+  onDestroy(() => {
+    if (mapA) { mapA.remove(); (mapA as any) = null; }
+    if (mapB) { mapB.remove(); (mapB as any) = null; }
+    if (overlayA) { overlayA.remove(); overlayA = null; }
+    if (overlayB) { overlayB.remove(); overlayB = null; }
+  });
+
   async function processImage(image: any, side: 'A' | 'B') {
     if (!image || !polygonCoords) return;
     if (side === 'A') { loadingA = true; errorA = ''; }
@@ -58,7 +66,7 @@
         body: JSON.stringify({
           image_id: image.id,
           coordinates: polygonCoords,
-          product: 'NDVI',
+          product: product,
         }),
       });
       if (!resp.ok) throw new Error('Process request failed');
@@ -75,7 +83,7 @@
             if (map && bounds) {
               const overlay = L.imageOverlay(`${API_URL}/overlay/${status.result.path.split('/').pop()}`, bounds, { opacity: 0.8 });
               map.addLayer(overlay);
-              map.fitBounds(bounds);
+              map.flyToBounds(bounds, { duration: 1 });
               if (side === 'A') overlayA = overlay; else overlayB = overlay;
             }
             if (side === 'A') loadingA = false; else loadingB = false;

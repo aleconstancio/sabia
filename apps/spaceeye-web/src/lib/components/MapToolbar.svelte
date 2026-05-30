@@ -7,6 +7,7 @@
     onZoomOut = () => {},
     onClearOverlay = () => {},
     hasOverlay = false,
+    product = 'NDVI',
   } = $props();
 </script>
 
@@ -21,18 +22,15 @@
 
 {#if showLegend}
   <div class="absolute left-4 bottom-8 z-[999] rounded-lg border border-border bg-card p-3 shadow-lg">
-    <div class="flex flex-col gap-1">
-      <p class="text-xs font-semibold mb-1">NDVI</p>
+    {#if product === 'NDVI' || product === 'NDWI'}
+      <p class="text-xs font-semibold mb-1">{product}</p>
       <div class="w-4 h-40 rounded" style="background: linear-gradient(to top, #d73027, #fc8d59, #fee08b, #d9ef8b, #91cf60, #1a9641);"></div>
-      <div class="flex justify-between text-xs text-muted-foreground w-4">
-        <span>1</span>
-      </div>
-      <div class="flex justify-between text-xs text-muted-foreground w-4">
-        <span style="position: relative; left: -8px;">0</span>
-      </div>
-      <div class="flex justify-between text-xs text-muted-foreground w-4">
-        <span style="position: relative; left: -16px;">-1</span>
-      </div>
-    </div>
+      <div class="flex justify-between text-xs text-muted-foreground w-4"><span style="position: relative; left: -16px;">1</span></div>
+      <div class="flex justify-between text-xs text-muted-foreground w-4"><span style="position: relative; left: -8px;">0</span></div>
+      <div class="flex justify-between text-xs text-muted-foreground w-4"><span>-1</span></div>
+    {:else if product === 'TCI'}
+      <p class="text-xs font-semibold mb-1">True Color</p>
+      <p class="text-xs text-muted-foreground">RGB composição natural</p>
+    {/if}
   </div>
 {/if}

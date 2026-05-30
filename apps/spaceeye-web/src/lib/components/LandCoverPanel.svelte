@@ -1,11 +1,23 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
+
   let { lat = 0, lon = 0 }: { lat: number; lon: number } = $props();
   let landcover: any = $state(null);
   let loading = $state(false);
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let debounceTimer: ReturnType<typeof setTimeout>;
 
-  $effect(() => { if (lat && lon) fetchLandcover(); });
+  $effect(() => {
+    if (lat && lon) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchLandcover();
+      }, 300);
+    }
+  });
+
+  onDestroy(() => clearTimeout(debounceTimer));
 
   async function fetchLandcover() {
     loading = true;
@@ -28,7 +40,7 @@
   {#if loading}
     <p class="text-sm text-muted-foreground">Carregando...</p>
   {:else if landcover}
-    <p class="text-xs text-muted-foreground mb-2">ESA WorldCover 2020 · {landcover.resolution}</p>
+    <p class="text-xs text-muted-foreground mb-2">ESA WorldCover 2021 · {landcover.resolution}</p>
     <div class="space-y-1 max-h-48 overflow-y-auto">
       {#each Object.entries(landcover.classes) as [code, name]}
         <div class="flex items-center gap-2 text-sm">
