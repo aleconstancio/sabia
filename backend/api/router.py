@@ -404,6 +404,11 @@ async def export_pdf(data: dict):
 
     # Embed processed image overlay if available
     overlay_path = data.get('overlay_path', '')
+    if overlay_path:
+        settings = get_settings()
+        real_path = os.path.realpath(overlay_path)
+        if not real_path.startswith(os.path.realpath(settings.temp_dir)):
+            raise HTTPException(status_code=403, detail="Access denied")
     overlay_y = y - 80
     if overlay_path and os.path.exists(overlay_path):
         try:
