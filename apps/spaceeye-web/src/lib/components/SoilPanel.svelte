@@ -1,24 +1,20 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
-
   let { lat = 0, lon = 0, polygonCoords = null as any }: { lat: number; lon: number; polygonCoords?: any } = $props();
   let soil: any = $state(null);
   let loading = $state(false);
   let error = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
-  let debounceTimer: ReturnType<typeof setTimeout>;
 
   $effect(() => {
     if (lat && lon) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
+      const timer = setTimeout(() => {
         fetchSoil();
       }, 300);
+      return () => clearTimeout(timer);
     }
   });
 
-  onDestroy(() => clearTimeout(debounceTimer));
 
   async function fetchSoil() {
     loading = true; error = '';
