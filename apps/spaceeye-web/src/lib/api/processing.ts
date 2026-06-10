@@ -116,6 +116,22 @@ export async function processImage(imageId: string) {
             centroid: mapState.polygonCentroid,
             stats: status.result?.statistics,
           });
+          // Auto-save to backend for dashboard
+          try {
+            await fetch(`${API_URL}/analyses`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image_id: imageId,
+                collection: mapState.selectedCollection || 'unknown',
+                product: mapState.selectedProduct,
+                polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
+                centroid: mapState.polygonCentroid,
+                statistics: status.result?.statistics,
+                overlay_path: status.result?.path,
+              }),
+            });
+          } catch { /* non-critical, history store has backup */ }
         } else if (status.status === 'error') {
           clearInterval(pollInterval);
           mapState.isLoading = false;
