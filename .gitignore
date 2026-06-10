@@ -33,6 +33,7 @@ todo.txt
 # IDE
 .idea/
 .vscode/
-*.swpdump.rdb
+*.swp
+dump.rdb
 # Redis
 dump.rdb

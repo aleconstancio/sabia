@@ -10,6 +10,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./sql/002_monitors.sql:/docker-entrypoint-initdb.d/002_monitors.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -43,7 +44,7 @@ services:
     volumes:
       - spaceeye_cache:/tmp/spaceeye
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s
       timeout: 10s
       start_period: 30s
