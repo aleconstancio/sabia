@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db
-from backend.models.schemas import PolygonRequest, ProcessRequest
+from backend.models.schemas import PolygonRequest, ProcessRequest, ExportPdfRequest, ProcessBatchRequest, ComputeDifferenceRequest, DownloadBatchRequest
 from backend.config import get_settings
 
 router = APIRouter()
@@ -379,7 +379,7 @@ async def soil_zonal(req: PolygonRequest):
 
 
 @router.post("/export/pdf")
-async def export_pdf(data: dict):
+async def export_pdf(data: ExportPdfRequest):
     """Generate a PDF report from analysis data."""
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
@@ -394,39 +394,11 @@ async def export_pdf(data: dict):
 
     c.setFont("Helvetica", 11)
     y = height - 100
-    c.drawString(50, y, f"Imagem: {data.get('image_id', 'N/A')}")
-    c.drawString(50, y - 20, f"Produto: {data.get('product', 'N/A')}")
-    c.drawString(50, y - 40, f"Data: {data.get('date', 'N/A')}")
+    c.drawString(50, y, f"Task: {data.task_id}")
+    c.drawString(50, y - 20, f"Formato: {data.format}")
 
-    cc = data.get('cloud_cover')
-    if cc is not None:
-        c.drawString(50, y - 60, f"Nuvem: {cc:.1f}%")
-
-    # Embed processed image overlay if available
-    overlay_path = data.get('overlay_path', '')
-    if overlay_path:
-        settings = get_settings()
-        real_path = os.path.realpath(overlay_path)
-        if not real_path.startswith(os.path.realpath(settings.temp_dir)):
-            raise HTTPException(status_code=403, detail="Access denied")
-    overlay_y = y - 80
-    if overlay_path and os.path.exists(overlay_path):
-        try:
-            from reportlab.lib.utils import ImageReader
-            img = ImageReader(overlay_path)
-            c.drawImage(img, 50, y - 260, width=400, height=200, preserveAspectRatio=True)
-            overlay_y = y - 280
-        except Exception:
-            c.drawString(50, overlay_y, "(Imagem overlay não disponível)")
-            overlay_y -= 20
-
-    weather = data.get('weather')
-    if weather:
-        weather_y = overlay_y
-        c.drawString(50, weather_y, "Clima:")
-        c.drawString(70, weather_y - 20, f"Temperatura: {weather.get('temperature', 'N/A')}°C")
-        c.drawString(70, weather_y - 40, f"Umidade: {weather.get('humidity', 'N/A')}%")
-        c.drawString(70, weather_y - 60, f"Precipitação: {weather.get('precipitation', 'N/A')} mm")
+    if data.overlays:
+        c.drawString(50, y - 40, f"Overlays: {', '.join(data.overlays)}")
 
     c.setFont("Helvetica", 8)
     c.drawString(50, 30, f"Gerado em: {__import__('datetime').datetime.now().strftime('%d/%m/%Y %H:%M')}")
@@ -443,15 +415,17 @@ async def export_pdf(data: dict):
 
 
 @router.post("/download/batch")
-async def download_batch(task_ids: list[str]):
+async def download_batch(req: DownloadBatchRequest):
     """Download multiple processed results as a ZIP archive."""
+    if len(req.task_ids) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 tasks per batch")
     from celery.result import AsyncResult
     from backend.tasks.celery_app import celery_app
     import zipfile, io
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for tid in task_ids:
+        for tid in req.task_ids:
             result = AsyncResult(tid, app=celery_app)
             if result.state == "SUCCESS" and result.result:
                 path = result.result.get("path", "")
@@ -471,20 +445,16 @@ async def download_batch(task_ids: list[str]):
 
 
 @router.post("/process/batch")
-async def process_batch(req: dict):
+async def process_batch(req: ProcessBatchRequest):
     """Process multiple images for the same polygon and return task IDs."""
-    image_ids = req.get("image_ids", [])
-    coordinates = req.get("coordinates")
-    product = req.get("product", "NDVI")
-
     from backend.tasks.processing import process_image_task
 
     task_ids = []
-    for img_id in image_ids:
+    for img_id in req.image_ids:
         task = process_image_task.delay(
             image_id=img_id,
-            polygon_coords=coordinates,
-            product=product,
+            polygon_coords=req.coordinates,
+            product=req.product,
             band_urls={},
         )
         task_ids.append({"image_id": img_id, "task_id": task.id})
@@ -493,16 +463,13 @@ async def process_batch(req: dict):
 
 
 @router.post("/difference")
-async def compute_difference(req: dict):
+async def compute_difference(req: ComputeDifferenceRequest):
     """Compute NDVI difference between two processed images."""
-    task_id_a = req.get("task_id_a")
-    task_id_b = req.get("task_id_b")
-
     from backend.tasks.processing import compute_difference_task
 
     task = compute_difference_task.delay(
-        task_id_a=task_id_a,
-        task_id_b=task_id_b,
+        task_id_a=req.task_id_a,
+        task_id_b=req.task_id_b,
     )
     return {"task_id": task.id}
 

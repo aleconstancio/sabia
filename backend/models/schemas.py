@@ -50,3 +50,25 @@ class UfResponse(BaseModel):
 
 class CityResponse(BaseModel):
     nome: str
+
+
+class ExportPdfRequest(BaseModel):
+    task_id: str
+    format: str = "pdf"
+    overlays: list[str] = []
+
+
+class ProcessBatchRequest(BaseModel):
+    image_ids: list[str]
+    coordinates: list[list[float]]
+    product: str
+
+
+class ComputeDifferenceRequest(BaseModel):
+    task_id_a: str
+    task_id_b: str
+    coordinates: list[list[float]]
+
+
+class DownloadBatchRequest(BaseModel):
+    task_ids: list[str]
