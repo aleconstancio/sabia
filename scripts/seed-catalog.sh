@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Manual seed script for users who run `docker compose up -d` and want to
+# populate the catalog afterwards. If you prefer the one-command approach,
+# use `docker compose --profile setup run --rm seed` instead.
 set -euo pipefail
 
 # Resolve script directory and project root
