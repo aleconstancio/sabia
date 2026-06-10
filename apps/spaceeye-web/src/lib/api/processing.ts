@@ -79,7 +79,6 @@ export async function processImage(imageId: string) {
           clearInterval(pollInterval);
           mapState.isLoading = false;
           mapState.showProcessingViewer = false;
-          mapState.completedTaskIds = [...mapState.completedTaskIds, data.task_id];
           showOverlayResult(status.result);
           addRecord({
             imageId: imageId,

@@ -176,15 +176,6 @@
     window.history.replaceState({}, '', url);
   }
 
-  function copyShareLink() {
-    if (!browser || !mapState.polygonCoords || !mapState.taskId) return;
-    const params = new URLSearchParams();
-    params.set('coords', JSON.stringify(mapState.polygonCoords));
-    params.set('image', mapState.taskId);
-    params.set('product', mapState.selectedProduct);
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    navigator.clipboard.writeText(url);
-  }
 
   function restoreBookmark(coords: number[][][], name: string) {
     mapState.polygonCoords = coords;
