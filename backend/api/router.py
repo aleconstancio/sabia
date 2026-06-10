@@ -22,8 +22,10 @@ with open(_datasets_path, "r", encoding="utf-8") as f:
 
 
 @router.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(db: AsyncSession = Depends(get_db)):
+    from backend.api.health import check_database
+    db_status = await check_database(db)
+    return {"status": "ok", **db_status}
 
 
 @router.get("/collections")

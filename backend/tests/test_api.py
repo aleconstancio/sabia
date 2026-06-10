@@ -1,8 +1,10 @@
 import respx
 import httpx
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 from backend.main import app
+from backend.api.deps import get_db
 
 
 @pytest.fixture
@@ -11,12 +13,40 @@ def client():
     return AsyncClient(transport=transport, base_url="http://test")
 
 
+@pytest.fixture
+def client_with_mock_db():
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar.return_value = 0
+    mock_session.execute.return_value = mock_result
+
+    async def override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    transport = ASGITransport(app=app)
+    c = AsyncClient(transport=transport, base_url="http://test")
+    yield c
+    app.dependency_overrides.clear()
+
+
 @pytest.mark.asyncio
 async def test_health_endpoint(client):
     resp = await client.get("/api/health")
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_detailed(client_with_mock_db):
+    resp = await client_with_mock_db.get("/api/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "database" in data
+    assert "catalog_count" in data
+    assert data["database"] in ("connected", "disconnected")
 
 
 @pytest.mark.asyncio
