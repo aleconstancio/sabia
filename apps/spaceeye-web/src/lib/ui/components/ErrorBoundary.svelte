@@ -36,8 +36,19 @@
       toast.error(fallbackTitle, { description: errorInfo.slice(0, 120) });
       event.preventDefault();
     };
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
+      error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      errorInfo = String(event.reason);
+      onError?.(error);
+      toast.error(fallbackTitle, { description: errorInfo.slice(0, 120) });
+      event.preventDefault();
+    };
     window.addEventListener('error', handler);
-    return () => window.removeEventListener('error', handler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+    return () => {
+      window.removeEventListener('error', handler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+    };
   });
 
   function retry() {

@@ -24,6 +24,7 @@
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import OnboardingDialog from '$lib/components/OnboardingDialog.svelte';
   import ProductInfo from '$lib/components/ProductInfo.svelte';
+  import { toast } from 'svelte-sonner';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
   import { createProfile } from '$lib/api/client';
@@ -43,6 +44,7 @@
   let useSwipe = $state(false);
   let drawnItemsGroup = $state<L.FeatureGroup | null>(null);
   let showOnboarding = $state(false);
+  let isSavingProfile = $state(false);
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -171,17 +173,25 @@
   }
 
   async function saveAsProfile() {
-    if (!mapState.polygonCoords) return;
+    if (!mapState.polygonCoords || isSavingProfile) return;
     const name = prompt('Nome para este perfil:');
-    if (!name) return;
-    await createProfile({
-      name,
-      polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
-      satellite_data: mapState.lastStats ? {
-        product: mapState.selectedProduct,
-        stats: mapState.lastStats,
-      } : undefined,
-    });
+    if (!name?.trim()) return;
+    isSavingProfile = true;
+    try {
+      await createProfile({
+        name: name.trim(),
+        polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
+        satellite_data: mapState.lastStats ? {
+          product: mapState.selectedProduct,
+          stats: mapState.lastStats,
+        } : undefined,
+      });
+      toast.success('Perfil salvo com sucesso!');
+    } catch {
+      toast.error('Falha ao salvar perfil');
+    } finally {
+      isSavingProfile = false;
+    }
   }
 
   function updateShareUrl(imageId: string) {
@@ -198,8 +208,12 @@
   function restoreBookmark(coords: number[][][], name: string) {
     mapState.polygonCoords = coords;
     if (map && mapState.polygonCoords) {
+      if (drawnItemsGroup) {
+        drawnItemsGroup.clearLayers();
+      }
       const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
       map.addLayer(polygon);
+      drawnItemsGroup?.addLayer(polygon);
       map.fitBounds(polygon.getBounds());
       const center = polygon.getCenter();
       mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
@@ -277,6 +291,7 @@
     onClearOverlay={clearOverlay}
     onExportPdf={doExportPdf}
     onSaveProfile={saveAsProfile}
+    isSavingProfile={isSavingProfile}
     showCompare={mapState.showComparison}
     showTimelapse={showTimelapse}
   />
@@ -316,7 +331,7 @@
 />
 
 {#if mapState.polygonCentroid && (mapState.showImageGallery || mapState.hasOverlay)}
-  <div class="absolute right-4 top-20 z-[999] w-72 space-y-3">
+  <div class="absolute right-2 sm:right-4 top-16 sm:top-20 z-[999] w-56 sm:w-72 space-y-3">
     <WeatherPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} {onWeatherData} />
     <SoilPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />
     <LandCoverPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />

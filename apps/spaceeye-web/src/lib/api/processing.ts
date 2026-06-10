@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { toast } from 'svelte-sonner';
 import { mapState } from '$lib/stores/map.svelte';
 import { addRecord } from '$lib/stores/history.svelte';
 import type { Map as LeafletMap } from 'leaflet';
@@ -31,8 +32,11 @@ interface ProcessResult {
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+let _processPollInterval: ReturnType<typeof setInterval> | null = null;
+
 export async function searchImages() {
   if (!mapState.polygonCoords) return;
+  if (mapState.isLoading) return;
   mapState.isLoading = true;
   mapState.searchError = '';
   try {
@@ -56,17 +60,24 @@ export async function searchImages() {
     mapState.showImageGallery = true;
   } catch (e: unknown) {
     mapState.searchError = (e as Error).message || 'Erro ao buscar imagens';
+    toast.error('Falha ao buscar imagens', { description: (e as Error).message });
   } finally {
     mapState.isLoading = false;
   }
 }
 
 export async function processImage(imageId: string) {
+  if (_processPollInterval) {
+    clearInterval(_processPollInterval);
+    _processPollInterval = null;
+  }
+
+  if (mapState.isLoading) return;
+
   mapState.isLoading = true;
   mapState.showImageGallery = false;
   mapState.showProcessingViewer = true;
 
-  let pollInterval: ReturnType<typeof setInterval>;
   let attempts = 0;
   const MAX = 120;
 
@@ -84,16 +95,19 @@ export async function processImage(imageId: string) {
     const data = await resp.json();
     mapState.taskId = data.task_id;
 
-    pollInterval = setInterval(async () => {
+    _processPollInterval = setInterval(async () => {
       if (!mapState.showProcessingViewer) {
-        clearInterval(pollInterval);
+        clearInterval(_processPollInterval!);
+        _processPollInterval = null;
         mapState.isLoading = false;
         return;
       }
-      if (++attempts >= MAX) {
-        clearInterval(pollInterval);
+        if (++attempts >= MAX) {
+        clearInterval(_processPollInterval!);
+        _processPollInterval = null;
         mapState.isLoading = false;
         mapState.processingPhase = 'Timeout';
+        toast.error('Processamento expirou. Tente novamente.');
         return;
       }
       try {
@@ -103,7 +117,8 @@ export async function processImage(imageId: string) {
         mapState.processingPhase = status.phase || '';
 
         if (status.status === 'done') {
-          clearInterval(pollInterval);
+          clearInterval(_processPollInterval!);
+          _processPollInterval = null;
           mapState.isLoading = false;
           mapState.showProcessingViewer = false;
           showOverlayResult(status.result);
@@ -133,19 +148,23 @@ export async function processImage(imageId: string) {
             });
           } catch { /* non-critical, history store has backup */ }
         } else if (status.status === 'error') {
-          clearInterval(pollInterval);
+          clearInterval(_processPollInterval!);
+          _processPollInterval = null;
           mapState.isLoading = false;
           mapState.processingPhase = 'Erro: ' + (status.error || 'Falha no processamento');
         }
       } catch {
-        clearInterval(pollInterval);
+        clearInterval(_processPollInterval!);
+        _processPollInterval = null;
         mapState.isLoading = false;
         mapState.processingPhase = 'Falha na conexao';
+        toast.error('Falha na conexão. Tente novamente.');
       }
     }, 1000);
   } catch {
     mapState.isLoading = false;
     mapState.processingPhase = 'Erro ao iniciar processamento';
+    toast.error('Falha ao iniciar processamento');
   }
 }
 
@@ -190,6 +209,8 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
     a.download = `spaceeye-${imageId.slice(0, 20)}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+  } else {
+    toast.error('Falha ao exportar PDF');
   }
 }
 
@@ -204,6 +225,8 @@ export async function downloadGeotiff(taskId: string) {
     a.download = `spaceeye-${taskId.slice(0, 8)}.tif`;
     a.click();
     URL.revokeObjectURL(url);
+  } else {
+    toast.error('Falha ao baixar GeoTIFF');
   }
 }
 
@@ -222,5 +245,7 @@ export async function downloadBatch(taskIds: string[]) {
     a.download = 'spaceeye-batch.zip';
     a.click();
     URL.revokeObjectURL(url);
+  } else {
+    toast.error('Falha ao baixar lote');
   }
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { toggleMode } from 'mode-watcher';
+  import { toast } from 'svelte-sonner';
   import { browser } from '$app/environment';
   import SearchMenu from '$lib/components/SearchMenu.svelte';
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
@@ -20,17 +21,20 @@
     onClearOverlay = () => {},
     onExportPdf = () => {},
     onSaveProfile = () => {},
+    isSavingProfile = false,
     showCompare = false,
     showTimelapse = false,
   } = $props();
 
   function copyShareLink() {
-    if (!browser) return;
+    if (!browser || !mapState.polygonCoords) return;
     const params = new URLSearchParams();
-    if (mapState.polygonCoords) params.set('coords', JSON.stringify(mapState.polygonCoords));
+    params.set('coords', JSON.stringify(mapState.polygonCoords));
     if (mapState.taskId) params.set('image', mapState.taskId);
     params.set('product', mapState.selectedProduct);
-    navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?${params.toString()}`);
+    navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?${params.toString()}`)
+      .then(() => toast.success('Link copiado!'))
+      .catch(() => toast.error('Falha ao copiar link'));
   }
 
   async function handleRestore(r: AnalysisRecord) {
@@ -44,8 +48,8 @@
 <header
   class="sticky top-0 shrink-0 z-30 transition-all duration-300 bg-background/55 backdrop-blur-xl border-b border-border"
 >
-  <div class="flex items-center justify-between gap-4 px-4 py-2">
-    <div class="flex items-center gap-3 min-w-0">
+  <div class="flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 py-2 overflow-x-auto">
+    <div class="flex items-center gap-3 min-w-0 shrink-0">
       <button
         onclick={() => mapState.sidebarOpen = !mapState.sidebarOpen}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
@@ -62,7 +66,7 @@
       <SearchMenu {navigateToCity} />
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <ConnectionStatus />
       <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
         Dashboard
@@ -84,7 +88,9 @@
         <Button variant="ghost" size="sm" onclick={onExportPdf}>PDF</Button>
       {/if}
       {#if mapState.polygonCoords}
-        <Button variant="outline" size="sm" onclick={onSaveProfile}>Salvar Perfil</Button>
+        <Button variant="outline" size="sm" onclick={onSaveProfile} disabled={isSavingProfile}>
+          {isSavingProfile ? 'Salvando...' : 'Salvar Perfil'}
+        </Button>
       {/if}
       <Select bind:value={mapState.selectedCollection} options={[
         { value: 'cbers4a', label: 'CBERS-4A' },
