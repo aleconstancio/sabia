@@ -13,10 +13,30 @@ function persist() {
   localStorage.setItem('spaceeye_history', JSON.stringify(_history));
 }
 
+async function persistToBackend(rec: AnalysisRecord) {
+  try {
+    const API_URL = import.meta.env.VITE_API_URL || '/api';
+    await fetch(`${API_URL}/analyses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_id: rec.imageId,
+        collection: rec.collection,
+        product: rec.product,
+        polygon: { type: 'Polygon', coordinates: rec.polygonCoords },
+        centroid: rec.centroid,
+        statistics: rec.stats,
+        cloud_cover: rec.cloudCover,
+      }),
+    });
+  } catch { /* offline — localStorage backup is fine */ }
+}
+
 export function addRecord(rec: Omit<AnalysisRecord, 'id' | 'timestamp'>) {
   const r: AnalysisRecord = { id: crypto.randomUUID(), timestamp: new Date().toISOString(), ...rec };
   _history = [r, ..._history].slice(0, 50);
   persist();
+  persistToBackend(r);
   return r;
 }
 

@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
-import type { ImageResult } from './types';
+import type { ImageResult, SavedAnalysis } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -30,4 +30,33 @@ export async function getCities(uf: string): Promise<string[]> {
   return api.get(`/ibge/cidades/${uf}`);
 }
 
-export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus } from './types';
+export async function saveAnalysis(data: {
+  image_id: string;
+  collection: string;
+  product: string;
+  polygon: { type: string; coordinates: number[][][] };
+  centroid?: { lat: number; lon: number };
+  statistics?: Record<string, unknown>;
+}): Promise<{ id: string }> {
+  return api.post('/analyses', data);
+}
+
+export async function listAnalyses(params?: {
+  product?: string;
+  collection?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ analyses: SavedAnalysis[]; total: number }> {
+  const query: Record<string, string> = {};
+  if (params?.product) query.product = params.product;
+  if (params?.collection) query.collection = params.collection;
+  if (params?.limit) query.limit = String(params.limit);
+  if (params?.offset) query.offset = String(params.offset);
+  return api.get('/analyses', query);
+}
+
+export async function deleteAnalysis(id: string): Promise<{ deleted: boolean }> {
+  return api.delete(`/analyses/${id}`);
+}
+
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis } from './types';

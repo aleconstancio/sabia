@@ -94,3 +94,16 @@ export interface StatsData {
   };
   [key: string]: unknown;
 }
+
+export interface SavedAnalysis {
+  id: string;
+  image_id: string;
+  collection: string;
+  product: string;
+  polygon: { type: string; coordinates: number[][][] };
+  centroid: { lat: number; lon: number } | null;
+  statistics: Record<string, unknown> | null;
+  acquired_at: string | null;
+  cloud_cover: number | null;
+  created_at: string | null;
+}
