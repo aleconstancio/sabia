@@ -19,6 +19,7 @@
     onToggleTimelapse = () => {},
     onClearOverlay = () => {},
     onExportPdf = () => {},
+    onSaveProfile = () => {},
     showCompare = false,
     showTimelapse = false,
   } = $props();
@@ -81,6 +82,9 @@
         <Button variant="ghost" size="sm" onclick={copyShareLink}>Link</Button>
         <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>GeoTIFF</Button>
         <Button variant="ghost" size="sm" onclick={onExportPdf}>PDF</Button>
+      {/if}
+      {#if mapState.polygonCoords}
+        <Button variant="outline" size="sm" onclick={onSaveProfile}>Salvar Perfil</Button>
       {/if}
       <Select bind:value={mapState.selectedCollection} options={[
         { value: 'cbers4a', label: 'CBERS-4A' },

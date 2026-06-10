@@ -26,6 +26,7 @@
   import ProductInfo from '$lib/components/ProductInfo.svelte';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
+  import { createProfile } from '$lib/api/client';
   import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
   import SwipeComparison from '$lib/components/SwipeComparison.svelte';
@@ -169,6 +170,20 @@
     await exportPdf(mapState.taskId, null);
   }
 
+  async function saveAsProfile() {
+    if (!mapState.polygonCoords) return;
+    const name = prompt('Nome para este perfil:');
+    if (!name) return;
+    await createProfile({
+      name,
+      polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
+      satellite_data: mapState.lastStats ? {
+        product: mapState.selectedProduct,
+        stats: mapState.lastStats,
+      } : undefined,
+    });
+  }
+
   function updateShareUrl(imageId: string) {
     if (!browser || !mapState.polygonCoords) return;
     const params = new URLSearchParams();
@@ -261,6 +276,7 @@
     onToggleTimelapse={() => showTimelapse = !showTimelapse}
     onClearOverlay={clearOverlay}
     onExportPdf={doExportPdf}
+    onSaveProfile={saveAsProfile}
     showCompare={mapState.showComparison}
     showTimelapse={showTimelapse}
   />
