@@ -62,12 +62,12 @@ export async function checkMonitor(m: Monitor): Promise<string> {
       const data = await resp.json();
       const newImages = data.images || [];
       const result = newImages.length > 0 ? `Nova imagem: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'Sem novidades';
-      const idx = _monitors.findIndex(x => x.id === m.id);
-      if (idx >= 0) {
-        _monitors[idx].lastChecked = new Date().toISOString();
-        _monitors[idx].lastResult = result;
-        persist();
-      }
+      _monitors = _monitors.map(monitor =>
+        monitor.id === m.id
+          ? { ...monitor, lastChecked: new Date().toISOString(), lastResult: result }
+          : monitor
+      );
+      persist();
       return result;
     }
   } catch { /* network error */ }

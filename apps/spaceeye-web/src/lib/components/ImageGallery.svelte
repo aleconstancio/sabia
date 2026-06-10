@@ -26,11 +26,11 @@
   let hoveredImage = $state<any>(null);
 
   function onImgLoad(id: string) {
-    loadedMap.set(id, true);
+    loadedMap = new Map(loadedMap).set(id, true);
   }
   function onImgError(id: string) {
     errorMap.set(id, true);
-    loadedMap.set(id, true);
+    loadedMap = new Map(loadedMap).set(id, true);
   }
 </script>
 
