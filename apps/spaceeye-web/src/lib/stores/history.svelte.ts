@@ -1,14 +1,4 @@
-export interface AnalysisRecord {
-  id: string;
-  timestamp: string;
-  imageId: string;
-  product: string;
-  collection: string;
-  cloudCover: number | null;
-  polygonCoords: number[][][];
-  centroid: { lat: number; lon: number } | null;
-  stats?: any;
-}
+import type { AnalysisRecord } from '$lib/api/types';
 
 let _history = $state<AnalysisRecord[]>([]);
 

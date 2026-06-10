@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { getHistory, clearHistory } from '$lib/stores/history.svelte.ts';
+  import { getHistory, clearHistory } from '$lib/stores/history.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import type { AnalysisRecord } from '$lib/api/types';
 
-  let { onRestore = (r: any) => {} } = $props();
-  let history = $state<any[]>([]);
+  let { onRestore = (r: AnalysisRecord) => {} } = $props();
+  let history = $state<AnalysisRecord[]>([]);
   let show = $state(false);
 
   function refresh() { history = getHistory(); }

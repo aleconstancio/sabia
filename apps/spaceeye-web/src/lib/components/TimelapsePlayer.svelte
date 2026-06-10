@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import type { ImageResult } from '$lib/api/types';
 
   let {
-    images = [] as any[],
-    polygonCoords = null as any,
+    images = [] as ImageResult[],
+    polygonCoords = null as number[][][] | null,
     product = 'NDVI',
     onFrameChange = (imageId: string) => {},
   } = $props();
@@ -97,7 +98,7 @@
   />
   {#if images[frameIndex]}
     <div class="flex justify-between text-xs text-muted-foreground mt-1">
-      <span>{new Date(images[frameIndex].acquired_at || images[frameIndex].date).toLocaleDateString('pt-BR')}</span>
+      <span>{new Date(images[frameIndex].acquired_at).toLocaleDateString('pt-BR')}</span>
       <span>nuvem: {images[frameIndex].cloud_cover?.toFixed(0) ?? '?'}%</span>
     </div>
   {/if}

@@ -1,16 +1,17 @@
 <script lang="ts">
   import Badge from '$lib/ui/components/Badge.svelte';
   import ImageMetadata from '$lib/components/ImageMetadata.svelte';
+  import type { ImageResult } from '$lib/api/types';
 
   let {
-    images = [] as any[],
+    images = [] as ImageResult[],
     selectedProduct = 'NDVI',
     processImage = (imageId: string) => {},
     selectionMode = false,
     selectedIds = [] as string[],
     onToggleSelect = (imageId: string) => {},
   }: {
-    images: any[];
+    images: ImageResult[];
     selectedProduct: string;
     processImage: (imageId: string) => void;
     selectionMode?: boolean;
@@ -23,7 +24,7 @@
 
   let loadedMap = $state(new Map<string, boolean>());
   let errorMap = $state(new Map<string, boolean>());
-  let hoveredImage = $state<any>(null);
+  let hoveredImage = $state<ImageResult | null>(null);
 
   function onImgLoad(id: string) {
     loadedMap = new Map(loadedMap).set(id, true);
@@ -54,7 +55,7 @@
     >
       {#if img.thumbnail_url && !errorMap.get(img.id)}
         {#if !loadedMap.get(img.id)}
-          <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse" />
+          <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse"></div>
         {/if}
         <img
           src={img.thumbnail_url}
@@ -75,8 +76,8 @@
       {/if}
       <p class="font-mono text-xs truncate mb-1">{img.id}</p>
       <div class="flex items-center justify-between">
-        <Badge variant={img.cloud_cover < 20 ? 'success' : img.cloud_cover < 50 ? 'warning' : 'destructive'}>
-          {img.cloud_cover?.toFixed(1)}% nuvem
+        <Badge variant={(img.cloud_cover ?? 100) < 20 ? 'success' : (img.cloud_cover ?? 100) < 50 ? 'warning' : 'destructive'}>
+          {img.cloud_cover?.toFixed(1) ?? '—'}% nuvem
         </Badge>
         <span class="text-xs text-muted-foreground">
           {new Date(img.acquired_at).toLocaleDateString('pt-BR')}

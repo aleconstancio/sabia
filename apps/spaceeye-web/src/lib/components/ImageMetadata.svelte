@@ -1,5 +1,7 @@
 <script lang="ts">
-  let { image = null as any }: { image: any } = $props();
+  import type { ImageResult } from '$lib/api/types';
+
+  let { image = null as ImageResult | null }: { image: ImageResult | null } = $props();
 </script>
 
 {#if image}

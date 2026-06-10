@@ -1,6 +1,33 @@
 import L from 'leaflet';
 import { mapState } from '$lib/stores/map.svelte';
-import { addRecord } from '$lib/stores/history.svelte.ts';
+import { addRecord } from '$lib/stores/history.svelte';
+import type { Map as LeafletMap } from 'leaflet';
+
+interface SearchRequestBody {
+  coordinates: number[][][];
+  limit: number;
+  collections?: string[];
+  date_from?: string;
+  date_to?: string;
+  max_cloud?: number;
+  sort_by?: string;
+  sort_order?: string;
+}
+
+interface ExportPdfRequestBody {
+  image_id: string;
+  product: string;
+  date: string;
+  cloud_cover: number | null;
+  weather?: Record<string, unknown>;
+  overlay_path?: string;
+}
+
+interface ProcessResult {
+  bounds: [[number, number], [number, number]];
+  path: string;
+  statistics?: Record<string, unknown>;
+}
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -9,7 +36,7 @@ export async function searchImages() {
   mapState.isLoading = true;
   mapState.searchError = '';
   try {
-    const body: any = { coordinates: mapState.polygonCoords, limit: 50 };
+    const body: SearchRequestBody = { coordinates: mapState.polygonCoords, limit: 50 };
     if (mapState.selectedCollection) body.collections = [mapState.selectedCollection];
     if (mapState.filterDateFrom) body.date_from = mapState.filterDateFrom;
     if (mapState.filterDateTo) body.date_to = mapState.filterDateTo;
@@ -27,8 +54,8 @@ export async function searchImages() {
     mapState.results = data.images || [];
     mapState.showPolygonModal = false;
     mapState.showImageGallery = true;
-  } catch (e: any) {
-    mapState.searchError = e.message || 'Erro ao buscar imagens';
+  } catch (e: unknown) {
+    mapState.searchError = (e as Error).message || 'Erro ao buscar imagens';
   } finally {
     mapState.isLoading = false;
   }
@@ -100,16 +127,16 @@ export async function processImage(imageId: string) {
         mapState.processingPhase = 'Falha na conexao';
       }
     }, 1000);
-  } catch (e: any) {
+  } catch {
     mapState.isLoading = false;
     mapState.processingPhase = 'Erro ao iniciar processamento';
   }
 }
 
-export function showOverlayResult(result: any) {
+export function showOverlayResult(result: ProcessResult) {
   if (!result || !mapState.map) return;
-  const bounds = result.bounds as [[number, number], [number, number]];
-  const map = mapState.map as any;
+  const bounds = result.bounds;
+  const map = mapState.map as LeafletMap;
   const filename = result.path.split('/').pop();
   const overlay = L.imageOverlay(`${API_URL}/overlay/${filename}`, bounds, { opacity: 0.8 });
   map.addLayer(overlay);
@@ -122,16 +149,16 @@ export function showOverlayResult(result: any) {
 
 export async function exportPdf(imageId: string, cloudCover: number | null) {
   const weather = mapState.lastWeatherData;
-  const body: any = {
+  const body: ExportPdfRequestBody = {
     image_id: imageId,
     product: mapState.selectedProduct,
     date: new Date().toISOString(),
     cloud_cover: cloudCover,
     weather: weather ? {
-      temperature: weather.current?.temperature_2m,
-      humidity: weather.current?.relative_humidity_2m,
-      precipitation: weather.current?.precipitation,
-    } : {},
+      temperature: weather.temperature,
+      humidity: weather.humidity,
+      precipitation: weather.precipitation,
+    } : undefined,
   };
   if (mapState.lastOverlayPath) body.overlay_path = mapState.lastOverlayPath;
   const resp = await fetch(`${API_URL}/export/pdf`, {

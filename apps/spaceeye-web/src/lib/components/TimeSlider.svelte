@@ -1,9 +1,11 @@
 <script lang="ts">
+  import type { ImageResult } from '$lib/api/types';
+
   let {
-    images = [] as any[],
+    images = [] as ImageResult[],
     onSelect = (imageId: string) => {}
   }: {
-    images: any[];
+    images: ImageResult[];
     onSelect: (imageId: string) => void;
   } = $props();
 
@@ -28,9 +30,9 @@
     {#if current}
       <div class="flex items-center justify-between mt-2">
         <div class="flex items-center gap-2">
-          <span class="text-xs text-muted-foreground">{new Date(current.date).toLocaleDateString('pt-BR')}</span>
-          <span class="text-xs" class:text-emerald-400={current.cloud_cover < 20} class:text-amber-400={current.cloud_cover >= 20 && current.cloud_cover < 50} class:text-red-400={current.cloud_cover >= 50}>
-            {current.cloud_cover?.toFixed(0)}%
+          <span class="text-xs text-muted-foreground">{new Date(current.acquired_at).toLocaleDateString('pt-BR')}</span>
+          <span class="text-xs" class:text-emerald-400={(current.cloud_cover ?? 100) < 20} class:text-amber-400={(current.cloud_cover ?? 100) >= 20 && (current.cloud_cover ?? 100) < 50} class:text-red-400={(current.cloud_cover ?? 100) >= 50}>
+            {current.cloud_cover?.toFixed(0) ?? '—'}%
           </span>
         </div>
         <button

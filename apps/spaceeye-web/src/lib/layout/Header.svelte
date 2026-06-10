@@ -10,6 +10,7 @@
   import { restorePolygonOnMap } from '$lib/utils/map-helpers';
   import { mapState } from '$lib/stores/map.svelte.ts';
   import { downloadGeotiff } from '$lib/api/processing';
+  import type { AnalysisRecord } from '$lib/api/types';
 
   let {
     navigateToCity = (lat: number, lng: number) => {},
@@ -30,7 +31,7 @@
     navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?${params.toString()}`);
   }
 
-  async function handleRestore(r: any) {
+  async function handleRestore(r: AnalysisRecord) {
     if (r?.polygonCoords) {
       mapState.polygonCoords = r.polygonCoords;
       await restorePolygonOnMap(r.polygonCoords);

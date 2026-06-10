@@ -1,6 +1,8 @@
 <script lang="ts">
-  let { lat = 0, lon = 0, polygonCoords = null as any }: { lat: number; lon: number; polygonCoords?: any } = $props();
-  let soil: any = $state(null);
+  import type { SoilData, SoilZonalResponse } from '$lib/api/types';
+
+  let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
+  let soil: SoilData | SoilZonalResponse | null = $state(null);
   let loading = $state(false);
   let error = $state('');
 
@@ -24,24 +26,26 @@
       const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body });
       if (!resp.ok) throw new Error('Soil fetch failed');
       soil = await resp.json();
-    } catch (e: any) {
-      error = e.message;
+    } catch (e: unknown) {
+      error = (e as Error).message;
     } finally {
       loading = false;
     }
   }
 
   function findValue(layer: string): number | null {
-    if (!soil?.properties?.layers) return null;
-    const l = soil.properties.layers.find((l: any) => l.name === layer);
+    if (!soil || !('properties' in soil)) return null;
+    const props = (soil as Record<string, unknown>).properties as { layers?: Array<{ name: string; depths?: Array<{ values?: { mean?: number } }> }> } | undefined;
+    if (!props?.layers) return null;
+    const l = props.layers.find((l) => l.name === layer);
     return l?.depths?.[0]?.values?.mean ?? null;
   }
 
-  let ph = $derived(!polygonCoords ? findValue('phh2o') : soil?.ph);
-  let oc = $derived(!polygonCoords ? findValue('oc') : soil?.organic_carbon_gkg);
-  let sand = $derived(!polygonCoords ? findValue('sand') : soil?.sand_pct);
-  let silt = $derived(!polygonCoords ? findValue('silt') : soil?.silt_pct);
-  let clay = $derived(!polygonCoords ? findValue('clay') : soil?.clay_pct);
+  let ph = $derived(!polygonCoords ? findValue('phh2o') : (soil as SoilZonalResponse | null)?.ph);
+  let oc = $derived(!polygonCoords ? findValue('oc') : (soil as SoilZonalResponse | null)?.organic_carbon_gkg);
+  let sand = $derived(!polygonCoords ? findValue('sand') : (soil as SoilZonalResponse | null)?.sand_pct);
+  let silt = $derived(!polygonCoords ? findValue('silt') : (soil as SoilZonalResponse | null)?.silt_pct);
+  let clay = $derived(!polygonCoords ? findValue('clay') : (soil as SoilZonalResponse | null)?.clay_pct);
   let nitrogen = $derived(!polygonCoords ? findValue('nitrogen') : null);
   let cec = $derived(!polygonCoords ? findValue('cec') : null);
 </script>
@@ -50,42 +54,42 @@
   <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Solo</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
       <span>Carregando...</span>
     </div>
   {:else if error}
     <p class="text-sm text-destructive">{error}</p>
   {:else if soil}
     {#if polygonCoords}
-      <p class="text-xs text-muted-foreground mb-2">{soil.source}</p>
+      <p class="text-xs text-muted-foreground mb-2">{(soil as SoilZonalResponse).source}</p>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <p class="text-xs text-muted-foreground">pH</p>
-          <p class="text-lg font-bold">{soil.ph?.toFixed(1) ?? '—'}</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).ph?.toFixed(1) ?? '—'}</p>
         </div>
         <div>
           <p class="text-xs text-muted-foreground">Carbono Org.</p>
-          <p class="text-lg font-bold">{soil.organic_carbon_gkg?.toFixed(1) ?? '—'} g/kg</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).organic_carbon_gkg?.toFixed(1) ?? '—'} g/kg</p>
         </div>
         <div>
           <p class="text-xs text-muted-foreground">Areia</p>
-          <p class="text-lg font-bold">{soil.sand_pct?.toFixed(0) ?? '—'}%</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).sand_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
           <p class="text-xs text-muted-foreground">Silte</p>
-          <p class="text-lg font-bold">{soil.silt_pct?.toFixed(0) ?? '—'}%</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).silt_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
           <p class="text-xs text-muted-foreground">Argila</p>
-          <p class="text-lg font-bold">{soil.clay_pct?.toFixed(0) ?? '—'}%</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).clay_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
           <p class="text-xs text-muted-foreground">Pontos amostrados</p>
-          <p class="text-lg font-bold">{soil.points_sampled ?? '—'}</p>
+          <p class="text-lg font-bold">{(soil as SoilZonalResponse).points_sampled ?? '—'}</p>
         </div>
       </div>
-      {#if soil.note}
-        <p class="text-xs text-muted-foreground italic mt-2">{soil.note}</p>
+      {#if (soil as SoilZonalResponse).note}
+        <p class="text-xs text-muted-foreground italic mt-2">{(soil as SoilZonalResponse).note}</p>
       {/if}
     {:else}
       <div class="grid grid-cols-2 gap-3">

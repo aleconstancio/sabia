@@ -1,10 +1,25 @@
 <script lang="ts">
+  import type { WeatherData } from '$lib/api/types';
+
+  interface WeatherApiResponse {
+    current?: {
+      temperature_2m?: number;
+      apparent_temperature?: number;
+      relative_humidity_2m?: number;
+      precipitation?: number;
+      soil_moisture_0_to_7cm?: number;
+    };
+    daily?: {
+      precipitation_sum?: number[];
+    };
+  }
+
   let {
     lat = 0,
     lon = 0,
-    onWeatherData = (_data: any) => {},
-  }: { lat: number; lon: number; onWeatherData?: (data: any) => void } = $props();
-  let weather: any = $state(null);
+    onWeatherData = (_data: WeatherData) => {},
+  }: { lat: number; lon: number; onWeatherData?: (data: WeatherData) => void } = $props();
+  let weather: WeatherApiResponse | null = $state(null);
   let loading = $state(false);
   let error = $state('');
 
@@ -26,9 +41,16 @@
       const resp = await fetch(`${API_URL}/weather/${lat}/${lon}`);
       if (!resp.ok) throw new Error('Weather fetch failed');
       weather = await resp.json();
-      onWeatherData(weather);
-    } catch (e: any) {
-      error = e.message;
+      if (weather?.current) {
+        onWeatherData({
+          temperature: weather.current.temperature_2m ?? 0,
+          precipitation: weather.current.precipitation ?? 0,
+          wind_speed: 0,
+          humidity: weather.current.relative_humidity_2m ?? 0,
+        });
+      }
+    } catch (e: unknown) {
+      error = (e as Error).message;
     } finally {
       loading = false;
     }

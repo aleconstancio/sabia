@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from '$lib/ui/components/Button.svelte';
   import { addBookmark, removeBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
+  import type { Bookmark } from '$lib/api/types';
 
   let {
     onSelect = (coords: number[][][], name: string) => {},
@@ -12,7 +13,7 @@
     currentCoords?: number[][][] | null;
   } = $props();
 
-  let bookmarks = $state<any[]>([]);
+  let bookmarks = $state<Bookmark[]>([]);
   let showPanel = $state(false);
 
   function loadBookmarks() {
@@ -30,7 +31,7 @@
     bookmarks = getBookmarks();
   }
 
-  function selectBookmark(b: any) {
+  function selectBookmark(b: Bookmark) {
     onSelect(b.coords, b.name);
     showPanel = false;
   }

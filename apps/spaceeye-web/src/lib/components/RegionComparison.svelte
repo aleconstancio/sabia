@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
+  import type { ImageResult } from '$lib/api/types';
 
   let {
-    imageA = null as any,
-    imageB = null as any,
-    polygonCoords = null as any,
-    polygonCentroid = null as { lat: number; lon: number },
+    imageA = null as ImageResult | null,
+    imageB = null as ImageResult | null,
+    polygonCoords = null as number[][][] | null,
+    polygonCentroid = null as { lat: number; lon: number } | null,
     product = 'NDVI',
   } = $props();
 
@@ -16,14 +17,14 @@
   let mapB: L.Map;
   let loadingA = $state(false);
   let loadingB = $state(false);
-  let overlayA: any = null;
-  let overlayB: any = null;
+  let overlayA: L.ImageOverlay | null = $state(null);
+  let overlayB: L.ImageOverlay | null = $state(null);
   let errorA = $state('');
   let errorB = $state('');
   let taskIdA = $state('');
   let taskIdB = $state('');
   let computingDiff = $state(false);
-  let diffOverlay: any = null;
+  let diffOverlay: L.ImageOverlay | null = $state(null);
   let diffError = $state('');
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -53,13 +54,13 @@
   });
 
   onDestroy(() => {
-    if (mapA) { mapA.remove(); (mapA as any) = null; }
-    if (mapB) { mapB.remove(); (mapB as any) = null; }
+    if (mapA) { mapA.remove(); }
+    if (mapB) { mapB.remove(); }
     if (overlayA) { overlayA.remove(); overlayA = null; }
     if (overlayB) { overlayB.remove(); overlayB = null; }
   });
 
-  async function processImage(image: any, side: 'A' | 'B') {
+  async function processImage(image: ImageResult, side: 'A' | 'B') {
     if (!image || !polygonCoords) return;
     if (side === 'A') { loadingA = true; errorA = ''; }
     else { loadingB = true; errorB = ''; }
@@ -110,9 +111,9 @@
           if (side === 'A') loadingA = false; else loadingB = false;
         }
       }, 1000);
-    } catch (e: any) {
-      if (side === 'A') { errorA = e.message; loadingA = false; }
-      else { errorB = e.message; loadingB = false; }
+    } catch (e: unknown) {
+      if (side === 'A') { errorA = (e as Error).message; loadingA = false; }
+      else { errorB = (e as Error).message; loadingB = false; }
     }
   }
 

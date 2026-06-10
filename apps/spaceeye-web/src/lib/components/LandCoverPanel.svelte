@@ -1,6 +1,6 @@
 <script lang="ts">
-  let { lat = 0, lon = 0, polygonCoords = null as any }: { lat: number; lon: number; polygonCoords?: any } = $props();
-  let landcover: any = $state(null);
+  let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
+  let landcover: Record<string, unknown> | null = $state(null);
   let loading = $state(false);
   let fetchError = $state('');
 
@@ -43,15 +43,17 @@
     </div>
   {:else if landcover}
     {#if polygonCoords}
-      <p class="text-xs text-muted-foreground mb-2">{landcover.source}</p>
-      <p class="text-xs text-muted-foreground mb-1">Centroide: {landcover.centroid?.lat?.toFixed(4)}, {landcover.centroid?.lon?.toFixed(4)}</p>
+      <p class="text-xs text-muted-foreground mb-2">{landcover.source as string}</p>
+      {#if landcover.centroid}
+        <p class="text-xs text-muted-foreground mb-1">Centroide: {(landcover.centroid as { lat?: number; lon?: number }).lat?.toFixed(4)}, {(landcover.centroid as { lat?: number; lon?: number }).lon?.toFixed(4)}</p>
+      {/if}
       {#if landcover.note}
-        <p class="text-xs text-muted-foreground italic">{landcover.note}</p>
+        <p class="text-xs text-muted-foreground italic">{landcover.note as string}</p>
       {/if}
     {:else}
-      <p class="text-xs text-muted-foreground mb-2">ESA WorldCover 2021 · {landcover.resolution}</p>
+      <p class="text-xs text-muted-foreground mb-2">ESA WorldCover 2021 · {landcover.resolution as string}</p>
       <div class="space-y-1 max-h-48 overflow-y-auto">
-        {#each Object.entries(landcover.classes) as [code, name]}
+        {#each Object.entries(landcover.classes as Record<string, string>) as [code, name]}
           <div class="flex items-center gap-2 text-sm">
             <div class="w-3 h-3 rounded flex-shrink-0" style="background-color: {classColors[parseInt(code)] || '#666'}"></div>
             <span class="text-foreground">{name}</span>

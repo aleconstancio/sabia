@@ -1,5 +1,7 @@
 <script lang="ts">
-  let { stats = null as any, product = 'NDVI' } = $props();
+  import type { StatsData } from '$lib/api/types';
+
+  let { stats = null as StatsData | null, product = 'NDVI' } = $props();
   let canvas: HTMLCanvasElement;
 
   function drawHistogram() {

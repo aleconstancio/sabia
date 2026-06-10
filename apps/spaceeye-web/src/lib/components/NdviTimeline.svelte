@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import type { ImageResult } from '$lib/api/types';
 
   let {
-    images = [] as any[],
-    polygonCoords = null as any,
+    images = [] as ImageResult[],
+    polygonCoords = null as number[][][] | null,
     product = 'NDVI',
   } = $props();
 
@@ -22,7 +23,7 @@
     if (images.length === 0) return;
     loading = true; error = '';
 
-    const ids = images.map((i: any) => i.id);
+    const ids = images.map((i) => i.id);
     try {
       const resp = await fetch(`${API_URL}/process/batch`, {
         method: 'POST',
@@ -39,7 +40,7 @@
           const sr = await fetch(`${API_URL}/tasks/${task.task_id}`);
           const status = await sr.json();
           if (status.status === 'done') {
-            const img = images.find((i: any) => i.id === task.image_id);
+            const img = images.find((i) => i.id === task.image_id);
             const rawValue = status.result?.statistics?.mean;
             const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
             if (img) {
@@ -52,15 +53,15 @@
       }
       results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       timelineData = results;
-    } catch (e: any) {
-      error = e.message;
+    } catch (e: unknown) {
+      error = (e as Error).message;
     } finally {
       loading = false;
     }
   }
 
-  let barData = $derived(timelineData.length > 0 ? timelineData : images.slice(0, 10).map((i: any) => ({
-    date: i.acquired_at || i.date,
+  let barData = $derived(timelineData.length > 0 ? timelineData : images.slice(0, 10).map((i) => ({
+    date: i.acquired_at,
     value: Math.max(0, 1 - (i.cloud_cover || 0) / 100),
   })));
   let maxVal = $derived(Math.max(...barData.map(d => d.value), 0.1));

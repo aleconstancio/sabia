@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
+  import type { ImageResult } from '$lib/api/types';
 
   let {
-    imageA = null as any,
-    imageB = null as any,
-    polygonCoords = null as any,
-    polygonCentroid = null as { lat: number; lon: number },
+    imageA = null as ImageResult | null,
+    imageB = null as ImageResult | null,
+    polygonCoords = null as number[][][] | null,
+    polygonCentroid = null as { lat: number; lon: number } | null,
     product = 'NDVI',
   } = $props();
 
@@ -32,7 +33,7 @@
     });
   });
 
-  async function processImage(image: any, side: 'A' | 'B') {
+  async function processImage(image: ImageResult, side: 'A' | 'B') {
     if (!image || !polygonCoords) return;
     loading = true;
     try {
@@ -87,11 +88,11 @@
 
   onDestroy(() => { if (map) map.remove(); });
 
-  function handleStart(e: any) { dragging = true; e.preventDefault(); }
-  function handleMove(e: any) {
+  function handleStart(e: MouseEvent | TouchEvent) { dragging = true; e.preventDefault(); }
+  function handleMove(e: MouseEvent | TouchEvent) {
     if (!dragging || !container || !overlayB) return;
     const rect = container.getBoundingClientRect();
-    const x = (e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX) - rect.left;
+    const x = (e.type.startsWith('touch') ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
     swipePos = Math.max(0, Math.min(100, (x / rect.width) * 100));
     overlayB.getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
   }
@@ -125,10 +126,10 @@
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-sm font-bold text-gray-600">↔</div>
     </div>
     <div class="absolute top-2 left-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at || imageA?.date).toLocaleDateString('pt-BR')}
+      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at).toLocaleDateString('pt-BR')}
     </div>
     <div class="absolute top-2 right-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at || imageB?.date).toLocaleDateString('pt-BR')}
+      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at).toLocaleDateString('pt-BR')}
     </div>
   {/if}
 </div>

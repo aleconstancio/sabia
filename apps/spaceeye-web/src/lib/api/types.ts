@@ -4,7 +4,7 @@ export interface ImageResult {
   cloud_cover: number | null;
   acquired_at: string;
   thumbnail_url: string | null;
-  footprint: any;
+  footprint: Record<string, unknown>;
 }
 
 export interface SoilData {
@@ -14,6 +14,18 @@ export interface SoilData {
   organic_carbon?: number;
   ph?: number;
   [key: string]: number | undefined;
+}
+
+export interface SoilZonalResponse {
+  source?: string;
+  ph?: number;
+  organic_carbon_gkg?: number;
+  sand_pct?: number;
+  silt_pct?: number;
+  clay_pct?: number;
+  points_sampled?: number;
+  note?: string;
+  [key: string]: unknown;
 }
 
 export interface WeatherData {
@@ -58,7 +70,7 @@ export interface AnalysisRecord {
   cloudCover: number | null;
   polygonCoords: number[][][];
   centroid: { lat: number; lon: number } | null;
-  stats?: any;
+  stats?: Record<string, unknown>;
 }
 
 export interface TaskStatus {
@@ -66,6 +78,19 @@ export interface TaskStatus {
   status: string;
   progress: number;
   phase: string;
-  result?: any;
+  result?: Record<string, unknown>;
   error?: string;
+}
+
+export interface StatsData {
+  mean?: number;
+  std?: number;
+  min?: number;
+  max?: number;
+  histogram?: {
+    deciles?: number[];
+    p10?: number;
+    p90?: number;
+  };
+  [key: string]: unknown;
 }

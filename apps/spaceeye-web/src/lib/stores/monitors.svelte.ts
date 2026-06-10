@@ -1,3 +1,5 @@
+import type { Bookmark } from '$lib/api/types';
+
 export interface Monitor {
   id: string;
   bookmarkId: string;
@@ -23,7 +25,7 @@ function persist() {
   localStorage.setItem('spaceeye_monitors', JSON.stringify(_monitors));
 }
 
-export function addMonitor(bookmark: any, product: string = 'NDVI', minCloudCover: number = 30): Monitor {
+export function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover: number = 30): Monitor {
   const m: Monitor = {
     id: crypto.randomUUID(),
     bookmarkId: bookmark.id,

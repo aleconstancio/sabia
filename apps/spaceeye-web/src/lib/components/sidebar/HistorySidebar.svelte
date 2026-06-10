@@ -3,10 +3,11 @@
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
   import { restorePolygonOnMap } from '$lib/utils/map-helpers';
   import { mapState } from '$lib/stores/map.svelte.ts';
+  import type { AnalysisRecord } from '$lib/api/types';
 
   let expanded = $state(true);
 
-  async function handleRestore(r: any) {
+  async function handleRestore(r: AnalysisRecord) {
     if (r?.polygonCoords) {
       mapState.polygonCoords = r.polygonCoords;
       await restorePolygonOnMap(r.polygonCoords);
@@ -27,4 +28,3 @@
     </div>
   {/if}
 </div>
-

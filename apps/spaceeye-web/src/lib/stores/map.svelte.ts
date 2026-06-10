@@ -1,11 +1,14 @@
-let _map: any = $state(null);
+import type { Map as LeafletMap } from 'leaflet';
+import type { ImageResult, WeatherData, AnalysisRecord } from '$lib/api/types';
+
+let _map: LeafletMap | null = $state(null);
 let _polygonCoords = $state<number[][][] | null>(null);
 let _polygonCentroid = $state<{lat: number; lon: number} | null>(null);
-let _results = $state<any[]>([]);
+let _results = $state<ImageResult[]>([]);
 let _selectedProduct = $state('NDVI');
 let _showLegend = $state(false);
 let _hasOverlay = $state(false);
-let _rasterOverlay: any = $state(null);
+let _rasterOverlay: unknown = $state(null);
 let _showPolygonModal = $state(false);
 let _showImageGallery = $state(false);
 let _showProcessingViewer = $state(false);
@@ -15,10 +18,10 @@ let _processingProgress = $state(0);
 let _processingPhase = $state('');
 let _taskId = $state('');
 let _searchError = $state('');
-let _comparisonFirst = $state<any>(null);
-let _comparisonSecond = $state<any>(null);
+let _comparisonFirst = $state<ImageResult | null>(null);
+let _comparisonSecond = $state<ImageResult | null>(null);
 let _selectedIds = $state<string[]>([]);
-let _lastWeatherData = $state<any>(null);
+let _lastWeatherData = $state<WeatherData | null>(null);
 let _lastOverlayPath = $state('');
 let _selectedCollection = $state('cbers4a');
 let _filterDateFrom = $state('');
@@ -26,7 +29,7 @@ let _filterDateTo = $state('');
 let _filterMaxCloud = $state<number | undefined>(undefined);
 let _filterSortBy = $state('acquired_at');
 let _filterSortOrder = $state('desc');
-let _lastStats = $state<any>(null);
+let _lastStats = $state<Record<string, unknown> | null>(null);
 let _sidebarOpen = $state(true);
 
 export const mapState = {
