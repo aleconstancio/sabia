@@ -134,11 +134,13 @@ class MndwiProduct(RasterProduct):
     Better than NDWI for urban water bodies and turbid water."""
     name = "MNDWI"
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
-        green = bands["green"].astype(np.float32)
-        swir = bands.get("swir1")
-        if swir is None:
-            swir = bands.get("nir")
-        swir = np.array(swir).astype(np.float32) if swir is not None else green
+        green = bands.get("green")
+        swir = bands.get("swir1") or bands.get("swir2")
+        if green is None or swir is None:
+            available = ", ".join(bands.keys())
+            raise ProcessingError(f"MNDWI requires green and SWIR bands. Available: {available}")
+        green = green.astype(np.float32)
+        swir = swir.astype(np.float32)
         denominator = green + swir
         mask = denominator != 0
         mndwi = np.full_like(denominator, np.nan, dtype=np.float32)
@@ -151,9 +153,13 @@ class NbrProduct(RasterProduct):
     Standard index for burn severity mapping."""
     name = "NBR"
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
-        nir = bands["nir"].astype(np.float32)
-        swir = bands.get("swir2") or bands.get("swir1") or bands.get("nir")
-        swir = np.array(swir).astype(np.float32)
+        nir = bands.get("nir")
+        swir = bands.get("swir2") or bands.get("swir1")
+        if nir is None or swir is None:
+            available = ", ".join(bands.keys())
+            raise ProcessingError(f"NBR requires NIR and SWIR bands. Available: {available}")
+        nir = nir.astype(np.float32)
+        swir = swir.astype(np.float32)
         denominator = nir + swir
         mask = denominator != 0
         nbr = np.full_like(denominator, np.nan, dtype=np.float32)
@@ -166,9 +172,13 @@ class NdmiProduct(RasterProduct):
     Vegetation moisture content and drought monitoring."""
     name = "NDMI"
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
-        nir = bands["nir"].astype(np.float32)
-        swir = bands.get("swir1") or bands.get("nir")
-        swir = np.array(swir).astype(np.float32)
+        nir = bands.get("nir")
+        swir = bands.get("swir1") or bands.get("swir2")
+        if nir is None or swir is None:
+            available = ", ".join(bands.keys())
+            raise ProcessingError(f"NDMI requires NIR and SWIR bands. Available: {available}")
+        nir = nir.astype(np.float32)
+        swir = swir.astype(np.float32)
         denominator = nir + swir
         mask = denominator != 0
         ndmi = np.full_like(denominator, np.nan, dtype=np.float32)
