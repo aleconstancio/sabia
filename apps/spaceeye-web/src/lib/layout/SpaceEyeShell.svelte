@@ -14,6 +14,14 @@
 </script>
 
 <div class="flex h-full w-full bg-background">
+  {#if mapState.sidebarOpen}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
+      onclick={() => mapState.sidebarOpen = false}
+    ></div>
+  {/if}
+
   <!-- Sidebar -->
   <aside
     class="flex flex-col border-r border-border bg-card shrink-0 transition-all duration-300 contain-layout"
