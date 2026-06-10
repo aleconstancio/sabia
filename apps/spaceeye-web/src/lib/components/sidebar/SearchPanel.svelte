@@ -3,6 +3,7 @@
   import Button from '$lib/ui/components/Button.svelte';
   import { mapState } from '$lib/stores/map.svelte.ts';
   import { searchImages } from '$lib/api/processing';
+  import ProductInfo from '$lib/components/ProductInfo.svelte';
 
   let expanded = $state(true);
 </script>
@@ -19,13 +20,19 @@
         Desenhe um polígono no mapa para buscar imagens
       </div>
       <Select bind:value={mapState.selectedProduct} options={[
-        { value: 'NDVI', label: 'NDVI' },
-        { value: 'TCI', label: 'TCI' },
-        { value: 'NDWI', label: 'NDWI' },
-        { value: 'SAVI', label: 'SAVI' },
-        { value: 'EVI', label: 'EVI' },
-        { value: 'CIR', label: 'CIR' },
+        { value: 'NDVI', label: 'NDVI - Vegetação' },
+        { value: 'TCI', label: 'TCI - Cor Verdadeira' },
+        { value: 'NDWI', label: 'NDWI - Água' },
+        { value: 'SAVI', label: 'SAVI - Solo/Ajuste' },
+        { value: 'EVI', label: 'EVI - Veg. Melhorada' },
+        { value: 'MSAVI2', label: 'MSAVI2 - SAVI Mod.' },
+        { value: 'VARI', label: 'VARI - Visível Atm.' },
+        { value: 'MNDWI', label: 'MNDWI - Água Mod.' },
+        { value: 'CIR', label: 'CIR - Infra. Cor' },
+        { value: 'NBR', label: 'NBR - Queimadas' },
+        { value: 'NDMI', label: 'NDMI - Umidade' },
       ]} />
+      <ProductInfo product={mapState.selectedProduct} />
       {#if mapState.polygonCoords}
         <Button onclick={searchImages} loading={mapState.isLoading} class="!w-full">Buscar imagens</Button>
       {/if}

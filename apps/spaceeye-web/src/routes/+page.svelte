@@ -23,6 +23,7 @@
   import FilterBar from '$lib/components/FilterBar.svelte';
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import OnboardingDialog from '$lib/components/OnboardingDialog.svelte';
+  import ProductInfo from '$lib/components/ProductInfo.svelte';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
   import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
@@ -311,18 +312,19 @@
     <div>
       <label class="text-sm font-medium">Produto</label>
       <Select bind:value={mapState.selectedProduct} options={[
-  { value: 'NDVI', label: 'NDVI - Veg. Index' },
-  { value: 'TCI', label: 'TCI - True Color' },
-  { value: 'NDWI', label: 'NDWI - Water Index' },
-  { value: 'SAVI', label: 'SAVI - Soil Adj. Veg.' },
-  { value: 'EVI', label: 'EVI - Enhanced Veg.' },
-  { value: 'MSAVI2', label: 'MSAVI2 - Mod. SAVI' },
-  { value: 'VARI', label: 'VARI - Visible Atmos.' },
-  { value: 'MNDWI', label: 'MNDWI - Mod. Water' },
-  { value: 'CIR', label: 'CIR - Color Infrared' },
-  { value: 'NBR', label: 'NBR - Burn Ratio' },
-  { value: 'NDMI', label: 'NDMI - Moisture' },
+  { value: 'NDVI', label: 'NDVI - Vegetação' },
+  { value: 'TCI', label: 'TCI - Cor Verdadeira' },
+  { value: 'NDWI', label: 'NDWI - Água' },
+  { value: 'SAVI', label: 'SAVI - Solo/Ajuste' },
+  { value: 'EVI', label: 'EVI - Veg. Melhorada' },
+  { value: 'MSAVI2', label: 'MSAVI2 - SAVI Mod.' },
+  { value: 'VARI', label: 'VARI - Visível Atm.' },
+  { value: 'MNDWI', label: 'MNDWI - Água Mod.' },
+  { value: 'CIR', label: 'CIR - Infra. Cor' },
+  { value: 'NBR', label: 'NBR - Queimadas' },
+  { value: 'NDMI', label: 'NDMI - Umidade' },
 ]} />
+      <ProductInfo product={mapState.selectedProduct} />
     </div>
     {#if drawnItemsGroup && drawnItemsGroup.getLayers().length > 1}
       <Button variant="ghost" onclick={unionPolygons}>Unir áreas</Button>

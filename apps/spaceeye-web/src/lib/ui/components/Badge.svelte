@@ -3,9 +3,11 @@
 
   let {
     variant = 'default' as Variant,
+    class: className = '',
     children,
   }: {
     variant?: Variant;
+    class?: string;
     children?: import('svelte').Snippet;
   } = $props();
 
@@ -23,7 +25,7 @@
 <span
   class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
          transition-colors duration-[--duration-snappy]
-         {vars[variant]}"
+         {vars[variant]} {className}"
 >
   {@render children?.()}
 </span>
