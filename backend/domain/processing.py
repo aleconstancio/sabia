@@ -1,3 +1,4 @@
+import asyncio
 import os
 import numpy as np
 import rasterio
@@ -32,14 +33,14 @@ async def process_image(
     output_path = os.path.join(settings.temp_dir, "cache", f"{product_name}_{image_id}.tif")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    result = _compute_product(downloaded, polygon_coords, product_name, output_path)
+    result = await asyncio.to_thread(_compute_product, downloaded, polygon_coords, product_name, output_path)
     result_path = result["path"]
     result_stats = result.get("statistics", {})
 
     if progress_callback:
         await progress_callback(80, "compressing")
 
-    overlay = compress_to_png(result_path, product_name)
+    overlay = await asyncio.to_thread(compress_to_png, result_path, product_name)
 
     if progress_callback:
         await progress_callback(100, "done")
