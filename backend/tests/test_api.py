@@ -47,6 +47,7 @@ async def test_health_detailed(client_with_mock_db):
     assert "database" in data
     assert "catalog_count" in data
     assert data["database"] in ("connected", "disconnected")
+    assert data["catalog_count"] == 0
 
 
 @pytest.mark.asyncio
