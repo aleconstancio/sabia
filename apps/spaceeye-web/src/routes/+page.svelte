@@ -22,6 +22,7 @@
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
+  import OnboardingDialog from '$lib/components/OnboardingDialog.svelte';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
   import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
@@ -39,6 +40,7 @@
   let timelapseOverlay = $state<any>(null);
   let useSwipe = $state(false);
   let drawnItemsGroup = $state<L.FeatureGroup | null>(null);
+  let showOnboarding = $state(false);
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -236,6 +238,12 @@
       } catch(e) { console.warn('Invalid share URL params:', e); }
     }
   });
+
+  $effect(() => {
+    if (browser && !localStorage.getItem('spaceeye_onboarded')) {
+      showOnboarding = true;
+    }
+  });
 </script>
 
 <SpaceEyeShell>
@@ -400,3 +408,5 @@
     }} />
   </div>
 {/if}
+
+<OnboardingDialog bind:open={showOnboarding} />
