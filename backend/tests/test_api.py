@@ -184,3 +184,125 @@ async def test_landcover_endpoint(client):
     assert resp.status_code == 200
     data = resp.json()
     assert "classes" in data
+
+
+# --- Analysis CRUD tests ---
+
+@pytest.fixture
+def client_with_analyses_db():
+    """Mock DB that handles analyses CRUD operations."""
+    mock_session = AsyncMock()
+
+    from datetime import datetime, timezone
+
+    analyses_store = []
+    next_id = 1
+
+    async def mock_execute(query, params=None):
+        nonlocal next_id
+        query_str = str(query) if hasattr(query, '__str__') else query
+
+        if 'INSERT INTO analyses' in query_str:
+            uid = f"test-uuid-{next_id:04d}"
+            next_id += 1
+            analyses_store.append({
+                "id": uid,
+                "image_id": params["image_id"],
+                "collection": params["collection"],
+                "product": params["product"],
+                "polygon": params.get("polygon"),
+                "centroid": params.get("centroid"),
+                "statistics": params.get("statistics"),
+                "acquired_at": None,
+                "cloud_cover": params.get("cloud_cover"),
+                "created_at": datetime(2025, 1, 1, tzinfo=timezone.utc),
+            })
+            result = MagicMock()
+            result.fetchone.return_value = [uid]
+            return result
+
+        elif 'SELECT * FROM analyses' in query_str:
+            filtered = list(analyses_store)
+            if params:
+                if 'product' in params and params['product']:
+                    filtered = [a for a in filtered if a.get('product') == params['product']]
+                if 'collection' in params and params['collection']:
+                    filtered = [a for a in filtered if a.get('collection') == params['collection']]
+            filtered.sort(key=lambda a: a.get('created_at') or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+            limit = params.get('limit', 50) if params else 50
+            offset = params.get('offset', 0) if params else 0
+            filtered = filtered[offset:offset+limit]
+            result = MagicMock()
+            result.mappings.return_value.all.return_value = filtered
+            return result
+
+        elif 'SELECT COUNT(*) FROM analyses' in query_str:
+            filtered = list(analyses_store)
+            if params:
+                if 'product' in params and params['product']:
+                    filtered = [a for a in filtered if a.get('product') == params['product']]
+                if 'collection' in params and params['collection']:
+                    filtered = [a for a in filtered if a.get('collection') == params['collection']]
+            result = MagicMock()
+            result.scalar.return_value = len(filtered)
+            return result
+
+        elif 'DELETE FROM analyses' in query_str:
+            aid = params.get('id') if params else None
+            found = any(a.get('id') == aid for a in analyses_store)
+            analyses_store[:] = [a for a in analyses_store if a.get('id') != aid]
+            result = MagicMock()
+            result.fetchone.return_value = [aid] if found else None
+            return result
+
+        return MagicMock()
+
+    # Patch execute and commit
+    mock_session.execute = mock_execute
+    mock_session.commit = AsyncMock()
+
+    # Store reference for test assertions
+    mock_session._analyses_store = analyses_store
+    mock_session._next_id_ref = lambda: next_id
+
+    async def override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    transport = ASGITransport(app=app)
+    c = AsyncClient(transport=transport, base_url="http://test")
+    yield c, analyses_store
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_create_and_list_analyses(client_with_analyses_db):
+    client, store = client_with_analyses_db
+    # Create
+    payload = {
+        "image_id": "test-image-001",
+        "collection": "cbers4a",
+        "product": "NDVI",
+        "polygon": {"type": "Polygon", "coordinates": [[[-35.9, -5.8], [-35.8, -5.8], [-35.8, -5.7], [-35.9, -5.7], [-35.9, -5.8]]]},
+        "centroid": {"lat": -5.75, "lon": -35.85},
+        "statistics": {"mean": 0.45, "std": 0.12},
+    }
+    resp = await client.post("/api/analyses", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "id" in data
+
+    # List
+    resp = await client.get("/api/analyses")
+    assert resp.status_code == 200
+    analyses = resp.json()["analyses"]
+    assert len(analyses) >= 1
+    assert analyses[0]["image_id"] == "test-image-001"
+
+
+@pytest.mark.asyncio
+async def test_create_analysis_validation(client_with_analyses_db):
+    client, store = client_with_analyses_db
+    payload = {"image_id": "x"}  # missing required fields
+    resp = await client.post("/api/analyses", json=payload)
+    assert resp.status_code == 422

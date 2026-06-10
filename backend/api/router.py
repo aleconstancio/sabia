@@ -11,10 +11,12 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db, get_http_client
+from backend.api.analyses import router as analyses_router
 from backend.models.schemas import PolygonRequest, ProcessRequest, ExportPdfRequest, ProcessBatchRequest, ComputeDifferenceRequest, DownloadBatchRequest
 from backend.config import get_settings
 
 router = APIRouter()
+router.include_router(analyses_router, prefix="/analyses", tags=["analyses"])
 
 _datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
 with open(_datasets_path, "r", encoding="utf-8") as f:
