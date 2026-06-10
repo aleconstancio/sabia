@@ -1,10 +1,10 @@
 export interface ImageResult {
   id: string;
-  cloud_cover: number;
-  thumbnail: string;
+  collection: string;
+  cloud_cover: number | null;
   acquired_at: string;
-  coordinates?: number[][];
-  collection?: string;
+  thumbnail_url: string | null;
+  footprint: any;
 }
 
 export interface SoilData {
@@ -33,32 +33,39 @@ export interface LandCoverData {
 export interface Bookmark {
   id: string;
   name: string;
-  coordinates: number[][];
+  coords: number[][][];
+  created_at: string;
 }
 
 export interface Monitor {
   id: string;
-  name: string;
-  coordinates: number[][];
-  interval: number;
-  lastChecked?: string;
-  lastResult?: string;
+  bookmarkId: string;
+  bookmarkName: string;
+  polygonCoords: number[][][];
+  product: string;
+  minCloudCover: number;
+  active: boolean;
+  lastChecked: string | null;
+  lastResult: string | null;
 }
 
-export interface HistoryRecord {
+export interface AnalysisRecord {
   id: string;
   timestamp: string;
   imageId: string;
   product: string;
+  collection: string;
+  cloudCover: number | null;
+  polygonCoords: number[][][];
+  centroid: { lat: number; lon: number } | null;
+  stats?: any;
 }
 
 export interface TaskStatus {
   task_id: string;
-  state: string;
-  progress?: number;
-  result?: {
-    path: string;
-    overlay_url: string;
-    bounds: number[];
-  };
+  status: string;
+  progress: number;
+  phase: string;
+  result?: any;
+  error?: string;
 }

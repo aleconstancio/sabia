@@ -30,4 +30,4 @@ export async function getCities(uf: string): Promise<string[]> {
   return api.get(`/ibge/cidades/${uf}`);
 }
 
-export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, HistoryRecord, TaskStatus } from './types';
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus } from './types';
