@@ -5,6 +5,7 @@
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
   import MonitoringPanel from '$lib/components/MonitoringPanel.svelte';
   import Bookmarks from '$lib/components/Bookmarks.svelte';
+  import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
   import Select from '$lib/ui/components/Select.svelte';
   import Button from '$lib/ui/components/Button.svelte';
   import { restorePolygonOnMap } from '$lib/utils/map-helpers';
@@ -61,6 +62,7 @@
     </div>
 
     <div class="flex items-center gap-2">
+      <ConnectionStatus />
       {#if mapState.results.length > 0}
         <Button variant={showCompare ? 'default' : 'ghost'} size="sm" onclick={onToggleCompare}>
           {showCompare ? 'Sair' : 'Comparar'}
