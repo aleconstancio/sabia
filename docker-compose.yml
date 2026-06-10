@@ -85,6 +85,29 @@ services:
     depends_on:
       - backend
 
+  seed:
+    profiles:
+      - setup
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/spaceeye
+      EMAIL_INPE: ${EMAIL_INPE:-}
+    volumes:
+      - spaceeye_cache:/tmp/spaceeye
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for backend to be ready...' &&
+        sleep 5 &&
+        echo 'Running catalog ingestion...' &&
+        python pipeline/ingest.py --collection cbers4a &&
+        echo 'Done. Catalog seeded successfully.'
+      "
+
 volumes:
   pgdata:
   spaceeye_cache:
