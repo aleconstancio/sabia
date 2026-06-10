@@ -53,17 +53,19 @@ async def list_profiles(
     rows = result.mappings().all()
     profiles = []
     for r in rows:
-        profiles.append({
-            "id": str(r["id"]),
-            "name": r["name"],
-            "polygon": r["polygon"],
-            "centroid": r["centroid"],
-            "weather_summary": _summarize_weather(r["weather_data"]),
-            "soil_summary": _summarize_soil(r["soil_data"]),
-            "landcover_summary": r["landcover_data"],
-            "satellite_data": r["satellite_data"],
-            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
-        })
+        profiles.append(
+            {
+                "id": str(r["id"]),
+                "name": r["name"],
+                "polygon": r["polygon"],
+                "centroid": r["centroid"],
+                "weather_summary": _summarize_weather(r["weather_data"]),
+                "soil_summary": _summarize_soil(r["soil_data"]),
+                "landcover_summary": r["landcover_data"],
+                "satellite_data": r["satellite_data"],
+                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            }
+        )
 
     count = (await db.execute(text("SELECT COUNT(*) FROM region_profiles"))).scalar() or 0
     return {"profiles": profiles, "total": count}
