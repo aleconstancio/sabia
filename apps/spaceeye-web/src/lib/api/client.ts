@@ -1,30 +1,13 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
+import type { ImageResult } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = createApiClient({ baseUrl: API_URL });
 
-export interface ImageResult {
-  id: string;
-  collection: string;
-  cloud_cover: number | null;
-  acquired_at: string;
-  thumbnail_url: string | null;
-  footprint: any;
-}
-
 export interface SearchResponse {
   images: ImageResult[];
   total: number;
-}
-
-export interface TaskResult {
-  task_id: string;
-  status: 'pending' | 'running' | 'done' | 'error';
-  progress: number;
-  phase: string;
-  result?: any;
-  error?: string;
 }
 
 export async function searchImages(coordinates: number[][][], collections?: string[]): Promise<SearchResponse> {
@@ -35,7 +18,7 @@ export async function processImage(imageId: string, coordinates: number[][][], p
   return api.post('/process', { image_id: imageId, coordinates, product });
 }
 
-export async function getTaskStatus(taskId: string): Promise<TaskResult> {
+export async function getTaskStatus(taskId: string): Promise<{ task_id: string; status: string; progress: number; phase: string; result?: any; error?: string }> {
   return api.get(`/tasks/${taskId}`);
 }
 
@@ -46,3 +29,5 @@ export async function getUfs(): Promise<string[]> {
 export async function getCities(uf: string): Promise<string[]> {
   return api.get(`/ibge/cidades/${uf}`);
 }
+
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, HistoryRecord, TaskStatus } from './types';
