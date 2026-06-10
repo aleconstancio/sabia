@@ -1,3 +1,6 @@
+import re
+SAFE_FILENAME_RE = re.compile(r"^[a-zA-Z0-9_.-]+$")
+
 import json
 import os
 
@@ -172,9 +175,15 @@ async def geocode(q: str):
 
 @router.get("/overlay/{filename}")
 async def serve_overlay(filename: str):
-    path = os.path.join(get_settings().temp_dir, "cache", filename)
+    if not SAFE_FILENAME_RE.match(filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    settings = get_settings()
+    cache_dir = os.path.join(settings.temp_dir, "cache")
+    path = os.path.join(cache_dir, filename)
+    if not os.path.realpath(path).startswith(os.path.realpath(cache_dir)):
+        raise HTTPException(status_code=403, detail="Access denied")
     if not os.path.exists(path):
-        raise HTTPException(404, "Overlay not found")
+        raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path, media_type="image/png")
 
 
