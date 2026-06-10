@@ -1,10 +1,10 @@
 import pytest
-import numpy as np
 
 
 @pytest.fixture
 def sample_raster_bands():
     """Create synthetic 10x10 raster bands for testing product computations."""
+    import numpy as np
     np.random.seed(42)
     nir = np.random.uniform(0.1, 0.9, (10, 10)).astype(np.float32)
     red = np.random.uniform(0.05, 0.5, (10, 10)).astype(np.float32)

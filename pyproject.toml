@@ -55,3 +55,8 @@ markers = ["asyncio: mark test as async"]
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
+
+[dependency-groups]
+dev = [
+    "respx>=0.23.1",
+]
