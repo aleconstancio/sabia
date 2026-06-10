@@ -9,28 +9,25 @@
 ### Production Deploy
 
 ```bash
-# 1. Clone
+# 1. Clone & configure
 git clone https://github.com/your-org/spaceeye
 cd spaceeye
-
-# 2. Configure
 cp .env.example .env
-# Edit .env:
-#   - Set EMAIL_INPE
-#   - Set CORS_ORIGINS to your frontend domain
-#   - Change database passwords
+# Edit .env: set EMAIL_INPE, CORS_ORIGINS, database passwords
 
-# 3. Start everything
+# 2. Start everything (includes catalog seeding)
 docker compose up -d --build
+docker compose --profile setup run --rm seed
 
-# 4. Run initial DB migration (auto-runs on first start)
-#    The sql/001_init.sql is mounted as docker-entrypoint-initdb.d
+# 3. Open
+# Frontend: http://localhost
+# API docs: http://localhost:8000/docs
+```
 
-# 5. Ingest catalog data
-docker compose exec backend python pipeline/ingest.py --collection cbers4a
-
-# 6. Monitor
-docker compose logs -f
+To seed additional collections:
+```bash
+docker compose exec backend python pipeline/ingest.py --collection sentinel2
+docker compose exec backend python pipeline/ingest.py --collection landsat8
 ```
 
 ### Services
