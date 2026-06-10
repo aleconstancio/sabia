@@ -15,21 +15,34 @@
 
 ## Quick Start
 
-Prerequisites: `uv` · `node` 20+ · PostgreSQL 16 (with PostGIS) · Redis 7
+### Docker (Recommended — 2 commands)
+
+Prerequisites: Docker 24+ · docker-compose v2 · [INPE email](http://queimadas.dgi.inpe.br/catalogo/explore)
 
 ```bash
-# One-command setup (creates .env, installs all deps)
-./make setup
-
-# Start everything (Postgres + backend + worker + frontend)
-./make dev
+git clone https://github.com/your-org/spaceeye && cd spaceeye
+cp .env.example .env   # Set EMAIL_INPE in .env
+docker compose up -d --build
+docker compose --profile setup run --rm seed
 ```
 
-`./make dev` starts local Postgres, Redis, the FastAPI backend, Celery worker, and Vite dev server in a single terminal. Press Ctrl+C to stop all services.
+Open http://localhost — you're ready to analyze satellite imagery.
 
-> **No `make` on PATH?** Use `./make` or `./scripts/make.sh` as drop-in replacements — they find GNU Make anywhere (Nix store, Homebrew, system packages).
+### Local Development
 
-Once running, open http://localhost:5173.
+Prerequisites: `uv` · `node` 20+ · PostgreSQL 16+PostGIS · Redis 7
+
+```bash
+git clone https://github.com/your-org/spaceeye && cd spaceeye
+./make setup     # Installs deps, creates .env
+./make dev       # Starts Postgres, Redis, backend, worker, frontend
+```
+
+Open http://localhost:5173. Run `python pipeline/ingest.py --collection cbers4a` to populate the catalog.
+
+### Manual Install
+
+See [docs/deployment.md](./docs/deployment.md) for step-by-step manual setup.
 
 ## Satellite Collections
 
