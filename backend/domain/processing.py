@@ -94,7 +94,7 @@ def _compute_product(
             geom = [geom_mapping]
 
     if geom is None:
-        raise RuntimeError("No valid bands to process")
+        raise ProcessingError("No valid bands to process")
 
     if "pan" in band_paths:
         pan_path = band_paths["pan"]

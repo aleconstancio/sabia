@@ -1,3 +1,4 @@
+from backend.exceptions import ProcessingError
 from abc import ABC, abstractmethod
 import numpy as np
 
@@ -44,7 +45,7 @@ class TciProduct(RasterProduct):
         valid = rgb[np.isfinite(rgb)]
 
         if valid.size == 0:
-            raise RuntimeError("No valid pixels in TCI computation")
+            raise ProcessingError("No valid pixels in TCI computation")
 
         p2, p98 = np.percentile(valid, 2), np.percentile(valid, 98)
         rgb = np.clip(rgb, p2, p98)

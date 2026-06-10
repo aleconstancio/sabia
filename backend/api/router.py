@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 import re
 SAFE_FILENAME_RE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
@@ -362,7 +364,9 @@ async def soil_zonal(req: PolygonRequest):
                     for k, layer in [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]:
                         v = find_val(layer)
                         if v is not None: results[k].append(v)
-            except: pass
+            except Exception as e:
+                logger.exception("Soil zonal stats failed")
+                raise HTTPException(status_code=500, detail="Failed to compute soil statistics")
 
     def avg(vals): return round(sum(vals) / len(vals), 2) if vals else None
 
