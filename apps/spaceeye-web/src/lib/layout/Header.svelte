@@ -40,15 +40,13 @@
 </script>
 
 <header
-  class="sticky top-0 shrink-0 z-30 transition-all duration-300"
-  style="background: oklch(from var(--background) l c h / 0.55); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border)"
+  class="sticky top-0 shrink-0 z-30 transition-all duration-300 bg-background/55 backdrop-blur-xl border-b border-border"
 >
   <div class="flex items-center justify-between gap-4 px-4 py-2">
     <div class="flex items-center gap-3 min-w-0">
       <button
         onclick={() => mapState.sidebarOpen = !mapState.sidebarOpen}
-        class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none"
-        style="color: var(--muted-foreground);"
+        class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
         aria-label="Abrir menu lateral"
         aria-expanded={mapState.sidebarOpen}
       >
@@ -58,7 +56,7 @@
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <h1 class="text-lg font-bold" style="color: var(--primary);">SpaceEye</h1>
+      <h1 class="text-lg font-bold text-primary">SpaceEye</h1>
       <SearchMenu {navigateToCity} />
     </div>
 
@@ -90,8 +88,7 @@
       <Bookmarks currentCoords={mapState.polygonCoords} />
       <button
         onclick={toggleMode}
-        class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none"
-        style="color: var(--muted-foreground);"
+        class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
         aria-label="Alternar tema"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

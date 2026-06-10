@@ -48,12 +48,12 @@
 </script>
 
 {#if error}
-  <div class="flex flex-col items-center justify-center p-8 text-center" style="min-height: 40vh;">
+  <div class="flex flex-col items-center justify-center p-8 text-center min-h-[40vh]">
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--destructive)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
-    <h2 class="text-lg font-semibold mt-4" style="color: var(--foreground)">{fallbackTitle}</h2>
-    <p class="text-sm mt-2 max-w-md" style="color: var(--muted-foreground)">{fallbackDescription}</p>
+    <h2 class="text-lg font-semibold mt-4 text-foreground">{fallbackTitle}</h2>
+    <p class="text-sm mt-2 max-w-md text-muted-foreground">{fallbackDescription}</p>
     <div class="flex gap-3 mt-6">
       {#if showRetry}
         <Button onclick={retry}>{t?.('common.reload') ?? 'Recarregar'}</Button>

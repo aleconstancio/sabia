@@ -1,5 +1,4 @@
 <script lang="ts">
-  import '$lib/components/sidebar/sidebar.css';
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
   import { restorePolygonOnMap } from '$lib/utils/map-helpers';
   import { mapState } from '$lib/stores/map.svelte.ts';
@@ -16,10 +15,10 @@
   }
 </script>
 
-<div class="sidebar-section">
-  <button onclick={() => expanded = !expanded} class="sidebar-section-header" aria-expanded={expanded} aria-label="Historico">
+<div class="mb-4 sidebar-section">
+  <button onclick={() => expanded = !expanded} class="flex items-center w-full p-2 rounded-[--radius] cursor-pointer transition-colors bg-transparent border-none text-inherit hover:bg-muted sidebar-section-header" aria-expanded={expanded} aria-label="Historico">
     <span class="text-lg mr-2">📁</span>
-    <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--muted-foreground);">Histórico</span>
+    <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Histórico</span>
     <svg class="ml-auto w-3 h-3 transition-transform" class:rotate-180={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
   </button>
   {#if expanded}

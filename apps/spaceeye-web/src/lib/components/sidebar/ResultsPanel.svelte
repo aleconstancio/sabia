@@ -1,5 +1,4 @@
 <script lang="ts">
-  import '$lib/components/sidebar/sidebar.css';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import Button from '$lib/ui/components/Button.svelte';
@@ -14,12 +13,12 @@
   }
 </script>
 
-<div class="sidebar-section">
-  <button onclick={() => expanded = !expanded} class="sidebar-section-header" aria-expanded={expanded} aria-label="Resultados">
+<div class="mb-4 sidebar-section">
+  <button onclick={() => expanded = !expanded} class="flex items-center w-full p-2 rounded-[--radius] cursor-pointer transition-colors bg-transparent border-none text-inherit hover:bg-muted sidebar-section-header" aria-expanded={expanded} aria-label="Resultados">
     <span class="text-lg mr-2">🖼</span>
-    <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--muted-foreground);">Resultados</span>
+    <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Resultados</span>
     {#if mapState.results.length > 0}
-      <span class="ml-2 text-xs font-mono" style="color: var(--muted-foreground);">{mapState.results.length}</span>
+      <span class="ml-2 text-xs font-mono text-muted-foreground">{mapState.results.length}</span>
     {/if}
     <svg class="ml-auto w-3 h-3 transition-transform" class:rotate-180={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
   </button>
@@ -43,7 +42,6 @@
       </div>
     </div>
   {:else if expanded}
-    <p class="text-xs mt-2" style="color: var(--muted-foreground);">Nenhum resultado ainda. Busque imagens para começar.</p>
+    <p class="text-xs mt-2 text-muted-foreground">Nenhum resultado ainda. Busque imagens para começar.</p>
   {/if}
 </div>
-

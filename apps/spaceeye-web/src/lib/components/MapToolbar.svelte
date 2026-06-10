@@ -58,8 +58,8 @@
     {#if product === 'NDVI' || product === 'NDWI' || product === 'SAVI' || product === 'EVI' || product === 'MSAVI2' || product === 'VARI' || product === 'NDMI' || product === 'NBR'}
       <p class="text-xs font-semibold mb-1">{product}</p>
       <div class="w-4 h-40 rounded" style="background: linear-gradient(to top, #d73027, #fc8d59, #fee08b, #d9ef8b, #91cf60, #1a9641);"></div>
-      <div class="flex justify-between text-xs text-muted-foreground w-4"><span style="position: relative; left: -16px;">1</span></div>
-      <div class="flex justify-between text-xs text-muted-foreground w-4"><span style="position: relative; left: -8px;">0</span></div>
+      <div class="flex justify-between text-xs text-muted-foreground w-4"><span class="relative -left-4">1</span></div>
+      <div class="flex justify-between text-xs text-muted-foreground w-4"><span class="relative -left-2">0</span></div>
       <div class="flex justify-between text-xs text-muted-foreground w-4"><span>-1</span></div>
     {:else if product === 'TCI'}
       <p class="text-xs font-semibold mb-1">True Color</p>

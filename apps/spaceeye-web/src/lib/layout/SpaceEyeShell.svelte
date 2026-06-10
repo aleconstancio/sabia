@@ -13,11 +13,11 @@
   const SIDEBAR_WIDTH_COLLAPSED = '3.5rem';
 </script>
 
-<div class="flex h-full w-full" style="background: var(--background);">
+<div class="flex h-full w-full bg-background">
   <!-- Sidebar -->
   <aside
-    class="flex flex-col border-r shrink-0 transition-all duration-300 contain-layout"
-    style="width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}; min-width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}; background: var(--card); border-color: var(--border);"
+    class="flex flex-col border-r border-border bg-card shrink-0 transition-all duration-300 contain-layout"
+    style="width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}; min-width: {mapState.sidebarOpen ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED};"
   >
     {#if sidebarContent}
       <div
@@ -32,7 +32,7 @@
   </aside>
 
   <!-- Main content area -->
-  <div class="flex-1 flex flex-col min-w-0 relative" style="background: var(--background);">
+  <div class="flex-1 flex flex-col min-w-0 relative bg-background">
     {@render children?.()}
   </div>
 </div>
