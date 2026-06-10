@@ -53,7 +53,7 @@
     <BitsSelect.Group class="space-y-0.5">
       {#each options as option}
         <BitsSelect.Item
-          {value}
+          value={option.value}
           disabled={option.disabled}
           class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm
                  text-foreground hover:bg-muted data-[state=checked]:bg-muted data-[state=checked]:text-foreground
