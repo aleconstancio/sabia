@@ -265,6 +265,23 @@
   />
 
   <div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
+
+  {#if !mapState.polygonCoords && !mapState.hasOverlay && !mapState.isLoading}
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[100]">
+      <div class="text-center space-y-3 bg-background/80 backdrop-blur-sm rounded-xl p-8 border border-border">
+        <div class="text-4xl">🌍</div>
+        <h2 class="text-lg font-semibold">Desenhe uma área no mapa</h2>
+        <p class="text-sm text-muted-foreground max-w-xs">
+          Use a ferramenta de polígono ou retângulo no canto superior esquerdo do mapa para selecionar uma região.
+        </p>
+        <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <kbd class="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px]">Draw Polygon</kbd>
+          <span>ou</span>
+          <kbd class="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px]">Draw Rectangle</kbd>
+        </div>
+      </div>
+    </div>
+  {/if}
 </SpaceEyeShell>
 
 <MapToolbar
