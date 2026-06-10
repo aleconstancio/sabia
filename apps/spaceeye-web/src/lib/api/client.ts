@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
-import type { ImageResult, SavedAnalysis } from './types';
+import type { ImageResult, SavedAnalysis, RegionProfile } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -59,4 +59,35 @@ export async function deleteAnalysis(id: string): Promise<{ deleted: boolean }> 
   return api.delete(`/analyses/${id}`);
 }
 
-export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis } from './types';
+export async function createProfile(data: {
+  name?: string;
+  polygon: { type: string; coordinates: number[][][] };
+  satellite_data?: { product: string; stats: Record<string, unknown> };
+  notes?: string;
+}): Promise<{ id: string }> {
+  return api.post('/profiles', data);
+}
+
+export async function listProfiles(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ profiles: RegionProfile[]; total: number }> {
+  const query: Record<string, string> = {};
+  if (params?.limit) query.limit = String(params.limit);
+  if (params?.offset) query.offset = String(params.offset);
+  return api.get('/profiles', query);
+}
+
+export async function getProfile(id: string): Promise<RegionProfile> {
+  return api.get(`/profiles/${id}`);
+}
+
+export async function refreshProfile(id: string): Promise<{ updated: boolean }> {
+  return api.put(`/profiles/${id}/refresh`);
+}
+
+export async function deleteProfile(id: string): Promise<{ deleted: boolean }> {
+  return api.delete(`/profiles/${id}`);
+}
+
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile } from './types';

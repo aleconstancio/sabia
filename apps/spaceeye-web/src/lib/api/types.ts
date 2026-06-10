@@ -107,3 +107,32 @@ export interface SavedAnalysis {
   cloud_cover: number | null;
   created_at: string | null;
 }
+
+export interface RegionProfile {
+  id: string;
+  name: string | null;
+  polygon: { type: string; coordinates: number[][][] };
+  centroid: { lat: number; lon: number } | null;
+  weather_summary: {
+    temperature: number | null;
+    humidity: number | null;
+    precipitation: number | null;
+    weather_code: number | null;
+  } | null;
+  soil_summary: {
+    phh2o: number | null;
+    oc: number | null;
+    sand: number | null;
+    clay: number | null;
+  } | null;
+  landcover_summary: {
+    source: string;
+    classes: Record<number, string>;
+    tile_url: string;
+  } | null;
+  satellite_data: {
+    product: string;
+    stats: Record<string, unknown>;
+  } | null;
+  created_at: string | null;
+}
