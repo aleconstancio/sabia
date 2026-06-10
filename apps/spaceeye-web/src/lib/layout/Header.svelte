@@ -63,6 +63,9 @@
 
     <div class="flex items-center gap-2">
       <ConnectionStatus />
+      <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Dashboard
+      </a>
       {#if mapState.results.length > 0}
         <Button variant={showCompare ? 'default' : 'ghost'} size="sm" onclick={onToggleCompare}>
           {showCompare ? 'Sair' : 'Comparar'}
