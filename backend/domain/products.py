@@ -6,12 +6,10 @@ import numpy as np
 class RasterProduct(ABC):
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @abstractmethod
-    def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
-        ...
+    def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray: ...
 
 
 class NdviProduct(RasterProduct):
@@ -35,7 +33,14 @@ class TciProduct(RasterProduct):
         green = bands["green"].astype(np.float32)
         blue = bands["blue"].astype(np.float32)
 
-        invalid = (red <= 0) | (green <= 0) | (blue <= 0) | ~np.isfinite(red) | ~np.isfinite(green) | ~np.isfinite(blue)
+        invalid = (
+            (red <= 0)
+            | (green <= 0)
+            | (blue <= 0)
+            | ~np.isfinite(red)
+            | ~np.isfinite(green)
+            | ~np.isfinite(blue)
+        )
 
         r = np.where(invalid, np.nan, red * 1.10)
         g = np.where(invalid, np.nan, green * 0.95)
@@ -71,7 +76,9 @@ class NdwiProduct(RasterProduct):
 class SaviProduct(RasterProduct):
     """Soil-Adjusted Vegetation Index: ((NIR - Red) / (NIR + Red + L)) * (1 + L), L=0.5
     Minimizes soil brightness influence in sparse vegetation."""
+
     name = "SAVI"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands["nir"].astype(np.float32)
         red = bands["red"].astype(np.float32)
@@ -86,7 +93,9 @@ class SaviProduct(RasterProduct):
 class EviProduct(RasterProduct):
     """Enhanced Vegetation Index: 2.5 * (NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1)
     Optimizes vegetation signal in high-biomass areas."""
+
     name = "EVI"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands["nir"].astype(np.float32)
         red = bands["red"].astype(np.float32)
@@ -102,7 +111,9 @@ class Msavi2Product(RasterProduct):
     """Modified Soil-Adjusted Vegetation Index 2.
     (2*NIR + 1 - sqrt((2*NIR+1)^2 - 8*(NIR-Red))) / 2
     No soil adjustment factor needed."""
+
     name = "MSAVI2"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands["nir"].astype(np.float32)
         red = bands["red"].astype(np.float32)
@@ -110,14 +121,18 @@ class Msavi2Product(RasterProduct):
         denom = 2
         mask = ~np.isnan(inner)
         msavi = np.full_like(nir, np.nan, dtype=np.float32)
-        msavi[mask] = (inner[mask] - np.sqrt(np.maximum(inner[mask]**2 - 8 * (nir[mask] - red[mask]), 0))) / denom
+        msavi[mask] = (
+            inner[mask] - np.sqrt(np.maximum(inner[mask] ** 2 - 8 * (nir[mask] - red[mask]), 0))
+        ) / denom
         return np.clip(msavi, -1, 1)
 
 
 class VariProduct(RasterProduct):
     """Visible Atmosphere Resistance Index: (Green - Red) / (Green + Red - Blue)
     Uses only visible bands — works without NIR."""
+
     name = "VARI"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         green = bands["green"].astype(np.float32)
         red = bands["red"].astype(np.float32)
@@ -132,10 +147,13 @@ class VariProduct(RasterProduct):
 class MndwiProduct(RasterProduct):
     """Modified Normalized Difference Water Index: (Green - SWIR1) / (Green + SWIR1)
     Better than NDWI for urban water bodies and turbid water."""
+
     name = "MNDWI"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         green = bands.get("green")
-        swir = bands.get("swir1") or bands.get("swir2")
+        swir1 = bands.get("swir1")
+        swir = swir1 if swir1 is not None else bands.get("swir2")
         if green is None or swir is None:
             available = ", ".join(bands.keys())
             raise ProcessingError(f"MNDWI requires green and SWIR bands. Available: {available}")
@@ -151,10 +169,13 @@ class MndwiProduct(RasterProduct):
 class NbrProduct(RasterProduct):
     """Normalized Burn Ratio: (NIR - SWIR2) / (NIR + SWIR2)
     Standard index for burn severity mapping."""
+
     name = "NBR"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands.get("nir")
-        swir = bands.get("swir2") or bands.get("swir1")
+        swir2 = bands.get("swir2")
+        swir = swir2 if swir2 is not None else bands.get("swir1")
         if nir is None or swir is None:
             available = ", ".join(bands.keys())
             raise ProcessingError(f"NBR requires NIR and SWIR bands. Available: {available}")
@@ -170,10 +191,13 @@ class NbrProduct(RasterProduct):
 class NdmiProduct(RasterProduct):
     """Normalized Difference Moisture Index: (NIR - SWIR1) / (NIR + SWIR1)
     Vegetation moisture content and drought monitoring."""
+
     name = "NDMI"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands.get("nir")
-        swir = bands.get("swir1") or bands.get("swir2")
+        swir1 = bands.get("swir1")
+        swir = swir1 if swir1 is not None else bands.get("swir2")
         if nir is None or swir is None:
             available = ", ".join(bands.keys())
             raise ProcessingError(f"NDMI requires NIR and SWIR bands. Available: {available}")
@@ -189,7 +213,9 @@ class NdmiProduct(RasterProduct):
 class ColorInfraredProduct(RasterProduct):
     """False-color composite: R=NIR, G=Red, B=Green.
     Healthy vegetation appears bright red — standard for vegetation analysis."""
+
     name = "CIR"
+
     def compute(self, bands: dict[str, np.ndarray]) -> np.ndarray:
         nir = bands["nir"].astype(np.float32)
         red = bands["red"].astype(np.float32)
