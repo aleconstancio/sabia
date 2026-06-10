@@ -61,7 +61,8 @@
             </div>
             <button
               class="text-xs text-destructive bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
-              onclick={(e) => handleRemoveBookmark(b.id, e)}
+              aria-label="Remover"
+              onclick={(e) => { if (confirm('Remover este local salvo?')) handleRemoveBookmark(b.id, e); }}
             >
               ✕
             </button>

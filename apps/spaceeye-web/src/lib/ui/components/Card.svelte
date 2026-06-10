@@ -52,7 +52,7 @@
     role={interactive ? 'button' : undefined}
     tabindex={interactive ? 0 : undefined}
     onclick={interactive ? onclick : undefined}
-    onkeydown={interactive ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onclick?.(e as any); } : undefined}
+    onkeydown={interactive ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick?.(e as any); } } : undefined}
   >
     {#if header}<div class="mb-2">{@render header()}</div>{/if}
     {#if children}<div>{@render children()}</div>{/if}

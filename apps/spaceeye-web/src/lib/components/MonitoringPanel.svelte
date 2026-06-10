@@ -61,7 +61,7 @@
                 <p class="text-xs text-muted-foreground">{new Date(m.lastChecked).toLocaleString('pt-BR')}</p>
               {/if}
             </div>
-            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" onclick={() => { removeMonitor(m.id); refresh(); }}>✕</button>
+            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => { if (confirm('Remover este monitor?')) { removeMonitor(m.id); refresh(); } }}>✕</button>
           </div>
         {/each}
         <div class="mt-2 pt-2 border-t border-border">

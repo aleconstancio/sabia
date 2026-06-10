@@ -42,52 +42,59 @@
   <span class="text-xs text-muted-foreground">({filteredImages.length}/{images.length})</span>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
-  {#each filteredImages as img}
-    <button
-      class="relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
-      class:border-emerald-500={selectionMode && selectedIds.includes(img.id)}
-      class:ring-2={selectionMode && selectedIds.includes(img.id)}
-      class:ring-emerald-500={selectionMode && selectedIds.includes(img.id)}
-      onclick={() => selectionMode ? onToggleSelect(img.id) : processImage(img.id)}
-      onmouseenter={() => hoveredImage = img}
-      onmouseleave={() => hoveredImage = null}
-    >
-      {#if img.thumbnail_url && !errorMap.get(img.id)}
-        {#if !loadedMap.get(img.id)}
-          <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse"></div>
+{#if filteredImages.length === 0 && images.length > 0}
+  <div class="text-center py-8 text-muted-foreground">
+    <p class="text-sm">Nenhuma imagem com cobertura de nuvens abaixo de {maxCloud}%</p>
+    <p class="text-xs mt-1">Ajuste o filtro para ver mais resultados</p>
+  </div>
+{:else}
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
+    {#each filteredImages as img}
+      <button
+        class="relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
+        class:border-emerald-500={selectionMode && selectedIds.includes(img.id)}
+        class:ring-2={selectionMode && selectedIds.includes(img.id)}
+        class:ring-emerald-500={selectionMode && selectedIds.includes(img.id)}
+        onclick={() => selectionMode ? onToggleSelect(img.id) : processImage(img.id)}
+        onmouseenter={() => hoveredImage = img}
+        onmouseleave={() => hoveredImage = null}
+      >
+        {#if img.thumbnail_url && !errorMap.get(img.id)}
+          {#if !loadedMap.get(img.id)}
+            <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse"></div>
+          {/if}
+          <img
+            src={img.thumbnail_url}
+            alt="Satelite {img.collection || 'imagem'} {new Date(img.acquired_at).toLocaleDateString('pt-BR')}"
+            class="w-full h-40 object-cover rounded-md mb-2"
+            class:hidden={!loadedMap.get(img.id)}
+            loading="lazy"
+            onload={() => onImgLoad(img.id)}
+            onerror={() => onImgError(img.id)}
+          />
+        {:else}
+          <div class="w-full h-40 bg-muted rounded-md mb-2 flex items-center justify-center text-muted-foreground text-sm">
+            Sem thumbnail
+          </div>
         {/if}
-        <img
-          src={img.thumbnail_url}
-          alt="Satelite {img.collection || 'imagem'} {new Date(img.acquired_at).toLocaleDateString('pt-BR')}"
-          class="w-full h-40 object-cover rounded-md mb-2"
-          class:hidden={!loadedMap.get(img.id)}
-          loading="lazy"
-          onload={() => onImgLoad(img.id)}
-          onerror={() => onImgError(img.id)}
-        />
-      {:else}
-        <div class="w-full h-40 bg-muted rounded-md mb-2 flex items-center justify-center text-muted-foreground text-sm">
-          Sem thumbnail
+        {#if selectionMode && selectedIds.includes(img.id)}
+          <div class="absolute top-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold">✓</div>
+        {/if}
+        <p class="font-mono text-xs truncate mb-1">{img.id}</p>
+        <div class="flex items-center justify-between">
+          <Badge variant={(img.cloud_cover ?? 100) < 20 ? 'success' : (img.cloud_cover ?? 100) < 50 ? 'warning' : 'destructive'}>
+            {img.cloud_cover?.toFixed(1) ?? '—'}% nuvem
+          </Badge>
+          <span class="text-xs text-muted-foreground">
+            {new Date(img.acquired_at).toLocaleDateString('pt-BR')}
+          </span>
         </div>
-      {/if}
-      {#if selectionMode && selectedIds.includes(img.id)}
-        <div class="absolute top-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold">✓</div>
-      {/if}
-      <p class="font-mono text-xs truncate mb-1">{img.id}</p>
-      <div class="flex items-center justify-between">
-        <Badge variant={(img.cloud_cover ?? 100) < 20 ? 'success' : (img.cloud_cover ?? 100) < 50 ? 'warning' : 'destructive'}>
-          {img.cloud_cover?.toFixed(1) ?? '—'}% nuvem
-        </Badge>
-        <span class="text-xs text-muted-foreground">
-          {new Date(img.acquired_at).toLocaleDateString('pt-BR')}
-        </span>
-      </div>
-      {#if hoveredImage === img}
-        <div class="absolute left-0 right-0 bottom-0 translate-y-full z-50">
-          <ImageMetadata image={img} />
-        </div>
-      {/if}
-    </button>
-  {/each}
-</div>
+        {#if hoveredImage === img}
+          <div class="absolute left-0 right-0 bottom-0 translate-y-full z-50">
+            <ImageMetadata image={img} />
+          </div>
+        {/if}
+      </button>
+    {/each}
+  </div>
+{/if}
