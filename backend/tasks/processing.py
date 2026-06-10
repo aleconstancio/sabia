@@ -24,8 +24,10 @@ def process_image_task(self, image_id: str, polygon_coords: list, product: str, 
 
     try:
         return asyncio.run(run())
-    except Exception as exc:
-        raise self.retry(exc=exc)
+    except (ConnectionError, TimeoutError, IOError) as exc:
+        raise self.retry(exc=exc, max_retries=3)
+    except Exception:
+        raise
 
 
 @celery_app.task(bind=True, max_retries=2)

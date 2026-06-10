@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db
+from backend.api.deps import get_db, get_http_client
 from backend.models.schemas import PolygonRequest, ProcessRequest, ExportPdfRequest, ProcessBatchRequest, ComputeDifferenceRequest, DownloadBatchRequest
 from backend.config import get_settings
 
@@ -166,13 +166,13 @@ async def list_cidades(uf: str):
 async def geocode(q: str):
     """Proxy for Nominatim geocoding to avoid direct client requests."""
     import httpx
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"format": "json", "q": q, "limit": 1},
-            headers={"User-Agent": "SpaceEye/0.2.0"},
-        )
-        return resp.json()
+    client = await get_http_client()
+    resp = await client.get(
+        "https://nominatim.openstreetmap.org/search",
+        params={"format": "json", "q": q, "limit": 1},
+        headers={"User-Agent": "SpaceEye/0.2.0"},
+    )
+    return resp.json()
 
 
 @router.get("/overlay/{filename}")
@@ -248,10 +248,10 @@ async def get_weather(lat: float, lon: float):
         "timezone": "America/Sao_Paulo",
         "forecast_days": 7,
     }
-    async with httpx.AsyncClient() as client:
-        resp = await client.get("https://api.open-meteo.com/v1/forecast", params=params)
-        resp.raise_for_status()
-        return resp.json()
+    client = await get_http_client()
+    resp = await client.get("https://api.open-meteo.com/v1/forecast", params=params)
+    resp.raise_for_status()
+    return resp.json()
 
 
 @router.get("/soil/{lat}/{lon}")
@@ -266,11 +266,11 @@ async def get_soil(lat: float, lon: float):
         "depth": "0-5cm",
         "value": "mean",
     }
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, params=params)
-        if resp.status_code == 200:
-            return resp.json()
-        return {}
+    client = await get_http_client()
+    resp = await client.get(url, params=params)
+    if resp.status_code == 200:
+        return resp.json()
+    return {}
 
 
 @router.get("/landcover/{lat}/{lon}")
@@ -347,26 +347,26 @@ async def soil_zonal(req: PolygonRequest):
     sampled = random.sample(points, min(len(points), 10))
 
     results = {"ph": [], "oc": [], "sand": [], "silt": [], "clay": []}
-    async with httpx.AsyncClient(timeout=15) as client:
-        for p in sampled:
-            url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
-            params = {"lat": p["lat"], "lon": p["lon"],
-                      "property": ["phh2o", "oc", "sand", "silt", "clay"],
-                      "depth": "0-5cm", "value": "mean"}
-            try:
-                resp = await client.get(url, params=params)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    def find_val(layer):
-                        l = data.get("properties", {}).get("layers", [])
-                        match = [x for x in l if x["name"] == layer]
-                        return match[0]["depths"][0]["values"]["mean"] if match else None
-                    for k, layer in [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]:
-                        v = find_val(layer)
-                        if v is not None: results[k].append(v)
-            except Exception as e:
-                logger.exception("Soil zonal stats failed")
-                raise HTTPException(status_code=500, detail="Failed to compute soil statistics")
+    client = await get_http_client()
+    for p in sampled:
+        url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+        params = {"lat": p["lat"], "lon": p["lon"],
+                  "property": ["phh2o", "oc", "sand", "silt", "clay"],
+                  "depth": "0-5cm", "value": "mean"}
+        try:
+            resp = await client.get(url, params=params)
+            if resp.status_code == 200:
+                data = resp.json()
+                def find_val(layer):
+                    l = data.get("properties", {}).get("layers", [])
+                    match = [x for x in l if x["name"] == layer]
+                    return match[0]["depths"][0]["values"]["mean"] if match else None
+                for k, layer in [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]:
+                    v = find_val(layer)
+                    if v is not None: results[k].append(v)
+        except Exception as e:
+            logger.exception("Soil zonal stats failed")
+            raise HTTPException(status_code=500, detail="Failed to compute soil statistics")
 
     def avg(vals): return round(sum(vals) / len(vals), 2) if vals else None
 
@@ -456,10 +456,10 @@ async def process_batch(req: ProcessBatchRequest):
     task_ids = []
     for img_id in req.image_ids:
         task = process_image_task.delay(
-            image_id=img_id,
-            polygon_coords=req.coordinates,
-            product=req.product,
-            band_urls={},
+        image_id=img_id,
+        polygon_coords=req.coordinates,
+        product=req.product,
+        band_urls={},
         )
         task_ids.append({"image_id": img_id, "task_id": task.id})
 
@@ -491,9 +491,9 @@ async def image_timeline(req: PolygonRequest, db: AsyncSession = Depends(get_db)
     timeline = []
     for img in images:
         timeline.append({
-            "id": img["id"],
-            "date": img["acquired_at"],
-            "cloud_cover": img["cloud_cover"],
-            "thumbnail_url": img["thumbnail_url"],
+        "id": img["id"],
+        "date": img["acquired_at"],
+        "cloud_cover": img["cloud_cover"],
+        "thumbnail_url": img["thumbnail_url"],
         })
     return {"timeline": timeline, "total": total}
