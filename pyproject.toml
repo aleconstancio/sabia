@@ -4,6 +4,7 @@ version = "0.2.0"
 description = "Satellite imagery search & processing"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.14.0",
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "sqlalchemy[asyncio]>=2.0.0",
