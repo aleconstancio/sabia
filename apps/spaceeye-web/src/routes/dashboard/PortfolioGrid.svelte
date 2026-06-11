@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import Card from '$lib/ui/components/Card.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
   import type { RegionProfile } from '$lib/api/types';
@@ -8,7 +9,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
   {#each profiles as profile (profile.id)}
-    <Card interactive onclick={() => window.location.href = `/map?profile=${profile.id}`}>
+    <Card interactive onclick={() => goto(`/map?profile=${profile.id}`)}>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-semibold truncate">{profile.name || 'Unnamed Region'}</h3>
