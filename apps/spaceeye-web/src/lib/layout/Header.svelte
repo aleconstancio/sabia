@@ -71,6 +71,21 @@
       <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
         Dashboard
       </a>
+      <a href="/modules/vegetation" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Vegetation
+      </a>
+      <a href="/modules/water" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Water
+      </a>
+      <a href="/modules/fire" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Fire
+      </a>
+      <a href="/modules/soil" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Soil
+      </a>
+      <a href="/modules/climate" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+        Climate
+      </a>
       {#if mapState.results.length > 0}
         <Button variant={showCompare ? 'default' : 'ghost'} size="sm" onclick={onToggleCompare}>
           {showCompare ? 'Sair' : 'Comparar'}
