@@ -20,7 +20,7 @@ PYTHON := $(shell $(UV) run -- python3 -c "import sys; print(sys.executable)" 2>
 RUN := $(UV) run
 endif
 
-.PHONY: setup dev dev-db dev-backend dev-worker dev-frontend lint check test test-backend test-frontend clean format help
+.PHONY: setup dev dev-db dev-backend dev-worker dev-frontend lint check test test-backend test-frontend clean format help migrate docker-build docker-up docker-down docker-logs
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -63,8 +63,12 @@ dev-worker: ## Start Celery worker
 dev-frontend: ## Start Vite dev server
 	cd apps/spaceeye-web && $(NPM) run dev
 
-lint: ## Run Svelte type-check
-	cd apps/spaceeye-web && npx svelte-check --tsconfig ./tsconfig.json
+lint: ## Run all linters
+	@echo "==> Python linting..."
+	uv run ruff check .
+	uv run ruff format --check .
+	@echo "==> Frontend type checking..."
+	cd apps/spaceeye-web && npm run check
 
 check: lint ## Alias for lint
 
@@ -79,8 +83,10 @@ test-frontend: ## Run frontend tests
 test-frontend-watch: ## Run frontend tests in watch mode
 	cd apps/spaceeye-web && $(NPM) run test
 
-format: ## Format Python code with ruff
-	$(RUN) ruff format backend/ pipeline/
+format: ## Format all code
+	@echo "==> Python formatting..."
+	uv run ruff format .
+	uv run ruff check --fix .
 
 clean: ## Remove build artifacts
 	rm -rf apps/spaceeye-web/build
@@ -89,3 +95,18 @@ clean: ## Remove build artifacts
 	rm -rf .venv
 	rm -rf __pycache__ backend/__pycache__ pipeline/__pycache__
 	find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+
+migrate: ## Run database migrations
+	uv run alembic upgrade head
+
+docker-build: ## Build Docker images
+	docker compose build
+
+docker-up: ## Start Docker services
+	docker compose up -d
+
+docker-down: ## Stop Docker services
+	docker compose down
+
+docker-logs: ## View Docker logs
+	docker compose logs -f

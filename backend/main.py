@@ -39,6 +39,9 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
