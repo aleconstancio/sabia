@@ -20,7 +20,7 @@ export async function loadProfiles() {
       _profiles = data.profiles || [];
       _total = data.total || 0;
     }
-  } catch { /* offline */ }
+  } catch (e) { console.warn('Dashboard load failed:', e); }
   _isLoading = false;
 }
 
@@ -29,5 +29,5 @@ export async function deleteProfile(id: string) {
     await fetch(`${API_URL}/profiles/${id}`, { method: 'DELETE' });
     _profiles = _profiles.filter(p => p.id !== id);
     _total--;
-  } catch { /* ignore */ }
+  } catch (e) { console.warn('Profile delete failed:', e); }
 }

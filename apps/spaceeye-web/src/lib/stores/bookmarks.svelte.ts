@@ -11,7 +11,7 @@ function load() {
   try {
     const raw = localStorage.getItem('spaceeye_bookmarks');
     _bookmarks = raw ? JSON.parse(raw) : [];
-  } catch { _bookmarks = []; }
+  } catch (e) { console.warn('Bookmarks load failed:', e); _bookmarks = []; }
 }
 
 function persist() {

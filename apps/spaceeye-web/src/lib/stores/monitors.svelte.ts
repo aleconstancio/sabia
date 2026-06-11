@@ -19,7 +19,7 @@ function load() {
   try {
     const raw = localStorage.getItem('spaceeye_monitors');
     _monitors = raw ? JSON.parse(raw) : [];
-  } catch { _monitors = []; }
+  } catch (e) { console.warn('Monitors load failed:', e); _monitors = []; }
 }
 
 function persist() {
@@ -72,7 +72,7 @@ export async function checkMonitor(m: Monitor): Promise<string> {
       persist();
       return result;
     }
-  } catch { /* network error */ }
+  } catch (e) { console.warn('Monitor check failed:', e); }
   return 'Falha na verificação';
 }
 

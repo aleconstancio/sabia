@@ -7,7 +7,7 @@ function load() {
   try {
     const raw = localStorage.getItem('spaceeye_history');
     _history = raw ? JSON.parse(raw) : [];
-  } catch { _history = []; }
+  } catch (e) { console.warn('History load failed:', e); _history = []; }
 }
 
 function persist() {
@@ -29,7 +29,7 @@ async function persistToBackend(rec: AnalysisRecord) {
         cloud_cover: rec.cloudCover,
       }),
     });
-  } catch { /* offline — localStorage backup is fine */ }
+  } catch (e) { console.warn('History persist failed:', e); }
 }
 
 export function addRecord(rec: Omit<AnalysisRecord, 'id' | 'timestamp'>) {

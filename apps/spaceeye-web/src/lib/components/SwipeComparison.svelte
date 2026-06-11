@@ -65,9 +65,11 @@
             clearInterval(poll); loading = false;
             swipeError = status.error || 'Erro';
           }
-        } catch { clearInterval(poll); loading = false; swipeError = 'Falha na conexão'; }
+        } catch { console.warn('SwipeComparison poll error for side:', side); clearInterval(poll); loading = false; swipeError = 'Falha na conexão'; }
       }, 1000);
-    } catch { loading = false; swipeError = 'Falha ao iniciar processamento'; }
+    } catch {
+      console.warn('SwipeComparison processImage error');
+      loading = false; swipeError = 'Falha ao iniciar processamento'; }
   }
 
   $effect(() => {

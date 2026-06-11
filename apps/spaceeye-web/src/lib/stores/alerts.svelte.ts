@@ -13,7 +13,7 @@ function load() {
   try {
     const raw = localStorage.getItem('spaceeye_alerts');
     _alerts = raw ? JSON.parse(raw) : [];
-  } catch { _alerts = []; }
+  } catch (e) { console.warn('Alerts load failed:', e); _alerts = []; }
 }
 
 function persist() {

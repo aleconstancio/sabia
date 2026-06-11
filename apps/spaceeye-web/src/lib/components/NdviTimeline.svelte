@@ -15,10 +15,6 @@
   let loading = $state(false);
   let error = $state('');
 
-  $effect(() => {
-    if (images.length > 0) fetchTimeline();
-  });
-
   async function fetchTimeline() {
     if (images.length === 0) return;
     loading = true; error = '';
@@ -54,6 +50,7 @@
       results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       timelineData = results;
     } catch (e: unknown) {
+      console.warn('NdviTimeline fetchTimeline error:', e);
       error = (e as Error).message;
     } finally {
       loading = false;
@@ -139,7 +136,16 @@
     </div>
   {:else}
     <div class="h-[140px] flex items-center justify-center text-xs text-muted-foreground">
-      Processe imagens para ver a série temporal
+      {#if images.length > 0}
+        <button
+          class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none"
+          onclick={fetchTimeline}
+        >
+          Construir Série Temporal
+        </button>
+      {:else}
+        Processe imagens para ver a série temporal
+      {/if}
     </div>
   {/if}
 </div>

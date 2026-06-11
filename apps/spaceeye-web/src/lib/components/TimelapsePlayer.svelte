@@ -2,6 +2,7 @@
   import { onDestroy } from 'svelte';
   import Button from '$lib/ui/components/Button.svelte';
   import type { ImageResult } from '$lib/api/types';
+  import { API_URL } from '$lib/config';
 
   let {
     images = [] as ImageResult[],
@@ -15,11 +16,12 @@
   let frameIndex = $state(0);
   let processedIds = $state<Set<string>>(new Set());
   let intervalId: ReturnType<typeof setInterval> | undefined;
-  import { API_URL } from '$lib/config';
 
   let processError = $state('');
+  let processing = $state(false);
+  let processProgress = $state(0);
 
-  async function ensureProcessed(imageId: string) {
+  async function ensureProcessed(imageId: string): Promise<boolean> {
     if (processedIds.has(imageId)) return true;
     try {
       const resp = await fetch(`${API_URL}/process`, {
@@ -33,32 +35,46 @@
         const sr = await fetch(`${API_URL}/tasks/${task_id}`);
         const st = await sr.json();
         if (st.status === 'done') {
-          processedIds.add(imageId);
+          processedIds = new Set([...processedIds, imageId]);
           return true;
         }
         if (st.status === 'error') return false;
       }
-    } catch { processError = 'Falha ao processar frame'; }
+    } catch {
+      console.warn('TimelapsePlayer ensureProcessed error for image:', imageId);
+      processError = 'Falha ao processar frame';
+    }
     return false;
   }
 
   $effect(() => {
-    if (images.length > 0) ensureProcessed(images[0].id).then(() => onFrameChange(images[0].id));
+    if (images.length > 0 && processedIds.size === 0) {
+      onFrameChange(images[0].id);
+    }
   });
 
+  async function processAllFrames() {
+    if (images.length === 0) return;
+    processing = true;
+    processProgress = 0;
+    processError = '';
+    for (let i = 0; i < images.length; i++) {
+      processProgress = ((i) / images.length) * 100;
+      await ensureProcessed(images[i].id);
+    }
+    processProgress = 100;
+    processing = false;
+  }
+
   async function play() {
+    if (processedIds.size < images.length) {
+      await processAllFrames();
+    }
     playing = true;
     if (frameIndex >= images.length) frameIndex = 0;
-    for (let i = 0; i < Math.min(images.length, 5); i++) {
-      ensureProcessed(images[i].id);
-    }
-    intervalId = setInterval(async () => {
+    intervalId = setInterval(() => {
       frameIndex = (frameIndex + 1) % images.length;
-      const img = images[frameIndex];
-      await ensureProcessed(img.id);
-      onFrameChange(img.id);
-      const nextIdx = (frameIndex + 1) % images.length;
-      ensureProcessed(images[nextIdx].id);
+      onFrameChange(images[frameIndex].id);
     }, speed);
   }
 
@@ -86,21 +102,30 @@
     <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Timelapse</h4>
     <span class="text-xs font-mono">{frameIndex + 1}/{images.length}</span>
   </div>
-  <div class="flex items-center gap-2 mb-2">
-    <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0" ariaLabel="Parar timelapse">⏹</Button>
-    <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0" ariaLabel={playing ? 'Pausar timelapse' : 'Iniciar timelapse'}>{playing ? '⏸' : '▶'}</Button>
-    <input type="range" min="200" max="5000" step="100" bind:value={speed} class="flex-1 accent-emerald-500 h-1" aria-label="Velocidade do timelapse" />
-    <span class="text-xs text-muted-foreground w-10">{(speed / 1000).toFixed(1)}s</span>
-  </div>
-  <input type="range" min="0" max={Math.max(0, images.length - 1)} bind:value={frameIndex}
-    onchange={() => goTo(frameIndex)} class="w-full accent-emerald-500 h-1"
-    aria-label="Frame do timelapse"
-  />
-  {#if images[frameIndex]}
-    <div class="flex justify-between text-xs text-muted-foreground mt-1">
-      <span>{new Date(images[frameIndex].acquired_at).toLocaleDateString('pt-BR')}</span>
-      <span>nuvem: {images[frameIndex].cloud_cover?.toFixed(0) ?? '?'}%</span>
+  {#if processing}
+    <div class="mb-2">
+      <div class="w-full bg-muted rounded-full h-1.5">
+        <div class="bg-emerald-500 h-1.5 rounded-full transition-all" style="width: {processProgress}%"></div>
+      </div>
+      <p class="text-xs text-muted-foreground mt-1">Processando frames... {processProgress.toFixed(0)}%</p>
     </div>
+  {:else}
+    <div class="flex items-center gap-2 mb-2">
+      <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0" ariaLabel="Parar timelapse">⏹</Button>
+      <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0" ariaLabel={playing ? 'Pausar timelapse' : 'Iniciar timelapse'}>{playing ? '⏸' : '▶'}</Button>
+      <input type="range" min="200" max="5000" step="100" bind:value={speed} class="flex-1 accent-emerald-500 h-1" aria-label="Velocidade do timelapse" />
+      <span class="text-xs text-muted-foreground w-10">{(speed / 1000).toFixed(1)}s</span>
+    </div>
+    <input type="range" min="0" max={Math.max(0, images.length - 1)} bind:value={frameIndex}
+      onchange={() => goTo(frameIndex)} class="w-full accent-emerald-500 h-1"
+      aria-label="Frame do timelapse"
+    />
+    {#if images[frameIndex]}
+      <div class="flex justify-between text-xs text-muted-foreground mt-1">
+        <span>{new Date(images[frameIndex].acquired_at).toLocaleDateString('pt-BR')}</span>
+        <span>nuvem: {images[frameIndex].cloud_cover?.toFixed(0) ?? '?'}%</span>
+      </div>
+    {/if}
   {/if}
   {#if processError}
     <p class="text-xs text-destructive mt-1">{processError}</p>

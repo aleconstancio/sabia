@@ -31,6 +31,7 @@
       const resp = await fetch(`${API_URL}/ibge/uf`);
       ufs = await resp.json();
     } catch {
+      console.warn('SearchMenu failed to load UFs');
       apiError = 'Falha ao carregar estados';
     }
   });
@@ -45,6 +46,7 @@
       const resp = await fetch(`${API_URL}/ibge/cidades/${uf}`);
       cities = await resp.json();
     } catch {
+      console.warn('SearchMenu failed to load cities for UF:', uf);
       cities = [];
       apiError = 'Falha ao carregar cidades';
     }
@@ -62,6 +64,7 @@
         navigateToCity(parseFloat(data[0].lat), parseFloat(data[0].lon));
       }
     } catch {
+      console.warn('SearchMenu geocode failed for city:', city);
       apiError = 'Falha na busca do local';
     }
   }

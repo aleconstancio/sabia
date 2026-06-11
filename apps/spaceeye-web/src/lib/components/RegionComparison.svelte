@@ -107,6 +107,7 @@
             else { errorB = status.error || 'Erro'; loadingB = false; }
           }
         } catch {
+          console.warn('RegionComparison poll error for side:', side);
           clearInterval(poll);
           if (side === 'A') loadingA = false; else loadingB = false;
         }
@@ -155,9 +156,10 @@
             computingDiff = false;
             diffError = status.error || 'Erro ao calcular diferença';
           }
-        } catch { clearInterval(poll); computingDiff = false; diffError = 'Falha na conexão'; }
+        } catch { console.warn('RegionComparison diff poll error'); clearInterval(poll); computingDiff = false; diffError = 'Falha na conexão'; }
       }, 2000);
     } catch {
+      console.warn('RegionComparison computeDifference error');
       computingDiff = false;
       diffError = 'Falha ao iniciar diferença';
     }

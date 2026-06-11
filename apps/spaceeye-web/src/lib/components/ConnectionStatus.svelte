@@ -19,6 +19,7 @@
         catalogCount = data.catalog_count;
       }
     } catch {
+      console.warn('ConnectionStatus health check failed');
       status = 'disconnected';
     }
   }
