@@ -13,11 +13,8 @@
   import Select from '$lib/ui/components/Select.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
-  import WeatherPanel from '$lib/components/WeatherPanel.svelte';
-  import SoilPanel from '$lib/components/SoilPanel.svelte';
   import MapToolbar from '$lib/components/MapToolbar.svelte';
   import RegionComparison from '$lib/components/RegionComparison.svelte';
-  import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
   import TimeSlider from '$lib/components/TimeSlider.svelte';
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
@@ -162,10 +159,6 @@
       mapState.comparisonFirst = null;
       mapState.comparisonSecond = null;
     }
-  }
-
-  function onWeatherData(data: any) {
-    mapState.lastWeatherData = data;
   }
 
   async function doExportPdf() {
@@ -329,14 +322,6 @@
   opacity={layerOpacity}
   onOpacityChange={setOpacity}
 />
-
-{#if mapState.polygonCentroid && (mapState.showImageGallery || mapState.hasOverlay)}
-  <div class="absolute right-2 sm:right-4 top-16 sm:top-20 z-[999] w-56 sm:w-72 space-y-3">
-    <WeatherPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} {onWeatherData} />
-    <SoilPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />
-    <LandCoverPanel lat={mapState.polygonCentroid.lat} lon={mapState.polygonCentroid.lon} polygonCoords={mapState.polygonCoords} />
-  </div>
-{/if}
 
 <Dialog bind:open={mapState.showPolygonModal} title="Buscar imagens deste local?">
   <div class="space-y-4">
