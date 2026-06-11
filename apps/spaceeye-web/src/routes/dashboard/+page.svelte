@@ -10,21 +10,21 @@
 
   onMount(() => loadProfiles());
 
-  let avgNdvi = $derived(() => {
+  let avgNdvi = $derived.by(() => {
     const values = dashboardState.profiles
       .map(p => p.satellite_data?.stats?.mean)
       .filter(v => v != null) as number[];
     return values.length ? (values.reduce((a, b) => a + b, 0) / values.length) : null;
   });
 
-  let alertCount = $derived(() => {
+  let alertCount = $derived.by(() => {
     try {
       const raw = localStorage.getItem('spaceeye_alerts');
       return raw ? JSON.parse(raw).length : 0;
     } catch { return 0; }
   });
 
-  let avgTemp = $derived(() => {
+  let avgTemp = $derived.by(() => {
     const temps = dashboardState.profiles
       .map(p => p.weather_summary?.temperature)
       .filter(t => t != null) as number[];
@@ -68,21 +68,21 @@
         />
         <Scorecard
           title="Avg NDVI Health"
-          value={avgNdvi() !== null ? `${(avgNdvi()! * 100).toFixed(0)}%` : '—'}
-          trend={avgNdvi() !== null ? `▲ +5% vs last month` : undefined}
-          trendData={[0.4, 0.42, 0.45, 0.48, 0.52, 0.55, avgNdvi() || 0.5]}
+          value={avgNdvi !== null ? `${(avgNdvi! * 100).toFixed(0)}%` : '—'}
+          trend={avgNdvi !== null ? `▲ +5% vs last month` : undefined}
+          trendData={[0.4, 0.42, 0.45, 0.48, 0.52, 0.55, avgNdvi || 0.5]}
           icon="🌿"
           color="#10b981"
         />
         <Scorecard
           title="Active Alerts"
-          value={String(alertCount())}
+          value={String(alertCount)}
           icon="🔔"
-          color={alertCount() > 0 ? '#ef4444' : '#10b981'}
+          color={alertCount > 0 ? '#ef4444' : '#10b981'}
         />
         <Scorecard
           title="Avg Temperature"
-          value={avgTemp() !== null ? `${avgTemp()}°C` : '—'}
+          value={avgTemp !== null ? `${avgTemp}°C` : '—'}
           icon="🌡"
           color="#3b82f6"
         />

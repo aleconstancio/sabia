@@ -23,7 +23,7 @@
       .range([height - 2, 2])
   );
 
-  let linePath = $derived(() => {
+  let linePath = $derived.by(() => {
     const gen = line<{ x: number; y: number }>()
       .x(d => xScale(d.x))
       .y(d => yScale(d.y))
@@ -31,7 +31,7 @@
     return gen(chartData) || '';
   });
 
-  let areaPath = $derived(() => {
+  let areaPath = $derived.by(() => {
     const gen = area<{ x: number; y: number }>()
       .x(d => xScale(d.x))
       .y0(height)
@@ -43,8 +43,8 @@
 
 {#if data.length > 1}
   <svg {width} {height} class="overflow-visible">
-    <path d={areaPath()} fill={color} fill-opacity={0.1} />
-    <path d={linePath()} fill="none" stroke={color} stroke-width={1.5} stroke-linecap="round" />
+    <path d={areaPath} fill={color} fill-opacity={0.1} />
+    <path d={linePath} fill="none" stroke={color} stroke-width={1.5} stroke-linecap="round" />
   </svg>
 {:else}
   <div class="flex items-center justify-center" style="width: {width}px; height: {height}px;">

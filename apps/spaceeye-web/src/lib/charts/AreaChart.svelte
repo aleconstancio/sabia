@@ -26,7 +26,7 @@
       .range([height - 30, 0])
   );
 
-  let linePath = $derived(() => {
+  let linePath = $derived.by(() => {
     const gen = line<{ date: string; value: number }>()
       .x(d => xScale(new Date(d.date)))
       .y(d => yScale(d.value))
@@ -34,7 +34,7 @@
     return gen(data) || '';
   });
 
-  let areaPath = $derived(() => {
+  let areaPath = $derived.by(() => {
     const gen = area<{ date: string; value: number }>()
       .x(d => xScale(new Date(d.date)))
       .y0(height - 30)
@@ -65,9 +65,9 @@
   {#if data.length > 0}
     <svg width={containerWidth} height={height} class="overflow-visible">
       <!-- Area fill -->
-      <path d={areaPath()} fill={color} fill-opacity={0.15} />
+      <path d={areaPath} fill={color} fill-opacity={0.15} />
       <!-- Line -->
-      <path d={linePath()} fill="none" stroke={color} stroke-width={2} />
+      <path d={linePath} fill="none" stroke={color} stroke-width={2} />
       <!-- Interactive overlay -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <rect
