@@ -28,6 +28,7 @@
   import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
   import SwipeComparison from '$lib/components/SwipeComparison.svelte';
+  import { SPECTRAL_PRODUCTS } from '$lib/constants';
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = $state(null);
@@ -187,17 +188,6 @@
     }
   }
 
-  function updateShareUrl(imageId: string) {
-    if (!browser || !mapState.polygonCoords) return;
-    const params = new URLSearchParams();
-    params.set('coords', JSON.stringify(mapState.polygonCoords));
-    params.set('image', imageId);
-    params.set('product', mapState.selectedProduct);
-    const url = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, '', url);
-  }
-
-
   function restoreBookmark(coords: number[][][], name: string) {
     mapState.polygonCoords = coords;
     if (map && mapState.polygonCoords) {
@@ -327,19 +317,7 @@
   <div class="space-y-4">
     <div>
       <label class="text-sm font-medium">Produto</label>
-      <Select bind:value={mapState.selectedProduct} options={[
-  { value: 'NDVI', label: 'NDVI - Vegetação' },
-  { value: 'TCI', label: 'TCI - Cor Verdadeira' },
-  { value: 'NDWI', label: 'NDWI - Água' },
-  { value: 'SAVI', label: 'SAVI - Solo/Ajuste' },
-  { value: 'EVI', label: 'EVI - Veg. Melhorada' },
-  { value: 'MSAVI2', label: 'MSAVI2 - SAVI Mod.' },
-  { value: 'VARI', label: 'VARI - Visível Atm.' },
-  { value: 'MNDWI', label: 'MNDWI - Água Mod.' },
-  { value: 'CIR', label: 'CIR - Infra. Cor' },
-  { value: 'NBR', label: 'NBR - Queimadas' },
-  { value: 'NDMI', label: 'NDMI - Umidade' },
-]} />
+      <Select bind:value={mapState.selectedProduct} options={SPECTRAL_PRODUCTS} />
       <ProductInfo product={mapState.selectedProduct} />
     </div>
     {#if drawnItemsGroup && drawnItemsGroup.getLayers().length > 1}
