@@ -1,51 +1,52 @@
-import httpx
 import logging
 from shapely.geometry import shape
+
+from backend.api.deps import get_http_client
 
 logger = logging.getLogger(__name__)
 
 
 async def fetch_weather_snapshot(lat: float, lon: float) -> dict:
     """Fetch current weather from Open-Meteo."""
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "current": [
-                    "temperature_2m",
-                    "relative_humidity_2m",
-                    "apparent_temperature",
-                    "precipitation",
-                    "weather_code",
-                    "soil_moisture_0_to_7cm",
-                ],
-                "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
-                "timezone": "America/Sao_Paulo",
-                "forecast_days": 7,
-            },
-        )
-        resp.raise_for_status()
-        return resp.json()
+    client = await get_http_client()
+    resp = await client.get(
+        "https://api.open-meteo.com/v1/forecast",
+        params={
+            "latitude": lat,
+            "longitude": lon,
+            "current": [
+                "temperature_2m",
+                "relative_humidity_2m",
+                "apparent_temperature",
+                "precipitation",
+                "weather_code",
+                "soil_moisture_0_to_7cm",
+            ],
+            "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
+            "timezone": "America/Sao_Paulo",
+            "forecast_days": 7,
+        },
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
     """Fetch soil properties from ISRIC SoilGrids."""
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.get(
-            "https://rest.isric.org/soilgrids/v2.0/properties/query",
-            params={
-                "lat": lat,
-                "lon": lon,
-                "property": ["phh2o", "oc", "nitrogen", "sand", "silt", "clay"],
-                "depth": "0-5cm",
-                "value": "mean",
-            },
-        )
-        if resp.status_code == 200:
-            return resp.json()
-        return {}
+    client = await get_http_client()
+    resp = await client.get(
+        "https://rest.isric.org/soilgrids/v2.0/properties/query",
+        params={
+            "lat": lat,
+            "lon": lon,
+            "property": ["phh2o", "oc", "nitrogen", "sand", "silt", "clay"],
+            "depth": "0-5cm",
+            "value": "mean",
+        },
+    )
+    if resp.status_code == 200:
+        return resp.json()
+    return {}
 
 
 async def fetch_landcover_snapshot(lat: float, lon: float) -> dict:
