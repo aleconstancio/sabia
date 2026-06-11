@@ -27,6 +27,7 @@ dependencies = [
     "scikit-image>=0.24.0",
     "httpx>=0.28.0",
     "reportlab>=4.0.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
 ]
 
 [build-system]
@@ -48,11 +49,46 @@ target-version = "py312"
 [tool.ruff.format]
 quote-style = "double"
 
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # function call in default argument (FastAPI Depends)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = ["backend/tests/*", "backend/__pycache__/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 50
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.",
+    "pass",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
 [tool.pytest.ini_options]
-testpaths = ["backend/tests"]
-pythonpath = ["backend"]
 asyncio_mode = "auto"
-markers = ["asyncio: mark test as async"]
+testpaths = ["backend/tests"]
+addopts = "-v --tb=short --cov=backend --cov-report=term-missing --cov-report=html"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
