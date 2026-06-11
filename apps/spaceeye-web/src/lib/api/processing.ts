@@ -249,3 +249,43 @@ export async function downloadBatch(taskIds: string[]) {
     toast.error('Falha ao baixar lote');
   }
 }
+
+export async function exportEsgCsv(module: string, coordinates: number[][][]) {
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  const resp = await fetch(`${API_URL}/export/esg-csv`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ coordinates }),
+  });
+  if (resp.ok) {
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spaceeye-${module}-export.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    toast.error('Failed to export CSV');
+  }
+}
+
+export async function exportEsgJson(region: string, coordinates: number[][][]) {
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  const resp = await fetch(`${API_URL}/export/esg-json`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ coordinates }),
+  });
+  if (resp.ok) {
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spaceeye-esg-export.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    toast.error('Failed to export JSON');
+  }
+}

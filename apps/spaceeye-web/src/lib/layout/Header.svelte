@@ -7,6 +7,7 @@
   import MonitoringPanel from '$lib/components/MonitoringPanel.svelte';
   import Bookmarks from '$lib/components/Bookmarks.svelte';
   import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
+  import AlertBell from '$lib/components/alerts/AlertBell.svelte';
   import Select from '$lib/ui/components/Select.svelte';
   import Button from '$lib/ui/components/Button.svelte';
   import { restorePolygonOnMap } from '$lib/utils/map-helpers';
@@ -116,6 +117,7 @@
       <HistoryPanel onRestore={handleRestore} />
       <MonitoringPanel />
       <Bookmarks currentCoords={mapState.polygonCoords} />
+      <AlertBell />
       <button
         onclick={toggleMode}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
