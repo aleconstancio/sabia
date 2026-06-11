@@ -12,23 +12,13 @@ CREATE TABLE IF NOT EXISTS analyses (
     acquired_at TIMESTAMPTZ,
     cloud_cover DOUBLE PRECISION,
     weather JSONB,
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+    CONSTRAINT check_analyses_cloud_cover CHECK (cloud_cover >= 0 AND cloud_cover <= 100)
 );
 
 CREATE INDEX IF NOT EXISTS idx_analyses_created_at ON analyses (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_analyses_product ON analyses (product);
 CREATE INDEX IF NOT EXISTS idx_analyses_collection ON analyses (collection);
-
--- Named regions for neighborhood ecology analysis
-CREATE TABLE IF NOT EXISTS regions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR NOT NULL,
-    description TEXT,
-    polygon JSONB NOT NULL,
-    centroid JSONB,
-    tags TEXT[] DEFAULT '{}',
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_regions_name ON regions (name);
+CREATE INDEX IF NOT EXISTS idx_analyses_image_id ON analyses (image_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_analyses_dedup ON analyses (image_id, product, (polygon::text));

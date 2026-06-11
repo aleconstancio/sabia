@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS images (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
     metadata JSONB DEFAULT '{}',
-    thumbnail_url VARCHAR
+    thumbnail_url VARCHAR,
+    CONSTRAINT check_cloud_cover CHECK (cloud_cover >= 0 AND cloud_cover <= 100)
 );
 
 -- Add geometry column when PostGIS is available
