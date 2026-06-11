@@ -9,7 +9,7 @@ import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db, get_http_client
@@ -41,6 +41,8 @@ with open(_datasets_path, "r", encoding="utf-8") as f:
 async def health(db: AsyncSession = Depends(get_db)):
     from backend.api.health import check_database
     db_status = await check_database(db)
+    if db_status.get("database") == "disconnected":
+        return JSONResponse(status_code=503, content={"status": "error", **db_status})
     return {"status": "ok", **db_status}
 
 
@@ -157,6 +159,10 @@ async def download_raster(task_id: str):
     if not path or not os.path.exists(path):
         raise HTTPException(404, "File not found or expired.")
 
+    cache_dir = os.path.join(get_settings().temp_dir, "cache")
+    if not os.path.realpath(path).startswith(os.path.realpath(cache_dir)):
+        raise HTTPException(403, "Access denied")
+
     filename = f"spaceeye_{task_id[:8]}.png"
     return FileResponse(path, filename=filename, media_type="image/png")
 
@@ -174,6 +180,10 @@ async def download_geotiff(task_id: str):
     path = result.result.get("path", "")
     if not path or not os.path.exists(path):
         raise HTTPException(404, "File not found or expired.")
+
+    cache_dir = os.path.join(get_settings().temp_dir, "cache")
+    if not os.path.realpath(path).startswith(os.path.realpath(cache_dir)):
+        raise HTTPException(403, "Access denied")
 
     tif_path = path.replace(".png", ".tif")
     if not os.path.exists(tif_path):
@@ -230,8 +240,8 @@ async def export_pdf(data: ExportPdfRequest):
 @router.post("/download/batch")
 async def download_batch(req: DownloadBatchRequest):
     """Download multiple processed results as a ZIP archive."""
-    if len(req.task_ids) > 10:
-        raise HTTPException(status_code=400, detail="Maximum 10 tasks per batch")
+    if len(req.task_ids) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 tasks per batch")
     from celery.result import AsyncResult
     from backend.tasks.celery_app import celery_app
     import zipfile, io
@@ -260,12 +270,13 @@ async def download_batch(req: DownloadBatchRequest):
 @router.post("/process/batch")
 async def process_batch(req: ProcessBatchRequest, db: AsyncSession = Depends(get_db)):
     """Process multiple images for the same polygon and return task IDs."""
-    from backend.repositories.images import get_image_by_id
+    from backend.repositories.images import get_images_by_ids
     from backend.tasks.processing import process_image_task
 
+    images = await get_images_by_ids(db, req.image_ids)
     task_ids = []
     for img_id in req.image_ids:
-        image = await get_image_by_id(db, img_id)
+        image = images.get(img_id)
         if not image:
             raise HTTPException(404, f"Image {img_id} not found")
         task = process_image_task.delay(

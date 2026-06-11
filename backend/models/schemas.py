@@ -60,14 +60,14 @@ class ExportPdfRequest(BaseModel):
 
 class ProcessBatchRequest(BaseModel):
     image_ids: list[str]
-    coordinates: list[list[float]]
+    coordinates: list[list[list[float]]]
     product: str
 
 
 class ComputeDifferenceRequest(BaseModel):
     task_id_a: str
     task_id_b: str
-    coordinates: list[list[float]]
+    coordinates: list[list[list[float]]]
 
 
 class DownloadBatchRequest(BaseModel):

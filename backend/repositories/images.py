@@ -5,17 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 
-async def _has_postgis(db: AsyncSession) -> bool:
-    """Check if the PostGIS column 'footprint' exists."""
-    try:
-        row = await db.execute(
-            text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
-        )
-        return row.scalar() is not None
-    except Exception:
-        return False
-
-
 async def find_images_by_polygon(
     db: AsyncSession,
     polygon_coords: list[list[list[float]]],
@@ -28,19 +17,15 @@ async def find_images_by_polygon(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict], int]:
-    has_gis = await _has_postgis(db)
     geojson_str = json.dumps({"type": "Polygon", "coordinates": polygon_coords})
 
-    # Build WHERE conditions (same for both modes)
     conditions = []
     params: dict = {}
 
-    if has_gis:
-        conditions.append(
-            "ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON(:geom), 4326))"
-        )
-        params["geom"] = geojson_str
-    # Non-PostGIS fallback: no spatial filter — return all images
+    conditions.append(
+        "ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON(:geom), 4326))"
+    )
+    params["geom"] = geojson_str
 
     if collections:
         placeholders = [f":col_{i}" for i in range(len(collections))]
@@ -65,10 +50,9 @@ async def find_images_by_polygon(
     count_query = text(f"SELECT COUNT(*) FROM images WHERE {where_clause}")
     total = (await db.execute(count_query, params)).scalar() or 0
 
-    if has_gis:
-        select_cols = "id, collection, ST_AsGeoJSON(footprint) as footprint_json, cloud_cover, acquired_at, thumbnail_url"
-    else:
-        select_cols = "id, collection, footprint_geojson as footprint_json, cloud_cover, acquired_at, thumbnail_url"
+    select_cols = "id, collection, ST_AsGeoJSON(footprint) as footprint_json, cloud_cover, acquired_at, thumbnail_url"
+    # Removed: PostGIS is required
+    # select_cols = "id, collection, footprint_geojson as footprint_json, cloud_cover, acquired_at, thumbnail_url"
 
     data_query = text(f"""
         SELECT {select_cols}
@@ -106,12 +90,28 @@ async def find_images_by_polygon(
     return images, total
 
 
+async def get_images_by_ids(db: AsyncSession, image_ids: list[str]) -> dict[str, dict]:
+    """Fetch multiple images by IDs in a single query."""
+    if not image_ids:
+        return {}
+    placeholders = [f":id_{i}" for i in range(len(image_ids))]
+    params = {f"id_{i}": img_id for i, img_id in enumerate(image_ids)}
+
+    query = text(f"""
+        SELECT id, jsonb_build_object(
+            'assets', metadata->'assets'
+        ) as metadata
+        FROM images
+        WHERE id IN ({','.join(placeholders)})
+    """)
+    result = await db.execute(query, params)
+    return {row[0]: row[1] for row in result.fetchall()}
+
+
 async def get_image_by_id(db: AsyncSession, image_id: str) -> Optional[dict]:
-    has_gis = await _has_postgis(db)
-    if has_gis:
-        select_cols = "id, collection, ST_AsGeoJSON(footprint) as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
-    else:
-        select_cols = "id, collection, footprint_geojson as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
+    select_cols = "id, collection, ST_AsGeoJSON(footprint) as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
+    # Removed: PostGIS is required
+    # select_cols = "id, collection, footprint_geojson as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
 
     query = text(f"SELECT {select_cols} FROM images WHERE id = :id")
     row = (await db.execute(query, {"id": image_id})).fetchone()

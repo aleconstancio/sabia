@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, HTTPException, Response
+from fastapi.responses import JSONResponse
 
 from backend.api.deps import get_http_client
 from backend.models.schemas import PolygonRequest
@@ -43,6 +44,7 @@ async def carbon_stock(req: PolygonRequest):
         "soil_organic_carbon": round(soc, 2),
         "biomass_estimate": round(ndvi_avg * biomass_factor, 2),
         "ndvi_avg": ndvi_avg,
+        "warning": "NDVI value is estimated",
     }
 
 
@@ -99,58 +101,17 @@ async def fire_risk(req: PolygonRequest):
         "temperature_factor": round(temp_factor, 2),
         "humidity_factor": round(humidity_factor, 2),
         "precipitation_factor": round(precip_factor, 2),
+        "warning": "NBR trend is estimated",
     }
 
 
 @router.post("/export/esg-csv")
 async def export_esg_csv(req: PolygonRequest):
     """Export ESG data as CSV for a module."""
-    import csv, io
-    from shapely.geometry import shape
-
-    poly = shape({"type": "Polygon", "coordinates": req.coordinates})
-    centroid = poly.centroid
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["date", "value", "metric"])
-
-    from datetime import datetime, timedelta
-    for i in range(30):
-        date = (datetime.now() - timedelta(days=30 - i)).strftime("%Y-%m-%d")
-        writer.writerow([date, round(0.3 + (i / 30) * 0.4, 4), "ndvi"])
-
-    return Response(
-        content=output.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=spaceeye-esg-export.csv"},
-    )
+    return JSONResponse(status_code=501, content={"error": "Not implemented", "message": "CSV export from real data not yet available"})
 
 
 @router.post("/export/esg-json")
 async def export_esg_json(req: PolygonRequest):
     """Export full ESG data package as JSON."""
-    from datetime import datetime as _dt
-    from shapely.geometry import shape
-
-    poly = shape({"type": "Polygon", "coordinates": req.coordinates})
-    centroid = poly.centroid
-
-    return {
-        "region": "Exported Region",
-        "coordinates": req.coordinates,
-        "export_date": _dt.now().isoformat(),
-        "metrics": {
-            "vegetation": {"ndvi_timeseries": [], "carbon_stock": 12.3},
-            "water": {"ndwi_timeseries": [], "water_area_pct": 10},
-            "soil": {"ph": 5.8, "organic_carbon": 18, "sand": 40, "clay": 35, "carbon_stock": 12.3},
-            "climate": {"avg_temp": 26.5, "precipitation": 120, "humidity": 65},
-        },
-        "alerts": [],
-        "thresholds": {
-            "vegetation_loss_pct": 20,
-            "water_change_pct": 15,
-            "carbon_decline_pct": 10,
-            "weather_alerts": True,
-        },
-    }
+    return JSONResponse(status_code=501, content={"error": "Not implemented", "message": "JSON export from real data not yet available"})

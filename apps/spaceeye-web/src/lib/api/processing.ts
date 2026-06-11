@@ -3,6 +3,8 @@ import { toast } from 'svelte-sonner';
 import { mapState } from '$lib/stores/map.svelte';
 import { addRecord } from '$lib/stores/history.svelte';
 import { API_URL } from '$lib/config';
+import { downloadBlob, downloadBlobPost } from '$lib/utils/download';
+import { pollTaskStatus } from '$lib/utils/pollTask';
 import type { Map as LeafletMap } from 'leaflet';
 
 interface SearchRequestBody {
@@ -30,8 +32,6 @@ interface ProcessResult {
   path: string;
   statistics?: Record<string, unknown>;
 }
-
-let _processPollInterval: ReturnType<typeof setInterval> | null = null;
 
 export async function searchImages() {
   if (!mapState.polygonCoords) return;
@@ -66,19 +66,11 @@ export async function searchImages() {
 }
 
 export async function processImage(imageId: string) {
-  if (_processPollInterval) {
-    clearInterval(_processPollInterval);
-    _processPollInterval = null;
-  }
-
   if (mapState.isLoading) return;
 
   mapState.isLoading = true;
   mapState.showImageGallery = false;
   mapState.showProcessingViewer = true;
-
-  let attempts = 0;
-  const MAX = 120;
 
   try {
     const resp = await fetch(`${API_URL}/process`, {
@@ -94,72 +86,53 @@ export async function processImage(imageId: string) {
     const data = await resp.json();
     mapState.taskId = data.task_id;
 
-    _processPollInterval = setInterval(async () => {
-      if (!mapState.showProcessingViewer) {
-        clearInterval(_processPollInterval!);
-        _processPollInterval = null;
-        mapState.isLoading = false;
-        return;
-      }
-        if (++attempts >= MAX) {
-        clearInterval(_processPollInterval!);
-        _processPollInterval = null;
-        mapState.isLoading = false;
-        mapState.processingPhase = 'Timeout';
-        toast.error('Processamento expirou. Tente novamente.');
-        return;
-      }
-      try {
-        const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
-        const status = await sr.json();
-        mapState.processingProgress = status.progress || 0;
-        mapState.processingPhase = status.phase || '';
+    const result = await pollTaskStatus(data.task_id, {
+      intervalMs: 1000,
+      onProgress: (progress, phase) => {
+        if (!mapState.showProcessingViewer) return;
+        mapState.processingProgress = progress;
+        mapState.processingPhase = phase;
+      },
+    });
 
-        if (status.status === 'done') {
-          clearInterval(_processPollInterval!);
-          _processPollInterval = null;
-          mapState.isLoading = false;
-          mapState.showProcessingViewer = false;
-          showOverlayResult(status.result);
-          addRecord({
-            imageId: imageId,
-            product: mapState.selectedProduct,
+    if (!mapState.showProcessingViewer) {
+      mapState.isLoading = false;
+      return;
+    }
+
+    if (result.status === 'done') {
+      mapState.isLoading = false;
+      mapState.showProcessingViewer = false;
+      showOverlayResult(result.result as unknown as ProcessResult);
+      addRecord({
+        imageId: imageId,
+        product: mapState.selectedProduct,
+        collection: mapState.selectedCollection || 'unknown',
+        cloudCover: null,
+        polygonCoords: mapState.polygonCoords || [],
+        centroid: mapState.polygonCentroid,
+        stats: result.result?.statistics as Record<string, unknown> | undefined,
+      });
+      // Auto-save to backend for dashboard
+      try {
+        await fetch(`${API_URL}/analyses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_id: imageId,
             collection: mapState.selectedCollection || 'unknown',
-            cloudCover: null,
-            polygonCoords: mapState.polygonCoords || [],
+            product: mapState.selectedProduct,
+            polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
             centroid: mapState.polygonCentroid,
-            stats: status.result?.statistics,
-          });
-          // Auto-save to backend for dashboard
-          try {
-            await fetch(`${API_URL}/analyses`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                image_id: imageId,
-                collection: mapState.selectedCollection || 'unknown',
-                product: mapState.selectedProduct,
-                polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
-                centroid: mapState.polygonCentroid,
-                statistics: status.result?.statistics,
-                overlay_path: status.result?.path,
-              }),
-            });
-          } catch { /* non-critical, history store has backup */ }
-        } else if (status.status === 'error') {
-          clearInterval(_processPollInterval!);
-          _processPollInterval = null;
-          mapState.isLoading = false;
-          mapState.processingPhase = 'Erro: ' + (status.error || 'Falha no processamento');
-        }
-      } catch {
-        clearInterval(_processPollInterval!);
-        _processPollInterval = null;
-        mapState.isLoading = false;
-        mapState.processingPhase = 'Falha na conexao';
-        toast.error('Falha na conexão. Tente novamente.');
-      }
-    }, 1000);
+            statistics: result.result?.statistics,
+            overlay_path: result.result?.path,
+          }),
+        });
+      } catch { /* non-critical, history store has backup */ }
+    } else {
+      mapState.isLoading = false;
+      mapState.processingPhase = 'Erro: ' + (result.error || 'Falha no processamento');
+    }
   } catch {
     mapState.isLoading = false;
     mapState.processingPhase = 'Erro ao iniciar processamento';
@@ -195,92 +168,41 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
     } : undefined,
   };
   if (mapState.lastOverlayPath) body.overlay_path = mapState.lastOverlayPath;
-  const resp = await fetch(`${API_URL}/export/pdf`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (resp.ok) {
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spaceeye-${imageId.slice(0, 20)}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
+  try {
+    await downloadBlobPost(`${API_URL}/export/pdf`, body, `spaceeye-${imageId.slice(0, 20)}.pdf`);
+  } catch {
     toast.error('Falha ao exportar PDF');
   }
 }
 
 export async function downloadGeotiff(taskId: string) {
-  const resp = await fetch(`${API_URL}/download/${taskId}/geotiff`);
-  if (resp.ok) {
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spaceeye-${taskId.slice(0, 8)}.tif`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
+  try {
+    await downloadBlob(`${API_URL}/download/${taskId}/geotiff`, `spaceeye-${taskId.slice(0, 8)}.tif`);
+  } catch {
     toast.error('Falha ao baixar GeoTIFF');
   }
 }
 
 export async function downloadBatch(taskIds: string[]) {
-  const resp = await fetch(`${API_URL}/download/batch`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(taskIds),
-  });
-  if (resp.ok) {
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'spaceeye-batch.zip';
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
+  try {
+    await downloadBlobPost(`${API_URL}/download/batch`, { task_ids: taskIds }, 'spaceeye-batch.zip');
+  } catch {
     toast.error('Falha ao baixar lote');
   }
 }
 
 export async function exportEsgCsv(module: string, coordinates: number[][][]) {
-  const resp = await fetch(`${API_URL}/export/esg-csv`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ coordinates }),
-  });
-  if (resp.ok) {
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spaceeye-${module}-export.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
+  try {
+    await downloadBlobPost(`${API_URL}/export/esg-csv`, { coordinates }, `spaceeye-${module}-export.csv`);
+  } catch {
     toast.error('Failed to export CSV');
   }
 }
 
 export async function exportEsgJson(region: string, coordinates: number[][][]) {
-  const resp = await fetch(`${API_URL}/export/esg-json`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ coordinates }),
-  });
-  if (resp.ok) {
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spaceeye-esg-export.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } else {
+  try {
+    await downloadBlobPost(`${API_URL}/export/esg-json`, { coordinates }, `spaceeye-esg-export.json`);
+  } catch {
     toast.error('Failed to export JSON');
   }
 }
