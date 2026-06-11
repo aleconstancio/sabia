@@ -1,4 +1,5 @@
 import os
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -17,6 +18,9 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.temp_dir, "downloads"), exist_ok=True)
     os.makedirs(os.path.join(settings.temp_dir, "cache"), exist_ok=True)
     yield
+    from backend.api.deps import _http_client
+    if _http_client is not None and not _http_client.is_closed:
+        await _http_client.aclose()
 
 
 app = FastAPI(
@@ -39,12 +43,11 @@ app.include_router(router, prefix="/api")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
+    logger = logging.getLogger(__name__)
+    logger.error("Unhandled exception: %s", exc, exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={
-            "detail": str(exc),
-            "trace": traceback.format_exc() if getattr(settings, 'debug', False) else None,
-        },
+        content={"detail": "Internal server error"},
     )
 
 

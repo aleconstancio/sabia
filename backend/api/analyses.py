@@ -60,6 +60,7 @@ async def list_analyses(
     db: AsyncSession = Depends(get_db),
 ):
     """List saved analyses with optional filters."""
+    limit = min(limit, 200)
     conditions = []
     params = {"limit": limit, "offset": offset}
     if product:

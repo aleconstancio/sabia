@@ -46,6 +46,7 @@ async def list_profiles(
     db: AsyncSession = Depends(get_db),
 ):
     """List all region profiles."""
+    limit = min(limit, 200)
     result = await db.execute(
         text("SELECT * FROM region_profiles ORDER BY created_at DESC LIMIT :limit OFFSET :offset"),
         {"limit": limit, "offset": offset},

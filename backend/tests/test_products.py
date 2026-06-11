@@ -28,8 +28,6 @@ class TestProductRegistry:
             assert product.name == name, f"{name} has wrong name"
 
     def test_invalid_product_raises_error(self):
-        import pytest
-
         with pytest.raises(ValueError, match="Unknown product"):
             get_product("INVALID")
 
