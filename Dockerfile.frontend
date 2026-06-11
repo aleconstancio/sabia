@@ -8,6 +8,7 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 FROM nginx:alpine
-COPY --from=builder /app/apps/spaceeye-web/build /usr/share/nginx/html
+RUN addgroup -g 1001 -S spaceeye && adduser -u 1001 -S spaceeye -G spaceeye
+COPY --from=builder --chown=spaceeye:spaceeye /app/apps/spaceeye-web/build /usr/share/nginx/html
 COPY apps/spaceeye-web/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

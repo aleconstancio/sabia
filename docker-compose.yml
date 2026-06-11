@@ -13,7 +13,6 @@ services:
       # Alembic is the preferred migration method for new deployments:
       #   ./scripts/migrate.sh
       - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
-      - ./sql/002_monitors.sql:/docker-entrypoint-initdb.d/002_monitors.sql
       - ./sql/003_analyses.sql:/docker-entrypoint-initdb.d/003_analyses.sql
       - ./sql/004_profiles.sql:/docker-entrypoint-initdb.d/004_profiles.sql
     healthcheck:
@@ -21,6 +20,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    networks:
+      - database
 
   redis:
     image: redis:7-alpine
@@ -31,6 +37,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
 
   backend:
     build:
@@ -54,6 +62,20 @@ services:
       timeout: 10s
       start_period: 30s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - frontend
+      - backend
+      - database
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,6 +96,19 @@ services:
       EMAIL_INPE: ${EMAIL_INPE:-}
     volumes:
       - spaceeye_cache:/tmp/spaceeye
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend
+      - database
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,6 +122,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    networks:
+      - frontend
     depends_on:
       - backend
 
@@ -102,6 +139,9 @@ services:
       COLLECTION: ${COLLECTION:-cbers4a}
     volumes:
       - spaceeye_cache:/tmp/spaceeye
+    networks:
+      - backend
+      - database
     depends_on:
       backend:
         condition: service_healthy
@@ -115,3 +155,11 @@ services:
 volumes:
   pgdata:
   spaceeye_cache:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+  database:
+    driver: bridge
