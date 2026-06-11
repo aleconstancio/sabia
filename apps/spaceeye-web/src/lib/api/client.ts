@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
-import type { ImageResult, SavedAnalysis, RegionProfile } from './types';
+import type { ImageResult, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, ESGExportData } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -90,4 +90,29 @@ export async function deleteProfile(id: string): Promise<{ deleted: boolean }> {
   return api.delete(`/profiles/${id}`);
 }
 
-export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile } from './types';
+export async function getLandCoverStats(coordinates: number[][][]): Promise<LandCoverStats> {
+  return api.post('/landcover/zonal-stats', { coordinates });
+}
+
+export async function getCarbonStock(coordinates: number[][][]): Promise<CarbonStock> {
+  return api.post('/carbon-stock', { coordinates });
+}
+
+export async function getFireRisk(coordinates: number[][][]): Promise<FireRisk> {
+  return api.post('/fire-risk', { coordinates });
+}
+
+export async function exportEsgJson(data: { region: string; coordinates: number[][][] }): Promise<ESGExportData> {
+  return api.post('/export/esg-json', data);
+}
+
+export async function exportEsgCsv(data: { region: string; coordinates: number[][][]; module: string }): Promise<Blob> {
+  const resp = await fetch(`${API_URL}/export/esg-csv`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return resp.blob();
+}
+
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, AlertThreshold, ESGExportData } from './types';

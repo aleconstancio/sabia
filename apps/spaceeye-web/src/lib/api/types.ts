@@ -136,3 +136,53 @@ export interface RegionProfile {
   } | null;
   created_at: string | null;
 }
+
+export interface LandCoverStats {
+  source: string;
+  classes: { code: number; name: string; area_pct: number }[];
+  total_area_km2: number;
+  centroid: { lat: number; lon: number };
+}
+
+export interface CarbonStock {
+  carbon_stock_t_ha: number;
+  soil_organic_carbon: number;
+  biomass_estimate: number;
+  ndvi_avg: number;
+}
+
+export interface FireRisk {
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  risk_score: number;
+  nbr_trend: number;
+  temperature_factor: number;
+  humidity_factor: number;
+  precipitation_factor: number;
+}
+
+export interface AlertThreshold {
+  id: string;
+  regionId: string;
+  regionName: string;
+  vegetation_loss_pct: number;
+  water_change_pct: number;
+  fire_risk_level: string;
+  carbon_decline_pct: number;
+  weather_alerts: boolean;
+  created_at: string;
+}
+
+export interface ESGExportData {
+  region: string;
+  coordinates: number[][][];
+  export_date: string;
+  metrics: {
+    vegetation?: { ndvi_timeseries: { date: string; value: number }[]; carbon_stock: number };
+    water?: { ndwi_timeseries: { date: string; value: number }[]; water_area_pct: number };
+    fire?: { nbr_timeseries: { date: string; value: number }[]; fire_risk: string };
+    soil?: { ph: number; organic_carbon: number; sand: number; clay: number; carbon_stock: number };
+    climate?: { avg_temp: number; precipitation: number; humidity: number };
+  };
+  alerts: { type: string; message: string; timestamp: string }[];
+  thresholds: AlertThreshold;
+}
