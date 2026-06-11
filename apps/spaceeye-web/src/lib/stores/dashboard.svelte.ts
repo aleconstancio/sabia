@@ -1,10 +1,9 @@
 import type { RegionProfile } from '$lib/api/types';
+import { API_URL } from '$lib/config';
 
 let _profiles = $state<RegionProfile[]>([]);
 let _total = $state(0);
 let _isLoading = $state(false);
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const dashboardState = {
   get profiles() { return _profiles; },

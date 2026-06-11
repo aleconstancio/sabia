@@ -10,10 +10,10 @@
 
   let canvas: HTMLCanvasElement;
   let timelineData = $state<{date: string; value: number}[]>([]);
+  import { API_URL } from '$lib/config';
+
   let loading = $state(false);
   let error = $state('');
-
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   $effect(() => {
     if (images.length > 0) fetchTimeline();

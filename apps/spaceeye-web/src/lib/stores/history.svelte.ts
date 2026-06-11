@@ -1,4 +1,5 @@
 import type { AnalysisRecord } from '$lib/api/types';
+import { API_URL } from '$lib/config';
 
 let _history = $state<AnalysisRecord[]>([]);
 
@@ -15,7 +16,6 @@ function persist() {
 
 async function persistToBackend(rec: AnalysisRecord) {
   try {
-    const API_URL = import.meta.env.VITE_API_URL || '/api';
     await fetch(`${API_URL}/analyses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

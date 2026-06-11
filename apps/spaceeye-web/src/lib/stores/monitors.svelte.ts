@@ -1,4 +1,5 @@
 import type { Bookmark } from '$lib/api/types';
+import { API_URL } from '$lib/config';
 
 export interface Monitor {
   id: string;
@@ -53,7 +54,6 @@ export function getMonitors(): Monitor[] {
 }
 
 export async function checkMonitor(m: Monitor): Promise<string> {
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
   try {
     const resp = await fetch(`${API_URL}/images/search`, {
       method: 'POST',

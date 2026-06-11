@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { toast } from 'svelte-sonner';
 import { mapState } from '$lib/stores/map.svelte';
 import { addRecord } from '$lib/stores/history.svelte';
+import { API_URL } from '$lib/config';
 import type { Map as LeafletMap } from 'leaflet';
 
 interface SearchRequestBody {
@@ -29,8 +30,6 @@ interface ProcessResult {
   path: string;
   statistics?: Record<string, unknown>;
 }
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 let _processPollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -215,7 +214,6 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
 }
 
 export async function downloadGeotiff(taskId: string) {
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const resp = await fetch(`${API_URL}/download/${taskId}/geotiff`);
   if (resp.ok) {
     const blob = await resp.blob();
@@ -231,7 +229,6 @@ export async function downloadGeotiff(taskId: string) {
 }
 
 export async function downloadBatch(taskIds: string[]) {
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const resp = await fetch(`${API_URL}/download/batch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -251,7 +248,6 @@ export async function downloadBatch(taskIds: string[]) {
 }
 
 export async function exportEsgCsv(module: string, coordinates: number[][][]) {
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const resp = await fetch(`${API_URL}/export/esg-csv`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -271,7 +267,6 @@ export async function exportEsgCsv(module: string, coordinates: number[][][]) {
 }
 
 export async function exportEsgJson(region: string, coordinates: number[][][]) {
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const resp = await fetch(`${API_URL}/export/esg-json`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

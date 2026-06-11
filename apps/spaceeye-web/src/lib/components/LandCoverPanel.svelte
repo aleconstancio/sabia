@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { API_URL } from '$lib/config';
+
   let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
   let landcover: Record<string, unknown> | null = $state(null);
   let loading = $state(false);
   let fetchError = $state('');
-
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   $effect(() => {
     if (lat && lon) {

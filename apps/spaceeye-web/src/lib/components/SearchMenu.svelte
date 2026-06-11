@@ -13,9 +13,9 @@
   let cityFilter = $state('');
   let showUfDropdown = $state(false);
   let showCityDropdown = $state(false);
-  let apiError = $state('');
+  import { API_URL } from '$lib/config';
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let apiError = $state('');
 
   function handleClickOutside(e: MouseEvent) {
     const target = e.target as HTMLElement;

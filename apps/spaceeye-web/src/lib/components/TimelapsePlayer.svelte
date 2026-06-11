@@ -15,9 +15,9 @@
   let frameIndex = $state(0);
   let processedIds = $state<Set<string>>(new Set());
   let intervalId: ReturnType<typeof setInterval> | undefined;
-  let processError = $state('');
+  import { API_URL } from '$lib/config';
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let processError = $state('');
 
   async function ensureProcessed(imageId: string) {
     if (processedIds.has(imageId)) return true;

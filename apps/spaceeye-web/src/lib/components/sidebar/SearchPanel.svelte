@@ -4,6 +4,7 @@
   import { mapState } from '$lib/stores/map.svelte.ts';
   import { searchImages } from '$lib/api/processing';
   import ProductInfo from '$lib/components/ProductInfo.svelte';
+  import { SPECTRAL_PRODUCTS } from '$lib/constants';
 
   let expanded = $state(true);
 </script>
@@ -19,19 +20,7 @@
       <div class="text-xs text-muted-foreground">
         Desenhe um polígono no mapa para buscar imagens
       </div>
-      <Select bind:value={mapState.selectedProduct} options={[
-        { value: 'NDVI', label: 'NDVI - Vegetação' },
-        { value: 'TCI', label: 'TCI - Cor Verdadeira' },
-        { value: 'NDWI', label: 'NDWI - Água' },
-        { value: 'SAVI', label: 'SAVI - Solo/Ajuste' },
-        { value: 'EVI', label: 'EVI - Veg. Melhorada' },
-        { value: 'MSAVI2', label: 'MSAVI2 - SAVI Mod.' },
-        { value: 'VARI', label: 'VARI - Visível Atm.' },
-        { value: 'MNDWI', label: 'MNDWI - Água Mod.' },
-        { value: 'CIR', label: 'CIR - Infra. Cor' },
-        { value: 'NBR', label: 'NBR - Queimadas' },
-        { value: 'NDMI', label: 'NDMI - Umidade' },
-      ]} />
+      <Select bind:value={mapState.selectedProduct} options={SPECTRAL_PRODUCTS} />
       <ProductInfo product={mapState.selectedProduct} />
       {#if mapState.polygonCoords}
         <Button onclick={searchImages} loading={mapState.isLoading} class="!w-full">Buscar imagens</Button>

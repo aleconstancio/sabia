@@ -19,11 +19,11 @@
     lon = 0,
     onWeatherData = (_data: WeatherData) => {},
   }: { lat: number; lon: number; onWeatherData?: (data: WeatherData) => void } = $props();
+  import { API_URL } from '$lib/config';
+
   let weather: WeatherApiResponse | null = $state(null);
   let loading = $state(false);
   let error = $state('');
-
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   $effect(() => {
     if (lat && lon) {

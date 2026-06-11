@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
-
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  import { API_URL } from '$lib/config';
 
   let status = $state<'checking' | 'connected' | 'empty' | 'disconnected'>('checking');
   let catalogCount = $state(0);

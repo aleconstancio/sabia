@@ -25,9 +25,9 @@
   let taskIdB = $state('');
   let computingDiff = $state(false);
   let diffOverlay: L.ImageOverlay | null = $state(null);
-  let diffError = $state('');
+  import { API_URL } from '$lib/config';
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let diffError = $state('');
 
   function initMap(container: HTMLDivElement): L.Map {
     const m = L.map(container, {

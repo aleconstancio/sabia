@@ -21,9 +21,9 @@
   let urlA = $state('');
   let urlB = $state('');
   let bounds: [[number, number], [number, number]] | null = null;
-  let swipeError = $state('');
+  import { API_URL } from '$lib/config';
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  let swipeError = $state('');
 
   onMount(() => {
     map = L.map(container, {

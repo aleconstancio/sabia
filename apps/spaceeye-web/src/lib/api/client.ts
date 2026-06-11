@@ -1,7 +1,6 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
 import type { ImageResult, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, ESGExportData } from './types';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '$lib/config';
 
 export const api = createApiClient({ baseUrl: API_URL });
 

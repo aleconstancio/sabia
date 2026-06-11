@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { SoilData, SoilZonalResponse } from '$lib/api/types';
 
+  import { API_URL } from '$lib/config';
+
   let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
   let soil: SoilData | SoilZonalResponse | null = $state(null);
   let loading = $state(false);
   let error = $state('');
-
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   $effect(() => {
     if (lat && lon) {
