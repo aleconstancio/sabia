@@ -16,8 +16,6 @@ dist/
 *.env
 
 # Generated / Cache
-controllers/imgs/
-testes/
 todo.txt
 *.tif
 *.mp4
@@ -34,6 +32,17 @@ todo.txt
 .idea/
 .vscode/
 *.swp
-dump.rdb
+
 # Redis
 dump.rdb
+
+# Just
+.justfile
+
+# DevContainer
+.devcontainer/
+
+# Playwright
+apps/spaceeye-web/test-results/
+apps/spaceeye-web/playwright-report/
+apps/spaceeye-web/playwright/.cache/

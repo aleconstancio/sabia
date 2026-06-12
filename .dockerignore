@@ -29,3 +29,5 @@ apps/spaceeye-web/.svelte-kit/
 htmlcov/
 alembic/
 .opencode/
+justfile
+.devcontainer/
