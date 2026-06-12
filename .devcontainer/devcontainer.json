@@ -1,0 +1,29 @@
+{
+  "name": "SpaceEye",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" },
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "svelte.svelte-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  },
+  "postCreateCommand": "just setup",
+  "forwardPorts": [8000, 5173],
+  "portsAttributes": {
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5173": { "label": "Frontend Dev", "onAutoForward": "silent" }
+  }
+}
