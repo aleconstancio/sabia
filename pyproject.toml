@@ -40,6 +40,8 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "httpx>=0.28.0",
     "ruff>=0.9.0",
+    "mypy>=1.13.0",
+    "pip-audit>=2.7.0",
 ]
 
 [tool.ruff]
@@ -67,13 +69,21 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["backend"]
 
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = ["backend/tests/*", "pipeline/*"]
+
 [tool.coverage.run]
 source = ["backend"]
 omit = ["backend/tests/*", "backend/__pycache__/*"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 50
+fail_under = 70
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -91,9 +101,4 @@ testpaths = ["backend/tests"]
 addopts = "-v --tb=short --cov=backend --cov-report=term-missing --cov-report=html"
 
 [tool.setuptools.packages.find]
-include = ["backend*"]
-
-[dependency-groups]
-dev = [
-    "respx>=0.23.1",
-]
+include = ["backend*", "pipeline*"]
