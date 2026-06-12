@@ -14,37 +14,18 @@ PGPORT=${PGPORT:-5432}
 REDIS_PORT=${REDIS_PORT:-6379}
 
 # ── Find binaries ──
-find_bin() {
-  local name="$1"
-  local pattern="${2:-}"
-  local path
-  path=$(command -v "$name" 2>/dev/null) && echo "$path" && return 0
-  if [ -n "$pattern" ]; then
-    path=$(ls /nix/store/*"$pattern"/bin/"$name" 2>/dev/null | head -1) && echo "$path" && return 0
-  fi
-  path=$(ls /nix/store/*/bin/"$name" 2>/dev/null | head -1) && echo "$path" && return 0
-  return 1
-}
-
-PG_CTL=$(find_bin pg_ctl "-postgresql")
-INITDB=$(find_bin initdb "-postgresql")
-PSQL=$(find_bin psql "-postgresql")
-PG_ISREADY=$(find_bin pg_isready "-postgresql")
-REDIS_SERVER=$(find_bin redis-server "-redis")
-
-PG_CTL=$(find_bin pg_ctl)
-INITDB=$(find_bin initdb)
-PSQL=$(find_bin psql)
-PG_ISREADY=$(find_bin pg_isready)
-REDIS_SERVER=$(find_bin redis-server)
+PG_CTL=$(command -v pg_ctl)
+INITDB=$(command -v initdb)
+PSQL=$(command -v psql)
+PG_ISREADY=$(command -v pg_isready)
+REDIS_SERVER=$(command -v redis-server)
 
 if [ -z "$PG_CTL" ] || [ -z "$PSQL" ]; then
-  echo "ERROR: PostgreSQL not found. Set up via your system package manager or nix-shell."
-  echo "  nix-shell -p postgresql_16 redis"
+  echo "ERROR: PostgreSQL not found. Install via your system package manager."
   exit 1
 fi
 if [ -z "$REDIS_SERVER" ]; then
-  echo "ERROR: Redis not found. Set up via your system package manager or nix-shell."
+  echo "ERROR: Redis not found. Install via your system package manager."
   exit 1
 fi
 
@@ -64,7 +45,6 @@ fi
 
 # ── Start Postgres (TCP on localhost) ──
 echo "→ Starting PostgreSQL on localhost:$PGPORT..."
-# Disable unix socket (no /run/postgresql), TCP only
 "$PG_CTL" -D "$PGDATA" -l "$DATA_DIR/pg.log" start \
   -o "-p $PGPORT -h 127.0.0.1 -k /tmp" 2>&1 | tail -3
 
@@ -73,8 +53,9 @@ for i in $(seq 1 10); do
   sleep 0.5
 done
 
-# ── Create database + postgres role + extensions ──
+# ── Create database + roles ──
 echo "→ Creating 'postgres' role if missing..."
+# Note: Passwordless superuser is intentional for local dev only
 "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -tc \
   "SELECT 1 FROM pg_roles WHERE rolname='postgres'" | grep -q 1 || \
   "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c \
@@ -85,10 +66,12 @@ echo "→ Creating 'spaceeye' database..."
   "SELECT 1 FROM pg_database WHERE datname='spaceeye'" | grep -q 1 || \
   "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c "CREATE DATABASE spaceeye" 2>/dev/null || true
 
-if [ -f "$PROJECT_ROOT/sql/001_init.sql" ]; then
-  echo "→ Applying migration..."
-  "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d spaceeye -f "$PROJECT_ROOT/sql/001_init.sql" 2>&1 | tail -1
-fi
+for sql_file in "$PROJECT_ROOT"/sql/001_init.sql "$PROJECT_ROOT"/sql/003_analyses.sql "$PROJECT_ROOT"/sql/004_profiles.sql "$PROJECT_ROOT"/sql/005_triggers.sql; do
+  if [ -f "$sql_file" ]; then
+    echo "→ Applying $(basename "$sql_file")..."
+    "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d spaceeye -f "$sql_file" 2>&1 | tail -1
+  fi
+done
 
 # ── Start Redis ──
 echo "→ Starting Redis on localhost:$REDIS_PORT..."
