@@ -61,8 +61,8 @@ Open **http://localhost** — you're ready to analyze satellite imagery.
 
 ```bash
 git clone https://github.com/your-org/spaceeye && cd spaceeye
-./make setup     # Installs deps, creates .env
-./make dev       # Starts Postgres, Redis, backend, worker, frontend
+just setup     # Installs deps, creates .env
+just dev       # Starts Postgres, Redis, backend, worker, frontend
 ```
 
 Open **http://localhost:5173**. Run `python pipeline/ingest.py --collection cbers4a` to populate the catalog.
