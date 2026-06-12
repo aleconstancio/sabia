@@ -32,8 +32,8 @@ Be respectful, constructive, and inclusive. We're building tools for environment
 git clone https://github.com/your-org/spaceeye
 cd spaceeye
 cp .env.example .env
-./make setup
-./make dev
+just setup
+just dev
 ```
 
 See [Development Guide](./development.md) for detailed setup instructions.

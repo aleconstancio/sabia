@@ -16,13 +16,13 @@
 # 1. Clone and bootstrap
 git clone https://github.com/your-org/spaceeye && cd spaceeye
 cp .env.example .env
-./make setup
+just setup
 
 # 2. Configure
 # Edit .env — set EMAIL_INPE (required for satellite data downloads)
 
 # 3. Start everything
-./make dev
+just dev
 ```
 
 **Services started by `make dev`:**
