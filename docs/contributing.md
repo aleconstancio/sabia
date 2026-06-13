@@ -22,7 +22,7 @@ Be respectful, constructive, and inclusive. We're building tools for environment
 ### Prerequisites
 
 - Python 3.12+ with [uv](https://docs.astral.sh/uv/)
-- Node.js 20+ with npm
+- Node.js 20+ with [bun](https://bun.sh/)
 - Docker + docker-compose
 - Git
 
@@ -43,7 +43,7 @@ See [Development Guide](./development.md) for detailed setup instructions.
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Make your changes
-4. Run tests: `make test`
+4. Run tests: `just test`
 5. Commit with a descriptive message
 6. Push and create a Pull Request
 
@@ -79,8 +79,8 @@ Examples:
 ### Before Submitting
 
 - [ ] Code follows project style guidelines
-- [ ] Tests pass (`make test`)
-- [ ] No new linting errors (`make lint`)
+- [ ] Tests pass (`just test`)
+- [ ] No new linting errors (`just lint`)
 - [ ] Documentation updated if needed
 - [ ] Commit messages follow conventions
 
@@ -162,7 +162,7 @@ async def fetch_weather(lat: float, lon: float) -> dict:
 ### Backend Tests
 
 ```bash
-make test-backend
+just test-backend
 # or
 uv run pytest backend/tests/ -v
 ```
@@ -175,7 +175,7 @@ uv run pytest backend/tests/ -v
 ### Frontend Tests
 
 ```bash
-make test-frontend
+just test-frontend
 # or
 cd apps/spaceeye-web && npm test
 ```

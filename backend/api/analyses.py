@@ -29,6 +29,7 @@ async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depend
         text("""
             INSERT INTO analyses (image_id, collection, product, polygon, statistics, overlay_path, weather)
             VALUES (:image_id, :collection, :product, :polygon, :statistics, :overlay_path, :weather)
+            ON CONFLICT (image_id, product, (polygon::text)) DO NOTHING
             RETURNING id
         """),
         {
@@ -95,11 +96,11 @@ async def list_analyses(
                 "collection": r["collection"],
                 "product": r["product"],
                 "polygon": r["polygon"],
-                "centroid": r["centroid"],
+                "centroid": r.get("centroid"),
                 "statistics": r["statistics"],
-                "acquired_at": r["acquired_at"].isoformat() if r["acquired_at"] else None,
-                "cloud_cover": r["cloud_cover"],
-                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                "acquired_at": r["acquired_at"].isoformat() if r.get("acquired_at") else None,
+                "cloud_cover": r.get("cloud_cover"),
+                "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
             }
         )
 

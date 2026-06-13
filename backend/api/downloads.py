@@ -99,6 +99,8 @@ async def download_batch(req: DownloadBatchRequest):
                     zf.write(path, name)
                     geotiff = result.result.get("geotiff_path", "")
                     if geotiff and os.path.exists(geotiff):
+                        if not os.path.realpath(geotiff).startswith(os.path.realpath(cache_dir)):
+                            raise HTTPException(403, "Access denied")
                         zf.write(geotiff, f"{tid[:8]}.tif")
 
     if len(buffer.getvalue()) <= 30:

@@ -175,8 +175,7 @@ pipeline/                         # Data ingestion scripts
 ├── ingest.py                     # STAC → PostGIS
 └── cleanup.py                    # TTL-based cache cleanup
 scripts/                          # Helper scripts
-├── migrate.sh                    # Run Alembic migrations
-└── make.sh                       # Makefile fallback
+└── migrate.sh                    # Run Alembic migrations
 ```
 
 ## Key Abstractions

@@ -5,7 +5,7 @@
 ## Prerequisites
 
 - Python 3.12+ with [uv](https://docs.astral.sh/uv/)
-- Node.js 20+ with npm
+- Node.js 20+ with [bun](https://bun.sh/)
 - Docker + docker-compose
 - PostgreSQL 16+PostGIS (or use Docker)
 - Redis 7+ (or use Docker)
@@ -25,7 +25,7 @@ just setup
 just dev
 ```
 
-**Services started by `make dev`:**
+**Services started by `just dev`:**
 
 | Service | URL | Description |
 |---------|-----|-------------|
@@ -35,25 +35,23 @@ just dev
 | PostGIS | localhost:5432 | PostgreSQL + PostGIS |
 | Redis | localhost:6379 | Task queue broker |
 
-## Makefile Targets
+## Justfile Targets
 
 | Target | Description |
 |--------|-------------|
-| `make setup` | Full bootstrap (deps + .env + DB) |
-| `make dev` | Start all services (single terminal) |
-| `make dev-db` | Start PostGIS + Redis only |
-| `make dev-backend` | FastAPI with hot reload |
-| `make dev-worker` | Celery worker |
-| `make dev-frontend` | Vite dev server |
-| `make test` | Run all tests |
-| `make test-backend` | Python tests (pytest) |
-| `make test-frontend` | Frontend tests (vitest) |
-| `make format` | Format Python (ruff) |
-| `make lint` | Type-check frontend (svelte-check) |
-| `make migrate` | Run Alembic migrations |
-| `make clean` | Remove build artifacts |
-
-If `make` is not installed, use `./scripts/make.sh` as a drop-in replacement.
+| `just setup` | Full bootstrap (deps + .env + DB) |
+| `just dev` | Start all services (single terminal) |
+| `just dev-db` | Start PostGIS + Redis only |
+| `just dev-backend` | FastAPI with hot reload |
+| `just dev-worker` | Celery worker |
+| `just dev-frontend` | Vite dev server |
+| `just test` | Run all tests |
+| `just test-backend` | Python tests (pytest) |
+| `just test-frontend` | Frontend tests (vitest) |
+| `just format` | Format Python (ruff) |
+| `just lint` | Type-check frontend (svelte-check) |
+| `just migrate` | Run Alembic migrations |
+| `just clean` | Remove build artifacts |
 
 ## Project Structure
 
@@ -116,30 +114,30 @@ The `uv.lock` file is committed for reproducible builds.
 cd apps/spaceeye-web
 
 # Install dependencies
-npm install
+bun install
 
 # Add a dependency
-npm install some-package
+bun add some-package
 
 # Add dev dependency
-npm install -D some-package
+bun add -D some-package
 ```
 
 ## Running Tests
 
 ```bash
 # All tests
-make test
+just test
 
 # Backend only
-make test-backend
+just test-backend
 # or
 uv run pytest backend/tests/ -v
 
 # Frontend only
-make test-frontend
+just test-frontend
 # or
-cd apps/spaceeye-web && npm test
+cd apps/spaceeye-web && bun run test
 
 # With coverage
 uv run pytest backend/tests/ --cov=backend --cov-report=term-missing
@@ -151,9 +149,7 @@ SpaceEye uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations
 
 ```bash
 # Run all pending migrations
-make migrate
-# or
-./scripts/migrate.sh
+just migrate
 
 # Create a new migration
 uv run alembic revision --autogenerate -m "description"
@@ -167,7 +163,7 @@ uv run alembic current
 
 ### Initial Setup
 
-For fresh databases, migrations run automatically during `make setup`. For existing databases:
+For fresh databases, migrations run automatically during `just setup`. For existing databases:
 
 ```bash
 uv run alembic upgrade head
@@ -177,7 +173,7 @@ uv run alembic upgrade head
 
 ### Python
 
-- **Formatter**: `ruff format` (run via `make format`)
+- **Formatter**: `ruff format` (run via `just format`)
 - **Linter**: `ruff check`
 - **Type hints**: Required for all function signatures
 - **Async**: Use `async/await` for I/O, sync for CPU-bound math
@@ -232,7 +228,7 @@ async def search_images(
 2. Add STAC URL + parsing in `pipeline/ingest.py`
 3. Register in `_COLLECTIONS` dict
 4. Add to frontend collection selector
-5. Test: `make test-backend`
+5. Test: `just test-backend`
 
 ## Adding a New Spectral Product
 
@@ -241,7 +237,7 @@ async def search_images(
 3. Update `schemas.py` product enum
 4. Add to collection's `available_products`
 5. Add to frontend product dropdown in `lib/constants.ts`
-6. Test: `make test-backend`
+6. Test: `just test-backend`
 
 ## Adding a New ESG Module
 
@@ -292,7 +288,7 @@ uv run uvicorn backend.main:app --reload --log-level debug
 ```bash
 # Run with debug
 cd apps/spaceeye-web
-npm run dev -- --inspect
+bun run dev --inspect
 
 # Chrome DevTools
 # Open chrome://inspect and find the Node.js process
@@ -337,6 +333,6 @@ Clear node_modules and reinstall:
 ```bash
 cd apps/spaceeye-web
 rm -rf node_modules .svelte-kit
-npm install
-npm run build
+bun install
+bun run build
 ```

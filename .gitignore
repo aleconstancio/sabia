@@ -23,6 +23,7 @@ todo.txt
 *.png
 *.lock
 !uv.lock
+!bun.lock
 !package-lock.json
 
 # Project data

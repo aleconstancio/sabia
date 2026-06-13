@@ -123,13 +123,13 @@ uv run celery -A backend.tasks.celery_app worker \
 cd apps/spaceeye-web
 
 # Build
-npm ci
-npm run build
+bun install --frozen-lockfile
+bun run build
 
 # Serve with any static server
-npx serve build -p 80
+bunx serve build -p 80
 # or
-npx vite preview --port 80
+bunx vite preview --port 80
 ```
 
 ### NGINX Configuration

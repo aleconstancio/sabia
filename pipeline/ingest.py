@@ -97,89 +97,91 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
         return
     
     conn = get_db_connection()
-    cursor = conn.cursor()
-    total_inserted = 0
-    total_skipped = 0
-    next_url = stac_url
-    
-    for page in range(1, max_pages + 1):
-        print(f"Fetching {collection_id} page {page}...")
-        for attempt in range(3):
-            try:
-                resp = requests.get(next_url, timeout=60)
-                resp.raise_for_status()
-                data = resp.json()
-                features = data.get("features", [])
+    try:
+        cursor = conn.cursor()
+        total_inserted = 0
+        total_skipped = 0
+        next_url = stac_url
+        
+        for page in range(1, max_pages + 1):
+            print(f"Fetching {collection_id} page {page}...")
+            for attempt in range(3):
+                try:
+                    resp = requests.get(next_url, timeout=60)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    features = data.get("features", [])
+                    break
+                except requests.RequestException:
+                    if attempt == 2:
+                        print(f"  Error on page {page} after 3 attempts")
+                        conn.rollback()
+                        return
+                    time.sleep(5)
+            
+            if not features:
+                print("  No more features. Done.")
                 break
-            except requests.RequestException:
-                if attempt == 2:
-                    print(f"  Error on page {page} after 3 attempts")
-                    conn.rollback()
-                    return
-                time.sleep(5)
-        
-        if not features:
-            print("  No more features. Done.")
-            break
-        
-        links = data.get("links", [])
-        next_link = next((l["href"] for l in links if l.get("rel") == "next"), None)
-        if next_link:
-            next_url = next_link
-        else:
-            next_url = None
-        
-        records = []
-        for item in features:
-            parsed = parse_item(item, collection_id)
-            if parsed:
-                records.append((
-                    parsed["id"],
-                    parsed["collection"],
-                    parsed["footprint_geojson"],
-                    parsed["cloud_cover"],
-                    parsed["acquired_at"],
-                    parsed["metadata"],
-                    parsed["thumbnail_url"],
-                ))
-        
-        if records:
-            # Detect which geometry column exists
-            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='images' AND column_name IN ('footprint','footprint_geojson')")
-            geo_col = cursor.fetchone()
-            geo_col = geo_col[0] if geo_col else 'footprint_geojson'
-
-            if geo_col == 'footprint':
-                geo_insert = "footprint"
-                geo_template = "ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)"
+            
+            links = data.get("links", [])
+            next_link = next((l["href"] for l in links if l.get("rel") == "next"), None)
+            if next_link:
+                next_url = next_link
             else:
-                geo_insert = "footprint_geojson"
-                geo_template = "%s"
+                next_url = None
+            
+            records = []
+            for item in features:
+                parsed = parse_item(item, collection_id)
+                if parsed:
+                    records.append((
+                        parsed["id"],
+                        parsed["collection"],
+                        parsed["footprint_geojson"],
+                        parsed["cloud_cover"],
+                        parsed["acquired_at"],
+                        parsed["metadata"],
+                        parsed["thumbnail_url"],
+                    ))
+            
+            if records:
+                # Detect which geometry column exists
+                cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='images' AND column_name IN ('footprint','footprint_geojson')")
+                geo_col = cursor.fetchone()
+                geo_col = geo_col[0] if geo_col else 'footprint_geojson'
 
-            sql = f"""
-                INSERT INTO images (id, collection, {geo_insert}, cloud_cover, acquired_at, metadata, thumbnail_url)
-                VALUES %s
-                ON CONFLICT (id) DO UPDATE SET
-                    cloud_cover = EXCLUDED.cloud_cover,
-                    acquired_at = EXCLUDED.acquired_at,
-                    metadata = EXCLUDED.metadata,
-                    thumbnail_url = EXCLUDED.thumbnail_url,
-                    updated_at = now()
-            """
-            template = f"(%s, %s, {geo_template}, %s, %s::timestamptz, %s::jsonb, %s)"
-            execute_values(cursor, sql, records, template=template)
-            conn.commit()
-            total_inserted += len(records)
+                if geo_col == 'footprint':
+                    geo_insert = "footprint"
+                    geo_template = "ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326)"
+                else:
+                    geo_insert = "footprint_geojson"
+                    geo_template = "%s"
+
+                sql = f"""
+                    INSERT INTO images (id, collection, {geo_insert}, cloud_cover, acquired_at, metadata, thumbnail_url)
+                    VALUES %s
+                    ON CONFLICT (id) DO UPDATE SET
+                        cloud_cover = EXCLUDED.cloud_cover,
+                        acquired_at = EXCLUDED.acquired_at,
+                        metadata = EXCLUDED.metadata,
+                        thumbnail_url = EXCLUDED.thumbnail_url,
+                        updated_at = now()
+                """
+                template = f"(%s, %s, {geo_template}, %s, %s::timestamptz, %s::jsonb, %s)"
+                execute_values(cursor, sql, records, template=template)
+                conn.commit()
+                total_inserted += len(records)
+            
+            total_skipped += len(features) - len(records)
+            print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
+            
+            if not next_url:
+                break
         
-        total_skipped += len(features) - len(records)
-        print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
-        
-        if not next_url:
-            break
-    
-    cursor.close()
-    conn.close()
-    print(f"\nDone. Total inserted: {total_inserted}, skipped: {total_skipped}")
+        cursor.close()
+        print(f"\nDone. Total inserted: {total_inserted}, skipped: {total_skipped}")
+    finally:
+        conn.close()
 
 
 def main():

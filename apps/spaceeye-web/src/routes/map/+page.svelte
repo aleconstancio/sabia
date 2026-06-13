@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import L from 'leaflet';
   import SpaceEyeShell from '$lib/layout/SpaceEyeShell.svelte';
@@ -101,6 +101,13 @@
       mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
       mapState.showPolygonModal = true;
     });
+  });
+
+  onDestroy(() => {
+    if (map) {
+      map.remove();
+      map = null;
+    }
   });
 
   function navigateToCity(lat: number, lng: number) {

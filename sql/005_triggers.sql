@@ -32,10 +32,10 @@ END $$;
 CREATE TABLE IF NOT EXISTS processing_tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     task_id VARCHAR NOT NULL UNIQUE,
-    image_id VARCHAR,
+    image_id VARCHAR REFERENCES images(id) ON DELETE SET NULL,
     product VARCHAR NOT NULL,
     polygon JSONB,
-    status VARCHAR NOT NULL DEFAULT 'pending',
+    status VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
     result_path TEXT,
     statistics JSONB,
     error TEXT,

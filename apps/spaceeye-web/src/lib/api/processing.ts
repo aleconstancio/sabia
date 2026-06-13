@@ -44,6 +44,7 @@ export async function searchImages() {
 
 export async function processImage(imageId: string) {
   if (mapState.isLoading) return;
+  if (!mapState.polygonCoords) return;
 
   mapState.isLoading = true;
   mapState.showImageGallery = false;

@@ -34,3 +34,4 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_images_collection ON images (collection);
 CREATE INDEX IF NOT EXISTS idx_images_acquired_at ON images (acquired_at DESC);
+CREATE INDEX IF NOT EXISTS idx_images_collection_acquired ON images (collection, acquired_at DESC);

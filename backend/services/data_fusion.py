@@ -40,20 +40,24 @@ async def fetch_weather_snapshot(lat: float, lon: float) -> dict:
 
 async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
     """Fetch soil properties from ISRIC SoilGrids."""
-    client = await get_http_client()
-    resp = await client.get(
-        "https://rest.isric.org/soilgrids/v2.0/properties/query",
-        params={
-            "lat": lat,
-            "lon": lon,
-            "property": ["phh2o", "oc", "nitrogen", "sand", "silt", "clay"],
-            "depth": "0-5cm",
-            "value": "mean",
-        },
-    )
-    if resp.status_code == 200:
-        return resp.json()
-    return {}
+    try:
+        client = await get_http_client()
+        resp = await client.get(
+            "https://rest.isric.org/soilgrids/v2.0/properties/query",
+            params={
+                "lat": lat,
+                "lon": lon,
+                "property": ["phh2o", "oc", "nitrogen", "sand", "silt", "clay"],
+                "depth": "0-5cm",
+                "value": "mean",
+            },
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        return {}
+    except Exception:
+        logger.warning("Failed to fetch soil snapshot for (%s, %s)", lat, lon)
+        return {}
 
 
 async def fetch_landcover_snapshot(lat: float, lon: float) -> dict:
