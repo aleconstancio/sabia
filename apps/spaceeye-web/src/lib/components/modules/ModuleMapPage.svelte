@@ -38,12 +38,12 @@
     });
     map.addControl(drawControl);
 
-    map.on(L.Draw.Event.CREATED, (e: any) => {
+    map.on(L.Draw.Event.CREATED, ((e: L.DrawEvents.Created) => {
       drawnItems.addLayer(e.layer);
       mapState.polygonCoords = e.layer.toGeoJSON().geometry.coordinates;
-      const center = e.layer.getCenter();
+      const center = (e.layer as L.Polygon).getCenter();
       mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
-    });
+    }) as unknown as L.LeafletEventHandlerFn);
   });
 </script>
 

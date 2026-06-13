@@ -6,7 +6,7 @@
 
 ### Prerequisites
 
-- Docker 24+ and docker-compose v2
+- Docker 24+ and docker compose v2
 - [INPE registered email](http://queimadas.dgi.inpe.br/catalogo/explore) (for satellite data access)
 
 ### Quick Deploy

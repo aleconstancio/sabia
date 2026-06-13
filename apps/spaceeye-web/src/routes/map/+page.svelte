@@ -111,9 +111,9 @@
       }
     }
 
-    map.on('mousemove', (e: any) => {
+    map.on('mousemove', (e: L.LeafletMouseEvent) => {
       if (measureMode) {
-        mouseCoords = { lat: e.latlng.lat.toFixed(4), lng: e.latlng.lng.toFixed(4) };
+        mouseCoords = { lat: parseFloat(e.latlng.lat.toFixed(4)), lng: parseFloat(e.latlng.lng.toFixed(4)) };
       }
     });
 
@@ -130,13 +130,13 @@
     });
     map.addControl(drawControl);
 
-    map.on(L.Draw.Event.CREATED, (e: any) => {
+    map.on(L.Draw.Event.CREATED, ((e: L.DrawEvents.Created) => {
       drawnItems.addLayer(e.layer);
       mapState.polygonCoords = e.layer.toGeoJSON().geometry.coordinates;
-      const center = e.layer.getCenter();
+      const center = (e.layer as L.Polygon).getCenter();
       mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
       mapState.showPolygonModal = true;
-    });
+    }) as unknown as L.LeafletEventHandlerFn);
   });
 
   onDestroy(() => {

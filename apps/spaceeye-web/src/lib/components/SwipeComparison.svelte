@@ -29,9 +29,13 @@
   let pendingCount = $state(0);
   let _processAbort: AbortController | null = null;
 
+  function getOverlayContainer(overlay: L.ImageOverlay): HTMLElement | null {
+    return (overlay as unknown as { getContainer(): HTMLElement }).getContainer();
+  }
+
   onMount(() => {
-    if (container && (container as any)._leaflet_id) {
-      (container as any)._leaflet_map?.remove();
+    if (container && (container as unknown as { _leaflet_id?: number })._leaflet_id) {
+      (container as unknown as { _leaflet_map?: L.Map })._leaflet_map?.remove();
     }
     map = L.map(container, {
       center: [polygonCentroid?.lat ?? -3.35, polygonCentroid?.lon ?? -23.21],
@@ -84,7 +88,7 @@
       if (overlayB) map.removeLayer(overlayB);
       overlayA = L.imageOverlay(urlA, bounds, { opacity: 1 }).addTo(map);
       overlayB = L.imageOverlay(urlB, bounds, { opacity: 1 }).addTo(map);
-      (overlayB as any).getContainer().style.clipPath = `inset(0 50% 0 0)`;
+      getOverlayContainer(overlayB)!.style.clipPath = `inset(0 50% 0 0)`;
       map.flyToBounds(bounds, { duration: 1 });
     }
   });
@@ -97,16 +101,16 @@
     const rect = container.getBoundingClientRect();
     const x = (e.type.startsWith('touch') ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
     swipePos = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+    getOverlayContainer(overlayB)!.style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
   }
   function handleEnd() { dragging = false; }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'ArrowLeft') {
       swipePos = Math.max(0, swipePos - 5);
-      if (overlayB) (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+      if (overlayB) getOverlayContainer(overlayB)!.style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
     } else if (e.key === 'ArrowRight') {
       swipePos = Math.min(100, swipePos + 5);
-      if (overlayB) (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+      if (overlayB) getOverlayContainer(overlayB)!.style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
     }
   }
 </script>

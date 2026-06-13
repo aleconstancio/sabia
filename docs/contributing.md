@@ -23,7 +23,7 @@ Be respectful, constructive, and inclusive. We're building tools for environment
 
 - Python 3.12+ with [uv](https://docs.astral.sh/uv/)
 - Node.js 20+ with [bun](https://bun.sh/)
-- Docker + docker-compose
+- Docker + docker compose
 - Git
 
 ### Setup

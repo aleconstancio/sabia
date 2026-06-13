@@ -1,7 +1,7 @@
 /**
  * Trigger a browser download from a Blob, cleaning up afterwards.
  */
-function triggerDownload(blob: Blob, filename: string) {
+export function triggerDownload(blob: Blob, filename: string) {
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
   try {

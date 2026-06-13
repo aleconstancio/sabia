@@ -1,6 +1,6 @@
-import type { Map as LeafletMap } from 'leaflet';
+import type { Map as LeafletMap, Layer } from 'leaflet';
 
-let _previousPolygon: any = null;
+let _previousPolygon: Layer | null = null;
 
 export async function restorePolygonOnMap(coords: number[][][]) {
   try {
@@ -11,7 +11,7 @@ export async function restorePolygonOnMap(coords: number[][][]) {
       mapState.map.removeLayer(_previousPolygon);
       _previousPolygon = null;
     }
-    const polygon = (L as any).polygon(coords[0].map((c: number[]) => [c[1], c[0]]));
+    const polygon = L.polygon(coords[0].map((c: number[]) => [c[1], c[0]]));
     _previousPolygon = polygon;
     const map = mapState.map as LeafletMap;
     map.addLayer(polygon);

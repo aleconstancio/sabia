@@ -20,13 +20,13 @@ export interface ApiClientOptions {
   onError?: (error: Error, path: string) => void;
 }
 
-export function createApiClient<TBase extends Record<string, (...args: any[]) => Promise<any>> = {}>(
+export function createApiClient<TBase extends Record<string, (...args: unknown[]) => Promise<unknown>> = {}>(
   options: ApiClientOptions,
   domainApis?: TBase
 ) {
   const { baseUrl, getToken, onError } = options;
 
-  async function request<T>(path: string, method: string = 'GET', body?: any): Promise<T> {
+  async function request<T>(path: string, method: string = 'GET', body?: unknown): Promise<T> {
     const headers = new Headers();
     const token = getToken?.();
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -57,13 +57,13 @@ export function createApiClient<TBase extends Record<string, (...args: any[]) =>
       const qs = params ? '?' + new URLSearchParams(params).toString() : '';
       return request<T>(`${path}${qs}`, 'GET');
     },
-    post<T>(path: string, body?: any): Promise<T> {
+    post<T>(path: string, body?: unknown): Promise<T> {
       return request<T>(path, 'POST', body);
     },
-    put<T>(path: string, body?: any): Promise<T> {
+    put<T>(path: string, body?: unknown): Promise<T> {
       return request<T>(path, 'PUT', body);
     },
-    patch<T>(path: string, body?: any): Promise<T> {
+    patch<T>(path: string, body?: unknown): Promise<T> {
       return request<T>(path, 'PATCH', body);
     },
     delete<T>(path: string): Promise<T> {

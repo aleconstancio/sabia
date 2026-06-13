@@ -6,7 +6,7 @@
 
 - Python 3.12+ with [uv](https://docs.astral.sh/uv/)
 - Node.js 20+ with [bun](https://bun.sh/)
-- Docker + docker-compose
+- Docker + docker compose
 - PostgreSQL 16+PostGIS (or use Docker)
 - Redis 7+ (or use Docker)
 

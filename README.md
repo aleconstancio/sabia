@@ -44,7 +44,7 @@
 
 ### Docker (Recommended — 2 commands)
 
-**Prerequisites**: Docker 24+ · docker-compose v2 · [INPE registered email](http://queimadas.dgi.inpe.br/catalogo/explore)
+**Prerequisites**: Docker 24+ · docker compose v2 · [INPE registered email](http://queimadas.dgi.inpe.br/catalogo/explore)
 
 ```bash
 git clone https://github.com/spaceeye/spaceeye && cd spaceeye
@@ -132,7 +132,7 @@ For detailed architecture, see [docs/architecture.md](./docs/architecture.md).
 | **Database** | PostgreSQL 16 + PostGIS 3.4 |
 | **Processing** | Rasterio, NumPy, scikit-image, aiohttp |
 | **External Data** | Open-Meteo (weather), ISRIC SoilGrids (soil), ESA WorldCover (land cover) |
-| **Infrastructure** | Docker, docker-compose, NGINX, Alembic (migrations) |
+| **Infrastructure** | Docker, docker compose, NGINX, Alembic (migrations) |
 | **Package Mgmt** | uv (Python), bun (Node.js) |
 
 ---
@@ -150,12 +150,11 @@ spaceeye/
 │       │   │   ├── alerts/      # Alert notification system
 │       │   │   ├── dashboard/   # Dashboard cards & grid
 │       │   │   ├── modules/     # ESG module components
-│       │   │   └── sidebar/     # Map sidebar panels
-│       │   ├── config.ts        # API_URL singleton
-│       │   ├── constants.ts     # Shared constants
+│       │   │   ├── sidebar/     # Map sidebar panels
+│       │   │   └── ui/          # shadcn-svelte components
+│       │   ├── helpers/         # Download, polling, map helpers
 │       │   ├── stores/          # Svelte 5 rune stores
-│       │   ├── ui/              # Design system (Button, Card, etc.)
-│       │   └── utils/           # Download, polling, map helpers
+│       │   └── utils/           # Logger, utilities
 │       └── routes/              # SvelteKit pages
 │           ├── dashboard/       # ESG dashboard (primary)
 │           ├── map/             # Map analysis view
@@ -163,7 +162,12 @@ spaceeye/
 │
 ├── backend/                     # FastAPI + Celery
 │   ├── api/                     # Route handlers (domain-split)
-│   │   ├── router.py            # Core routes (images, process, geocode)
+│   │   ├── router.py            # Main router assembly
+│   │   ├── images.py            # Image catalog endpoints
+│   │   ├── processing.py        # Processing endpoints
+│   │   ├── downloads.py         # File download endpoints
+│   │   ├── geocoding.py         # Geocoding endpoints
+│   │   ├── reports.py           # PDF export endpoints
 │   │   ├── weather.py           # Weather endpoint
 │   │   ├── soil.py              # Soil endpoints
 │   │   ├── landcover.py         # Land cover endpoints
@@ -175,11 +179,14 @@ spaceeye/
 │   │   └── deps.py              # Dependency injection
 │   ├── domain/                  # Business logic
 │   │   ├── catalog.py           # STAC collection abstraction
-│   │   ├── products.py          # Spectral product registry
-│   │   └── processing.py        # Image processing orchestrator
+│   │   └── products.py          # Spectral product registry
 │   ├── services/                # Infrastructure services
 │   │   ├── downloader.py        # Async band downloader
 │   │   ├── compressor.py        # GeoTIFF → PNG conversion
+│   │   ├── carbon_stock.py      # Carbon stock estimation
+│   │   ├── fire_risk.py         # Fire risk assessment
+│   │   ├── esg_export.py        # ESG CSV/JSON export
+│   │   ├── landcover_zonal.py   # Landcover zonal statistics
 │   │   └── data_fusion.py       # Multi-source data fusion
 │   ├── repositories/            # Database access layer
 │   │   └── images.py            # PostGIS spatial queries
@@ -189,20 +196,9 @@ spaceeye/
 │   ├── tasks/                   # Celery task definitions
 │   │   ├── celery_app.py
 │   │   └── processing.py
+│   ├── utils/                   # Shared utilities
 │   ├── config.py                # Typed settings (pydantic-settings)
 │   └── main.py                  # FastAPI app with lifespan
-│
-├── alembic/                     # Database migrations
-│   └── versions/                # Migration scripts
-│
-├── pipeline/                    # Data ingestion scripts
-│   ├── ingest.py                # STAC → PostGIS
-│   └── cleanup.py               # TTL-based cache cleanup
-│
-├── sql/                         # SQL schema files
-├── docs/                        # Documentation
-├── scripts/                     # Helper scripts
-└── pyproject.toml               # Python project config
 ```
 
 ---
