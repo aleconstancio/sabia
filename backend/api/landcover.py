@@ -23,11 +23,7 @@ async def get_landcover(lat: float, lon: float):
 
 @router.post("/zonal")
 async def landcover_zonal(req: PolygonRequest):
-    """Get land cover class percentages for a polygon area.
-
-    Not yet implemented — server-side rasterio sampling is required to
-    compute real zonal statistics from the ESA WorldCover raster tiles.
-    """
+    """Get land cover class percentages for a polygon area."""
     return JSONResponse(
         status_code=501,
         content={
@@ -43,11 +39,7 @@ async def landcover_zonal(req: PolygonRequest):
 
 @router.post("/zonal-stats")
 async def landcover_zonal_stats(req: PolygonRequest):
-    """Sample ESA WorldCover tile within polygon and return area percentages.
-
-    Not yet implemented — server-side rasterio sampling is required to
-    compute real zonal statistics from the ESA WorldCover raster tiles.
-    """
+    """Sample ESA WorldCover tile within polygon and return area percentages."""
     return JSONResponse(
         status_code=501,
         content={

@@ -2,9 +2,10 @@ import logging
 import os
 import re
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, Response
 
+from backend.api.deps import verify_api_key
 from backend.config import get_settings
 from backend.models.schemas import DownloadBatchRequest
 
@@ -76,9 +77,11 @@ async def download_geotiff(task_id: str):
 
 
 @router.post("/download/batch")
-async def download_batch(req: DownloadBatchRequest):
+async def download_batch(
+    req: DownloadBatchRequest,
+    _auth: None = Depends(verify_api_key),
+):
     """Download multiple processed results as a ZIP archive."""
-    # TODO: Add API key authentication before production use
     if len(req.task_ids) > 5:
         raise HTTPException(status_code=400, detail="Maximum 5 tasks per batch")
     import io

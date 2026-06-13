@@ -3,7 +3,7 @@
   import AlertThresholds from './AlertThresholds.svelte';
   import { AreaChart } from '$lib/charts';
   import { mapState } from '$lib/stores/map.svelte';
-  import { getCarbonStock, getFireRisk } from '$lib/api/client';
+  import { getCarbonStock, getFireRisk, getWeather, getSoil } from '$lib/api/client';
   import type { CarbonStock, FireRisk } from '$lib/api/types';
 
   let { module = 'vegetation' }: { module: string } = $props();
@@ -11,24 +11,47 @@
   let expanded = $state(true);
   let carbonStock = $state<CarbonStock | null>(null);
   let fireRisk = $state<FireRisk | null>(null);
+  let weatherData = $state<Record<string, unknown> | null>(null);
+  let soilData = $state<Record<string, unknown> | null>(null);
   let timelineData = $state<{ date: string; value: number }[]>([]);
 
-  // Fetch data when polygon changes
+  function computeCentroid(coords: number[][][]): { lat: number; lon: number } | null {
+    if (!coords || coords.length === 0) return null;
+    let totalLat = 0, totalLon = 0, count = 0;
+    for (const ring of coords) {
+      for (const [lon, lat] of ring) {
+        totalLat += lat;
+        totalLon += lon;
+        count++;
+      }
+    }
+    return count > 0 ? { lat: totalLat / count, lon: totalLon / count } : null;
+  }
+
   $effect(() => {
-    if (mapState.polygonCoords && module === 'vegetation') {
+    if (!mapState.polygonCoords) return;
+    const centroid = computeCentroid(mapState.polygonCoords);
+    if (!centroid) return;
+
+    if (module === 'vegetation') {
       getCarbonStock(mapState.polygonCoords).then(d => carbonStock = d).catch(() => {});
     }
-    if (mapState.polygonCoords && module === 'fire') {
+    if (module === 'fire') {
       getFireRisk(mapState.polygonCoords).then(d => fireRisk = d).catch(() => {});
+    }
+    if (module === 'water' || module === 'climate') {
+      getWeather(centroid.lat, centroid.lon).then(d => weatherData = d).catch(() => {});
+    }
+    if (module === 'soil') {
+      getSoil(centroid.lat, centroid.lon).then(d => soilData = d).catch(() => {});
     }
   });
 
-  // Build timeline from results
   $effect(() => {
     if (mapState.results.length > 0) {
       timelineData = mapState.results.slice(0, 20).map(img => ({
         date: img.acquired_at,
-        value: 0.0, // TODO: replace with real NDVI value from batch processing
+        value: 0.0,
       }));
     }
   });
@@ -42,6 +65,51 @@
   };
 
   let config = $derived(moduleConfig[module] || moduleConfig.vegetation);
+
+  function getWeatherTemp(): string {
+    const current = weatherData?.current as Record<string, unknown> | undefined;
+    if (!current) return '—';
+    const temp = current.temperature_2m;
+    return typeof temp === 'number' ? temp.toFixed(1) : '—';
+  }
+
+  function getWeatherPrecip(): string {
+    const daily = weatherData?.daily as Record<string, unknown> | undefined;
+    if (!daily) return '—';
+    const precip = daily.precipitation_sum as number[] | undefined;
+    if (!precip || !Array.isArray(precip)) return '—';
+    const total = precip.reduce((a, b) => a + b, 0);
+    return total.toFixed(1);
+  }
+
+  function getWeatherHumidity(): string {
+    const current = weatherData?.current as Record<string, unknown> | undefined;
+    if (!current) return '—';
+    const humidity = current.relative_humidity_2m;
+    return typeof humidity === 'number' ? humidity.toFixed(0) : '—';
+  }
+
+  function getSoilPh(): string {
+    const properties = soilData?.properties as Array<{ name: string; depths: Array<{ label: string; values: Record<string, number> }> }> | undefined;
+    if (!properties) return '—';
+    const phProp = properties.find(p => p.name === 'phh2o');
+    if (!phProp) return '—';
+    const depth = phProp.depths?.[0];
+    if (!depth) return '—';
+    const val = depth.values?.mean;
+    return typeof val === 'number' ? val.toFixed(1) : '—';
+  }
+
+  function getSoilCarbon(): string {
+    const properties = soilData?.properties as Array<{ name: string; depths: Array<{ label: string; values: Record<string, number> }> }> | undefined;
+    if (!properties) return '—';
+    const ocProp = properties.find(p => p.name === 'oc');
+    if (!ocProp) return '—';
+    const depth = ocProp.depths?.[0];
+    if (!depth) return '—';
+    const val = depth.values?.mean;
+    return typeof val === 'number' ? val.toFixed(1) : '—';
+  }
 </script>
 
 <aside class="w-72 border-r border-border bg-card shrink-0 flex flex-col overflow-y-auto p-4 space-y-4">
@@ -57,21 +125,21 @@
       <ModuleKPI label="Carbon Stock" value={carbonStock?.carbon_stock_t_ha?.toFixed(1) || '—'} unit="t/ha" color="#10b981" />
       <ModuleKPI label="Biomass" value={carbonStock?.biomass_estimate?.toFixed(1) || '—'} unit="t/ha" color="#3b82f6" />
     {:else if module === 'water'}
-      <ModuleKPI label="Water Area" value="—" trendData={[0.1, 0.12, 0.11, 0.13, 0.1]} />
-      <ModuleKPI label="NDWI Trend" value="—" />
-      <ModuleKPI label="Moisture" value="—" />
+      <ModuleKPI label="Humidity" value={getWeatherHumidity()} unit="%" color="#3b82f6" />
+      <ModuleKPI label="Precipitation (7d)" value={getWeatherPrecip()} unit="mm" color="#06b6d4" />
+      <ModuleKPI label="Temperature" value={getWeatherTemp()} unit="°C" color="#f97316" />
     {:else if module === 'fire'}
       <ModuleKPI label="Risk Level" value={fireRisk?.risk_level || '—'} color={fireRisk?.risk_level === 'high' ? '#ef4444' : '#10b981'} />
       <ModuleKPI label="Risk Score" value={fireRisk?.risk_score?.toFixed(0) || '—'} unit="/100" />
       <ModuleKPI label="NBR Trend" value={fireRisk?.nbr_trend?.toFixed(2) || '—'} />
     {:else if module === 'soil'}
-      <ModuleKPI label="Soil Health" value="—" />
-      <ModuleKPI label="pH Level" value="—" />
-      <ModuleKPI label="Organic Carbon" value="—" unit="g/kg" />
+      <ModuleKPI label="pH Level" value={getSoilPh()} />
+      <ModuleKPI label="Organic Carbon" value={getSoilCarbon()} unit="g/kg" />
+      <ModuleKPI label="Soil Health" value={soilData ? 'Available' : '—'} color="#84cc16" />
     {:else if module === 'climate'}
-      <ModuleKPI label="Temperature" value="—" unit="°C" />
-      <ModuleKPI label="Precipitation" value="—" unit="mm" />
-      <ModuleKPI label="Drought Index" value="—" />
+      <ModuleKPI label="Temperature" value={getWeatherTemp()} unit="°C" color="#f97316" />
+      <ModuleKPI label="Precipitation" value={getWeatherPrecip()} unit="mm" color="#06b6d4" />
+      <ModuleKPI label="Humidity" value={getWeatherHumidity()} unit="%" color="#3b82f6" />
     {/if}
   </div>
 

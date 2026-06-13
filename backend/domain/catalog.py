@@ -41,15 +41,18 @@ class Cbers4ACollection(Collection):
         return None
 
 
-# NOTE: Amazonia1Collection is not yet implemented — STAC integration pending.
 class Amazonia1Collection(Collection):
     id = "amazonia1"
-    stac_url = ""
+    stac_url = "https://queimadas.dgi.inpe.br/queimadas/catalogo/items"
     available_bands = ["red", "green", "blue", "nir"]
     available_products = ["TCI", "NDVI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
     def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        raise NotImplementedError("Amazonia1 STAC integration not yet implemented")
+        mapping = {"red": "red", "green": "green", "blue": "blue", "nir": "nir"}
+        key = mapping.get(band)
+        if key and key in item_assets:
+            return item_assets[key]["href"]
+        return None
 
 
 class Sentinel2Collection(Collection):

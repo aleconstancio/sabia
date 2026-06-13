@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db
+from backend.api.deps import get_db, verify_api_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -108,7 +108,11 @@ async def list_analyses(
 
 
 @router.delete("/{analysis_id}")
-async def delete_analysis(analysis_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_analysis(
+    analysis_id: str,
+    db: AsyncSession = Depends(get_db),
+    _auth: None = Depends(verify_api_key),
+):
     """Delete a saved analysis."""
     result = await db.execute(
         text("DELETE FROM analyses WHERE id = :id RETURNING id"),

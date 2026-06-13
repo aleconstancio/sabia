@@ -106,6 +106,14 @@ export async function getFireRisk(coordinates: number[][][]): Promise<FireRisk> 
   return api.post('/fire-risk', { coordinates });
 }
 
+export async function getWeather(lat: number, lon: number): Promise<Record<string, unknown>> {
+  return api.get(`/weather/${lat}/${lon}`);
+}
+
+export async function getSoil(lat: number, lon: number): Promise<Record<string, unknown>> {
+  return api.get(`/soil/${lat}/${lon}`);
+}
+
 export async function exportEsgJson(data: { region: string; coordinates: number[][][] }): Promise<ESGExportData> {
   return api.post('/export/esg-json', data);
 }

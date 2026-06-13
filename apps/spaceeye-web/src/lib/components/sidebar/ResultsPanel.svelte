@@ -1,35 +1,15 @@
 <script lang="ts">
   import ImageGallery from '$lib/components/ImageGallery.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
-  import { Button } from '$lib/components/ui/button';
   import { mapState } from '$lib/stores/map.svelte';
   import { processImage } from '$lib/api/processing';
+  import { handleToggleSelect } from '$lib/helpers/comparison';
 
   let expanded = $state(true);
 
   function handleProcess(id: string) {
     mapState.showImageGallery = false;
     processImage(id);
-  }
-
-  function handleToggleSelect(imageId: string) {
-    const ids = mapState.selectedIds;
-    if (ids.includes(imageId)) {
-      mapState.selectedIds = ids.filter(id => id !== imageId);
-    } else {
-      if (ids.length >= 2) {
-        mapState.selectedIds = [ids[1], imageId];
-      } else {
-        mapState.selectedIds = [...ids, imageId];
-      }
-    }
-    if (mapState.selectedIds.length === 2) {
-      mapState.comparisonFirst = mapState.results.find(i => i.id === mapState.selectedIds[0]) ?? null;
-      mapState.comparisonSecond = mapState.results.find(i => i.id === mapState.selectedIds[1]) ?? null;
-    } else {
-      mapState.comparisonFirst = null;
-      mapState.comparisonSecond = null;
-    }
   }
 </script>
 

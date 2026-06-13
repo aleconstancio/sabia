@@ -3,9 +3,8 @@
   import { monitorsStore } from '$lib/stores/monitors.svelte';
   import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import { Button } from '$lib/components/ui/button';
+  import Dialog from '$lib/ui/components/Dialog.svelte';
   import type { Monitor, Bookmark } from '$lib/api/types';
-  // i18n: All user-facing strings below are hardcoded in Portuguese.
-  // For production, extract them to a localization framework (e.g. svelte-i18n).
 
   let show = $state(false);
   let monitors = $state<Monitor[]>([]);
@@ -15,6 +14,8 @@
   let nameInputValue = $state('');
   let availableBookmarks = $state<Bookmark[]>([]);
   let panelRef: HTMLDivElement;
+  let deleteTarget = $state<Monitor | null>(null);
+  let showDeleteDialog = $state(false);
 
   function handleClickOutside(e: MouseEvent) {
     if (panelRef && !panelRef.contains(e.target as Node) && !showNameInput) {
@@ -59,6 +60,20 @@
     }
     showNameInput = false;
   }
+
+  function confirmDeleteMonitor(m: Monitor) {
+    deleteTarget = m;
+    showDeleteDialog = true;
+  }
+
+  function handleConfirmDeleteMonitor() {
+    if (deleteTarget) {
+      monitorsStore.remove(deleteTarget.id);
+      refresh();
+    }
+    showDeleteDialog = false;
+    deleteTarget = null;
+  }
 </script>
 
 <div class="relative" bind:this={panelRef}>
@@ -83,9 +98,7 @@
                 <p class="text-xs text-muted-foreground">{new Date(m.lastChecked).toLocaleString('pt-BR')}</p>
               {/if}
             </div>
-            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => { // TODO: Replace with custom Dialog component for consistency
-              if (confirm('Remover este monitor?')) { monitorsStore.remove(m.id); refresh(); }
-            }}>✕</button>
+            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => confirmDeleteMonitor(m)}>✕</button>
           </div>
         {/each}
         <div class="mt-2 pt-2 border-t border-border">
@@ -121,3 +134,13 @@
     </div>
   {/if}
 </div>
+
+<Dialog bind:open={showDeleteDialog} title="Remover monitor?">
+  <p class="text-sm text-muted-foreground">
+    Tem certeza que deseja remover o monitor de "{deleteTarget?.bookmarkName}"?
+  </p>
+  {#snippet actions()}
+    <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancelar</Button>
+    <Button variant="destructive" onclick={handleConfirmDeleteMonitor}>Remover</Button>
+  {/snippet}
+</Dialog>

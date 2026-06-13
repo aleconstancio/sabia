@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from fastapi import APIRouter, HTTPException
@@ -27,7 +26,11 @@ async def get_soil(lat: float, lon: float):
     resp = await client.get(url, params=params)
     if resp.status_code == 200:
         return resp.json()
-    return {}
+    logger.warning("ISRIC SoilGrids returned %d for (%s, %s)", resp.status_code, lat, lon)
+    raise HTTPException(
+        status_code=502,
+        detail=f"Upstream soil service returned status {resp.status_code}",
+    )
 
 
 @router.post("/zonal")
@@ -54,7 +57,6 @@ async def soil_zonal(req: PolygonRequest):
             break
         x += max(step, 0.1)
 
-    # Deterministic grid sampling for reproducible results
     sampled = points[:10]
 
     results = {"ph": [], "oc": [], "sand": [], "silt": [], "clay": []}
@@ -71,6 +73,7 @@ async def soil_zonal(req: PolygonRequest):
             return resp.json()
         return None
 
+    import asyncio
     responses = await asyncio.gather(*[_fetch_one(p) for p in sampled], return_exceptions=True)
     responses = [r for r in responses if not isinstance(r, Exception)]
 

@@ -30,6 +30,7 @@
   import { API_URL } from '$lib/config';
 
   let diffError = $state('');
+  let mounted = $state(true);
 
   function initMap(container: HTMLDivElement): L.Map {
     const m = L.map(container, {
@@ -56,6 +57,7 @@
   });
 
   onDestroy(() => {
+    mounted = false;
     if (mapA) { mapA.remove(); }
     if (mapB) { mapB.remove(); }
     if (overlayA) { overlayA.remove(); overlayA = null; }
@@ -125,6 +127,7 @@
   }
 
   $effect(() => {
+    if (!mounted) return;
     if (imageA) processImage(imageA, 'A');
     if (imageB) processImage(imageB, 'B');
   });

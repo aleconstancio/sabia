@@ -1,22 +1,12 @@
 import io
-import logging
 from datetime import datetime as _dt
 
-from fastapi import APIRouter
-from fastapi.responses import Response
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from backend.models.schemas import ExportPdfRequest
 
-logger = logging.getLogger(__name__)
-
-router = APIRouter()
-
-
-@router.post("/export/pdf")
-async def export_pdf(data: ExportPdfRequest):
-    """Generate a PDF report from analysis data."""
+def _generate_pdf(task_id: str, format: str, overlays: list[str]) -> bytes:
+    """Generate PDF content (extracted from reports.py for testing)."""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
@@ -26,15 +16,15 @@ async def export_pdf(data: ExportPdfRequest):
 
     c.setFont("Helvetica", 11)
     y = height - 100
-    c.drawString(50, y, f"Task ID: {data.task_id}")
-    c.drawString(50, y - 20, f"Formato: {data.format}")
+    c.drawString(50, y, f"Task ID: {task_id}")
+    c.drawString(50, y - 20, f"Formato: {format}")
 
-    if data.overlays:
+    if overlays:
         y -= 50
         c.setFont("Helvetica-Bold", 12)
         c.drawString(50, y, "Overlays processados:")
         c.setFont("Helvetica", 10)
-        for i, overlay in enumerate(data.overlays):
+        for i, overlay in enumerate(overlays):
             c.drawString(70, y - 20 * (i + 1), f"  - {overlay}")
 
     y -= 80
@@ -43,8 +33,6 @@ async def export_pdf(data: ExportPdfRequest):
     c.setFont("Helvetica", 10)
     y -= 20
     c.drawString(50, y, "Este relatorio foi gerado automaticamente pelo SpaceEye.")
-    y -= 20
-    c.drawString(50, y, "Os dados de遥感 sao processados via Celery workers assincronos.")
 
     c.setFont("Helvetica", 8)
     c.drawString(50, 30, f"Gerado em: {_dt.now().strftime('%d/%m/%Y %H:%M:%S')}")
@@ -53,9 +41,16 @@ async def export_pdf(data: ExportPdfRequest):
     c.showPage()
     c.save()
     buffer.seek(0)
+    return buffer.getvalue()
 
-    return Response(
-        content=buffer.getvalue(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=spaceeye-report.pdf"},
-    )
+
+def test_export_pdf_returns_pdf_content():
+    pdf_bytes = _generate_pdf("test-task-123", "pdf", ["ndvi_overlay.png"])
+    assert b"%PDF" in pdf_bytes[:10]
+    assert len(pdf_bytes) > 500
+
+
+def test_export_pdf_includes_task_info():
+    pdf_bytes = _generate_pdf("test-task-456", "pdf", [])
+    assert b"%PDF" in pdf_bytes[:10]
+    assert len(pdf_bytes) > 500

@@ -39,3 +39,16 @@ class TestCollectionRegistry:
                   "nir": {"href": "http://example.com/nir.tif"}}
         assert c.get_asset_url(assets, "red") == "http://example.com/red.tif"
         assert c.get_asset_url(assets, "pan") is None
+
+    def test_amazonia1_has_stac_url(self):
+        c = get_collection("amazonia1")
+        assert c is not None
+        assert c.stac_url != "", "Amazonia1 STAC URL should not be empty"
+        assert "amazonia" in c.stac_url.lower() or "queimadas" in c.stac_url.lower()
+
+    def test_amazonia1_asset_url_resolution(self):
+        c = get_collection("amazonia1")
+        assets = {"red": {"href": "https://example.com/red.tif"}, "nir": {"href": "https://example.com/nir.tif"}}
+        assert c.get_asset_url(assets, "red") == "https://example.com/red.tif"
+        assert c.get_asset_url(assets, "nir") == "https://example.com/nir.tif"
+        assert c.get_asset_url(assets, "swir1") is None

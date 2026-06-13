@@ -9,6 +9,14 @@ from fastapi.responses import JSONResponse
 
 from backend.api.router import router
 from backend.config import get_settings
+from backend.exceptions import (
+    DownloadError,
+    ExternalAPIError,
+    NotFoundError,
+    ProcessingError,
+    SpaceEyeError,
+    ValidationError,
+)
 
 settings = get_settings()
 
@@ -17,7 +25,7 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     os.makedirs(settings.temp_dir, exist_ok=True)
     os.makedirs(os.path.join(settings.temp_dir, "downloads"), exist_ok=True)
-    os.makedirs(os.path.join(settings.temp_dir, "cache"), exist_ok=True)
+    os.makedirs(os.path.join(settings.temp_dir, "cache"), exist=True)
     yield
     from backend.models.database import get_engine
     await get_engine().dispose()
@@ -47,6 +55,21 @@ try:
     Instrumentator().instrument(app).expose(app)
 except ImportError:
     pass
+
+
+@app.exception_handler(SpaceEyeError)
+async def spaceeye_error_handler(request: Request, exc: SpaceEyeError):
+    if isinstance(exc, ValidationError):
+        return JSONResponse(status_code=400, content={"error": "Validation error", "detail": str(exc)})
+    if isinstance(exc, NotFoundError):
+        return JSONResponse(status_code=404, content={"error": "Not found", "detail": str(exc)})
+    if isinstance(exc, ExternalAPIError):
+        return JSONResponse(status_code=502, content={"error": "External service error", "detail": str(exc)})
+    if isinstance(exc, ProcessingError):
+        return JSONResponse(status_code=422, content={"error": "Processing error", "detail": str(exc)})
+    if isinstance(exc, DownloadError):
+        return JSONResponse(status_code=502, content={"error": "Download error", "detail": str(exc)})
+    return JSONResponse(status_code=500, content={"error": "Internal error", "detail": str(exc)})
 
 
 @app.exception_handler(Exception)

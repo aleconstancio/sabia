@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db
+from backend.api.deps import get_db, verify_api_key
 from backend.services.data_fusion import fuse_region_data
-from backend.utils import _summarize_weather, _summarize_soil
+from backend.utils import _summarize_soil, _summarize_weather
 
 router = APIRouter()
 
@@ -129,7 +129,11 @@ async def refresh_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/{profile_id}")
-async def delete_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_profile(
+    profile_id: str,
+    db: AsyncSession = Depends(get_db),
+    _auth: None = Depends(verify_api_key),
+):
     result = await db.execute(
         text("DELETE FROM region_profiles WHERE id = :id RETURNING id"), {"id": profile_id}
     )

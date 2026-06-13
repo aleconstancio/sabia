@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db
+from backend.api.deps import get_db, verify_api_key
 from backend.models.schemas import (
     ComputeDifferenceRequest,
     ProcessBatchRequest,
@@ -19,6 +19,7 @@ router = APIRouter()
 async def process_image_endpoint(
     req: ProcessRequest,
     db: AsyncSession = Depends(get_db),
+    _auth: None = Depends(verify_api_key),
 ):
     from backend.repositories.images import get_image_by_id
     from backend.tasks.processing import process_image_task
@@ -38,7 +39,11 @@ async def process_image_endpoint(
 
 
 @router.post("/process/batch")
-async def process_batch(req: ProcessBatchRequest, db: AsyncSession = Depends(get_db)):
+async def process_batch(
+    req: ProcessBatchRequest,
+    db: AsyncSession = Depends(get_db),
+    _auth: None = Depends(verify_api_key),
+):
     """Process multiple images for the same polygon and return task IDs."""
     from backend.repositories.images import get_images_by_ids
     from backend.tasks.processing import process_image_task
@@ -61,7 +66,10 @@ async def process_batch(req: ProcessBatchRequest, db: AsyncSession = Depends(get
 
 
 @router.post("/difference")
-async def compute_difference(req: ComputeDifferenceRequest):
+async def compute_difference(
+    req: ComputeDifferenceRequest,
+    _auth: None = Depends(verify_api_key),
+):
     """Compute NDVI difference between two processed images."""
     from backend.tasks.processing import compute_difference_task
 

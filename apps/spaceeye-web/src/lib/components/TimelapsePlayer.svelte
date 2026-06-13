@@ -46,12 +46,13 @@
   });
 
   $effect(() => {
-    if (playing && intervalId) {
-      clearInterval(intervalId);
+    if (playing) {
+      if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => {
         frameIndex = (frameIndex + 1) % images.length;
         onFrameChange(images[frameIndex].id);
       }, speed);
+      return () => { if (intervalId) clearInterval(intervalId); };
     }
   });
 

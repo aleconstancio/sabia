@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -17,7 +18,7 @@ _cidades_data: dict = {}
 _cidades_loaded = False
 
 
-def _load_cidades():
+def _load_cidades_sync():
     global _cidades_data, _cidades_loaded
     if _cidades_loaded:
         return
@@ -30,15 +31,19 @@ def _load_cidades():
         logger.warning("Failed to load %s: %s — using empty dataset", datasets_path, exc)
 
 
+async def _load_cidades():
+    await asyncio.to_thread(_load_cidades_sync)
+
+
 @router.get("/ibge/uf")
 async def list_ufs():
-    _load_cidades()
+    await _load_cidades()
     return list(_cidades_data.keys())
 
 
 @router.get("/ibge/cidades/{uf}")
 async def list_cidades(uf: str):
-    _load_cidades()
+    await _load_cidades()
     return list(_cidades_data.get(uf.upper(), []))
 
 

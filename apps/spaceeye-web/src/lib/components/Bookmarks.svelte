@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { Button } from '$lib/components/ui/button';
+  import Dialog from '$lib/ui/components/Dialog.svelte';
   import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import type { Bookmark } from '$lib/api/types';
 
@@ -15,6 +16,8 @@
   let bookmarks = $state<Bookmark[]>([]);
   let showPanel = $state(false);
   let panelRef: HTMLDivElement;
+  let deleteTarget = $state<Bookmark | null>(null);
+  let showDeleteDialog = $state(false);
 
   function handleClickOutside(e: MouseEvent) {
     if (panelRef && !panelRef.contains(e.target as Node)) {
@@ -34,10 +37,19 @@
     bookmarks = bookmarksStore.all;
   }
 
-  function handleRemoveBookmark(id: string, e: MouseEvent) {
+  function confirmDelete(b: Bookmark, e: MouseEvent) {
     e.stopPropagation();
-    bookmarksStore.remove(id);
-    bookmarks = bookmarksStore.all;
+    deleteTarget = b;
+    showDeleteDialog = true;
+  }
+
+  function handleConfirmDelete() {
+    if (deleteTarget) {
+      bookmarksStore.remove(deleteTarget.id);
+      bookmarks = bookmarksStore.all;
+    }
+    showDeleteDialog = false;
+    deleteTarget = null;
   }
 
   function selectBookmark(b: Bookmark) {
@@ -71,9 +83,7 @@
             <button
               class="text-xs text-destructive bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
               aria-label="Remover"
-              onclick={(e) => { // TODO: Replace with custom Dialog component for consistency
-                if (confirm('Remover este local salvo?')) handleRemoveBookmark(b.id, e);
-              }}
+              onclick={(e) => confirmDelete(b, e)}
             >
               ✕
             </button>
@@ -83,3 +93,13 @@
     </div>
   {/if}
 </div>
+
+<Dialog bind:open={showDeleteDialog} title="Remover local salvo?">
+  <p class="text-sm text-muted-foreground">
+    Tem certeza que deseja remover "{deleteTarget?.name}"?
+  </p>
+  {#snippet actions()}
+    <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancelar</Button>
+    <Button variant="destructive" onclick={handleConfirmDelete}>Remover</Button>
+  {/snippet}
+</Dialog>
