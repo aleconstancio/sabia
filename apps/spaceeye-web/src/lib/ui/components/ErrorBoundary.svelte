@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import Button from './Button.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   type TFunction = (key: string, params?: Record<string, string | number>) => string;
 
@@ -32,14 +32,14 @@
     const handler = (event: ErrorEvent) => {
       error = event.error || new Error(event.message);
       errorInfo = event.message;
-      onError?.(error);
+      if (error) onError?.(error);
       toast.error(fallbackTitle, { description: errorInfo.slice(0, 120) });
       event.preventDefault();
     };
     const rejectionHandler = (event: PromiseRejectionEvent) => {
       error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
       errorInfo = String(event.reason);
-      onError?.(error);
+      if (error) onError?.(error);
       toast.error(fallbackTitle, { description: errorInfo.slice(0, 120) });
       event.preventDefault();
     };

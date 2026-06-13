@@ -1,34 +1,43 @@
 <script lang="ts">
-  import Button from '$lib/ui/components/Button.svelte';
-  import { addBookmark, removeBookmark, getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
+  import { onMount, onDestroy } from 'svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import type { Bookmark } from '$lib/api/types';
 
   let {
     onSelect = (coords: number[][][], name: string) => {},
-    onSaveBookmark = (name: string, coords: number[][][]) => {},
     currentCoords = null as number[][][] | null,
   }: {
     onSelect: (coords: number[][][], name: string) => void;
-    onSaveBookmark: (name: string, coords: number[][][]) => void;
     currentCoords?: number[][][] | null;
   } = $props();
 
   let bookmarks = $state<Bookmark[]>([]);
   let showPanel = $state(false);
+  let panelRef: HTMLDivElement;
+
+  function handleClickOutside(e: MouseEvent) {
+    if (panelRef && !panelRef.contains(e.target as Node)) {
+      showPanel = false;
+    }
+  }
+
+  onMount(() => document.addEventListener('mousedown', handleClickOutside));
+  onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
 
   function loadBookmarks() {
-    bookmarks = getBookmarks();
+    bookmarks = bookmarksStore.refresh();
   }
 
   function handleAddBookmark(name: string, coords: number[][][]) {
-    addBookmark(name, coords);
-    bookmarks = getBookmarks();
+    bookmarksStore.add(name, coords);
+    bookmarks = bookmarksStore.all;
   }
 
   function handleRemoveBookmark(id: string, e: MouseEvent) {
     e.stopPropagation();
-    removeBookmark(id);
-    bookmarks = getBookmarks();
+    bookmarksStore.remove(id);
+    bookmarks = bookmarksStore.all;
   }
 
   function selectBookmark(b: Bookmark) {
@@ -39,7 +48,7 @@
   loadBookmarks();
 </script>
 
-<div class="relative">
+<div class="relative" bind:this={panelRef}>
   <Button size="sm" variant="ghost" onclick={() => showPanel = !showPanel}>
     {bookmarks.length > 0 ? `${bookmarks.length} salvos` : 'Salvos'}
   </Button>
@@ -54,7 +63,7 @@
         <p class="text-xs text-muted-foreground p-2">Nenhum local salvo ainda.</p>
       {:else}
         {#each bookmarks as b}
-          <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group" onclick={() => selectBookmark(b)}>
+          <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group" role="button" tabindex="0" onclick={() => selectBookmark(b)} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectBookmark(b); }}>
             <div>
               <p class="text-sm font-medium">{b.name}</p>
               <p class="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString('pt-BR')}</p>
@@ -62,7 +71,9 @@
             <button
               class="text-xs text-destructive bg-transparent border-none cursor-pointer opacity-0 group-hover:opacity-100"
               aria-label="Remover"
-              onclick={(e) => { if (confirm('Remover este local salvo?')) handleRemoveBookmark(b.id, e); }}
+              onclick={(e) => { // TODO: Replace with custom Dialog component for consistency
+                if (confirm('Remover este local salvo?')) handleRemoveBookmark(b.id, e);
+              }}
             >
               ✕
             </button>

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class Collection(ABC):
@@ -24,7 +23,7 @@ class Collection(ABC):
         ...
 
     @abstractmethod
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
+    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
         ...
 
 
@@ -34,7 +33,7 @@ class Cbers4ACollection(Collection):
     available_bands = ["pan", "red", "green", "blue", "nir"]
     available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
+    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
         mapping = {"pan": "pan", "red": "red", "green": "green", "blue": "blue", "nir": "nir"}
         key = mapping.get(band)
         if key and key in item_assets:
@@ -48,7 +47,7 @@ class Amazonia1Collection(Collection):
     available_bands = ["red", "green", "blue", "nir"]
     available_products = ["TCI", "NDVI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
+    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
         return None
 
 
@@ -58,7 +57,7 @@ class Sentinel2Collection(Collection):
     available_bands = ["red", "green", "blue", "nir", "scl"]
     available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
+    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
         mapping = {"red": "B04", "green": "B03", "blue": "B02", "nir": "B08", "scl": "SCL"}
         key = mapping.get(band)
         if key and key in item_assets:
@@ -66,32 +65,26 @@ class Sentinel2Collection(Collection):
         return None
 
 
-class Landsat8Collection(Collection):
+class LandsatCollection(Collection):
+    available_bands = ["pan", "red", "green", "blue", "nir", "swir1", "swir2"]
+    available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
+
+    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
+        mapping = {"red": "B4", "green": "B3", "blue": "B2", "nir": "B5", "pan": "B8", "swir1": "B6", "swir2": "B7"}
+        key = mapping.get(band)
+        if key and key in item_assets:
+            return item_assets[key]["href"]
+        return None
+
+
+class Landsat8Collection(LandsatCollection):
     id = "landsat8"
     stac_url = "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items"
-    available_bands = ["pan", "red", "green", "blue", "nir", "swir1", "swir2"]
-    available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
-        mapping = {"red": "B4", "green": "B3", "blue": "B2", "nir": "B5", "pan": "B8", "swir1": "B6", "swir2": "B7"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
 
 
-class Landsat9Collection(Collection):
+class Landsat9Collection(LandsatCollection):
     id = "landsat9"
     stac_url = "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items"
-    available_bands = ["pan", "red", "green", "blue", "nir", "swir1", "swir2"]
-    available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> Optional[str]:
-        mapping = {"red": "B4", "green": "B3", "blue": "B2", "nir": "B5", "pan": "B8", "swir1": "B6", "swir2": "B7"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
 
 
 _COLLECTIONS: dict[str, Collection] = {
@@ -103,7 +96,7 @@ _COLLECTIONS: dict[str, Collection] = {
 }
 
 
-def get_collection(collection_id: str) -> Optional[Collection]:
+def get_collection(collection_id: str) -> Collection | None:
     return _COLLECTIONS.get(collection_id)
 
 

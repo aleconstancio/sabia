@@ -34,7 +34,7 @@
 
     const drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
-      draw: { polygon: true, rectangle: true, polyline: false, circle: false, circlemarker: false, marker: false },
+      draw: { polygon: {}, rectangle: {}, polyline: false, circle: false, circlemarker: false, marker: false },
     });
     map.addControl(drawControl);
 

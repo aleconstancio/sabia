@@ -1,42 +1,48 @@
 @import "tailwindcss";
+@import "tailwind-variants";
 @import "./lib/ui/styles/global.css";
 
-@layer tokens.base {
-  :root {
-    --background: oklch(0.05 0.01 290);
-    --foreground: oklch(0.95 0.01 290);
-    --card: oklch(0.1 0.01 290);
-    --card-foreground: oklch(0.95 0.01 290);
-    --primary: oklch(0.6 0.18 160);
-    --primary-foreground: oklch(0.15 0 0);
-    --secondary: oklch(0.15 0.02 290);
-    --secondary-foreground: oklch(0.85 0.02 290);
-    --muted: oklch(0.15 0.01 290);
-    --muted-foreground: oklch(0.6 0.02 290);
-    --accent: oklch(0.15 0.02 290);
-    --accent-foreground: oklch(0.85 0.02 290);
-    --destructive: oklch(0.7 0.2 30);
-    --destructive-foreground: oklch(0.15 0 0);
-    --border: oklch(0.2 0.02 290);
-    --input: oklch(0.12 0.01 290);
-    --ring: var(--primary);
-    --radius: 0.5rem;
+@custom-variant dark (&:is(.dark *));
 
-    /* Z-index scale */
-    --z-sidebar: 20;
-    --z-header: 30;
-    --z-bottom-sheet: 35;
-    --z-overlay: 40;
-    --z-modal: 50;
-    --z-toast: 60;
-  }
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.05 0.01 290);
+  --foreground: oklch(0.95 0.01 290);
+  --card: oklch(0.1 0.01 290);
+  --card-foreground: oklch(0.95 0.01 290);
+  --popover: oklch(0.1 0.01 290);
+  --popover-foreground: oklch(0.95 0.01 290);
+  --primary: oklch(0.6 0.18 160);
+  --primary-foreground: oklch(0.15 0 0);
+  --secondary: oklch(0.15 0.02 290);
+  --secondary-foreground: oklch(0.85 0.02 290);
+  --muted: oklch(0.15 0.01 290);
+  --muted-foreground: oklch(0.6 0.02 290);
+  --accent: oklch(0.15 0.02 290);
+  --accent-foreground: oklch(0.85 0.02 290);
+  --destructive: oklch(0.7 0.2 30);
+  --destructive-foreground: oklch(0.15 0 0);
+  --border: oklch(0.2 0.02 290);
+  --input: oklch(0.12 0.01 290);
+  --ring: var(--primary);
+
+  --z-sidebar: 20;
+  --z-header: 30;
+  --z-bottom-sheet: 35;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 html, body { height: 100%; margin: 0; }
 #map { flex: 1; min-height: 0; }
 .leaflet-container { background: #111; }
 
-/* Leaflet control positioning — Tailwind v4 reset overrides Leaflet's inline styles */
 .leaflet-pane { z-index: 1; }
 .leaflet-top, .leaflet-bottom { position: absolute; z-index: 1000; pointer-events: none; }
 .leaflet-top { top: 0; }
@@ -46,7 +52,6 @@ html, body { height: 100%; margin: 0; }
 .leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
 .leaflet-control-zoom { position: relative !important; }
 
-/* Bottom sheet backdrop */
 .bottom-sheet-backdrop {
   position: fixed; inset: 0; z-index: var(--z-bottom-sheet);
   background: rgba(0,0,0,0.4);

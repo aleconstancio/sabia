@@ -28,7 +28,7 @@
     if (mapState.results.length > 0) {
       timelineData = mapState.results.slice(0, 20).map(img => ({
         date: img.acquired_at,
-        value: 0.5 + Math.random() * 0.3, // placeholder — would come from batch processing
+        value: 0.0, // TODO: replace with real NDVI value from batch processing
       }));
     }
   });

@@ -1,6 +1,7 @@
+import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
 from backend.api.deps import get_http_client
 from backend.models.schemas import PolygonRequest
@@ -14,7 +15,6 @@ async def get_soil(lat: float, lon: float):
     """Fetch soil data from ISRIC SoilGrids REST API (free, no key needed)."""
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         raise HTTPException(400, "Latitude must be in [-90, 90], longitude in [-180, 180]")
-    import httpx
     url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
     params = {
         "lat": lat,
@@ -34,10 +34,8 @@ async def get_soil(lat: float, lon: float):
 async def soil_zonal(req: PolygonRequest):
     """Get average soil properties for a polygon area."""
     from shapely.geometry import shape
-    import httpx
 
     poly = shape({"type": "Polygon", "coordinates": req.coordinates})
-    centroid = poly.centroid
 
     bounds = poly.bounds
     step = min(bounds[2] - bounds[0], bounds[3] - bounds[1], 0.5) or 0.1
@@ -52,30 +50,34 @@ async def soil_zonal(req: PolygonRequest):
             y += max(step, 0.1)
         x += max(step, 0.1)
 
-    import random
-    sampled = random.sample(points, min(len(points), 10))
+    # Deterministic grid sampling for reproducible results
+    sampled = points[:10]
 
     results = {"ph": [], "oc": [], "sand": [], "silt": [], "clay": []}
     client = await get_http_client()
-    for p in sampled:
-        url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+    url = "https://rest.isric.org/soilgrids/v2.0/properties/query"
+    property_map = [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]
+
+    async def _fetch_one(p):
         params = {"lat": p["lat"], "lon": p["lon"],
                   "property": ["phh2o", "oc", "sand", "silt", "clay"],
                   "depth": "0-5cm", "value": "mean"}
-        try:
-            resp = await client.get(url, params=params)
-            if resp.status_code == 200:
-                data = resp.json()
-                def find_val(layer):
-                    l = data.get("properties", {}).get("layers", [])
-                    match = [x for x in l if x["name"] == layer]
-                    return match[0]["depths"][0]["values"]["mean"] if match else None
-                for k, layer in [("ph", "phh2o"), ("oc", "oc"), ("sand", "sand"), ("silt", "silt"), ("clay", "clay")]:
-                    v = find_val(layer)
-                    if v is not None: results[k].append(v)
-        except Exception as e:
-            logger.exception("Soil zonal stats failed")
-            raise HTTPException(status_code=500, detail="Failed to compute soil statistics")
+        resp = await client.get(url, params=params)
+        if resp.status_code == 200:
+            return resp.json()
+        return None
+
+    responses = await asyncio.gather(*[_fetch_one(p) for p in sampled], return_exceptions=True)
+    responses = [r for r in responses if not isinstance(r, Exception)]
+
+    for data in responses:
+        if data is None:
+            continue
+        layers = data.get("properties", {}).get("layers", [])
+        for k, layer in property_map:
+            match = [x for x in layers if x["name"] == layer]
+            if match:
+                results[k].append(match[0]["depths"][0]["values"]["mean"])
 
     def avg(vals): return round(sum(vals) / len(vals), 2) if vals else None
 

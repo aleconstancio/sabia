@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   let { module = 'vegetation' }: { module: string } = $props();
   let thresholds = $state({
@@ -41,6 +41,6 @@
       <span class="text-muted-foreground">Weather Alerts</span>
       <input type="checkbox" bind:checked={thresholds.weather_alerts} class="accent-primary" />
     </label>
-    <Button size="sm" variant="outline" fullWidth={true} onclick={saveThresholds}>Save Thresholds</Button>
+    <Button size="sm" variant="outline" class="w-full" onclick={saveThresholds}>Save Thresholds</Button>
   </div>
 </div>

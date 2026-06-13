@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, Response
@@ -64,7 +63,7 @@ async def download_geotiff(task_id: str):
     if result.state != "SUCCESS" or not result.result:
         raise HTTPException(404, "Result not found. Task may still be running.")
 
-    path = result.result.get("path", "")
+    path = result.result.get("geotiff_path") or result.result.get("path", "")
     if not path or not os.path.exists(path):
         raise HTTPException(404, "File not found or expired.")
 
@@ -72,19 +71,8 @@ async def download_geotiff(task_id: str):
     if not os.path.realpath(path).startswith(os.path.realpath(cache_dir)):
         raise HTTPException(403, "Access denied")
 
-    tif_path = path.replace(".png", ".tif")
-    if not os.path.exists(tif_path):
-        tif_path = next(
-            (f for f in os.listdir(os.path.dirname(path)) if f.endswith(".tif")),
-            None,
-        )
-        if tif_path:
-            tif_path = os.path.join(os.path.dirname(path), tif_path)
-        else:
-            raise HTTPException(404, "GeoTIFF not available.")
-
     filename = f"spaceeye_{task_id[:8]}.tif"
-    return FileResponse(tif_path, filename=filename, media_type="image/tiff")
+    return FileResponse(path, filename=filename, media_type="image/tiff")
 
 
 @router.post("/download/batch")
@@ -109,9 +97,9 @@ async def download_batch(req: DownloadBatchRequest):
                 if path and os.path.exists(path):
                     name = f"{tid[:8]}.png"
                     zf.write(path, name)
-                    tif_path = str(Path(path).with_suffix('.tif'))
-                    if os.path.exists(tif_path):
-                        zf.write(tif_path, f"{tid[:8]}.tif")
+                    geotiff = result.result.get("geotiff_path", "")
+                    if geotiff and os.path.exists(geotiff):
+                        zf.write(geotiff, f"{tid[:8]}.tif")
 
     if len(buffer.getvalue()) <= 30:
         raise HTTPException(status_code=404, detail="No completed tasks found")

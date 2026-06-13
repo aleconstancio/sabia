@@ -1,20 +1,17 @@
 services:
   postgres:
     image: postgis/postgis:16-3.4
+    restart: unless-stopped
     environment:
       POSTGRES_DB: spaceeye
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Legacy SQL init files kept for backward compatibility.
-      # Alembic is the preferred migration method for new deployments:
-      #   ./scripts/migrate.sh
       - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./sql/003_analyses.sql:/docker-entrypoint-initdb.d/003_analyses.sql
       - ./sql/004_profiles.sql:/docker-entrypoint-initdb.d/004_profiles.sql
+      - ./sql/005_triggers.sql:/docker-entrypoint-initdb.d/005_triggers.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -30,10 +27,12 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -46,12 +45,12 @@ services:
       dockerfile: Dockerfile.backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"  # Bind to localhost; use a reverse proxy for production
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/spaceeye
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/spaceeye
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
       EMAIL_INPE: ${EMAIL_INPE:-}
       CORS_ORIGINS: '["http://localhost:80"]'
     volumes:
@@ -87,12 +86,12 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     restart: unless-stopped
-    command: celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=4
+    command: celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4}
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/spaceeye
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/spaceeye
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
       EMAIL_INPE: ${EMAIL_INPE:-}
     volumes:
       - spaceeye_cache:/tmp/spaceeye
@@ -134,7 +133,15 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/spaceeye
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/spaceeye
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: spaceeye
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
       EMAIL_INPE: ${EMAIL_INPE:-}
       COLLECTION: ${COLLECTION:-cbers4a}
     volumes:

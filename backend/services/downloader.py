@@ -1,6 +1,8 @@
-import os
 import asyncio
+import os
+
 import aiohttp
+
 from backend.exceptions import DownloadError
 
 
@@ -28,6 +30,7 @@ async def download_bands(
             if url:
                 tasks.append(_download_one(session, url, filepaths[band_name], band_name))
 
+        # Note: asyncio.gather waits for all tasks even on failure. For large batches, consider TaskGroup for early cancellation.
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result in results:
@@ -37,6 +40,7 @@ async def download_bands(
     for band_name, filepath in filepaths.items():
         if filepath is None:
             continue
+        # Minimum 1KB — valid GeoTIFFs for tiny polygons may be small but not this small
         if not os.path.exists(filepath) or os.path.getsize(filepath) < 1024:
             raise DownloadError(f"Missing or truncated file for band {band_name}: {filepath}")
 

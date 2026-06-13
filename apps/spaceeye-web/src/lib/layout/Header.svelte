@@ -8,11 +8,12 @@
   import Bookmarks from '$lib/components/Bookmarks.svelte';
   import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
   import AlertBell from '$lib/components/alerts/AlertBell.svelte';
-  import Select from '$lib/ui/components/Select.svelte';
-  import Button from '$lib/ui/components/Button.svelte';
-  import { restorePolygonOnMap } from '$lib/utils/map-helpers';
-  import { mapState } from '$lib/stores/map.svelte.ts';
+  import * as Select from '$lib/components/ui/select';
+  import { Button } from '$lib/components/ui/button';
+  import { restorePolygonOnMap } from '$lib/helpers/map-helpers';
+  import { mapState } from '$lib/stores/map.svelte';
   import { downloadGeotiff } from '$lib/api/processing';
+
   import type { AnalysisRecord } from '$lib/api/types';
 
   let {
@@ -25,7 +26,21 @@
     isSavingProfile = false,
     showCompare = false,
     showTimelapse = false,
+  }: {
+    navigateToCity?: (lat: number, lng: number) => void;
+    onToggleCompare?: (e: MouseEvent) => void;
+    onToggleTimelapse?: (e: MouseEvent) => void;
+    onClearOverlay?: (e: MouseEvent) => void;
+    onExportPdf?: (e: MouseEvent) => void;
+    onSaveProfile?: (e: MouseEvent) => void;
+    isSavingProfile?: boolean;
+    showCompare?: boolean;
+    showTimelapse?: boolean;
   } = $props();
+
+  function handleBookmarkSelect(coords: number[][][], _name: string) {
+    mapState.polygonCoords = coords;
+  }
 
   function copyShareLink() {
     if (!browser || !mapState.polygonCoords) return;
@@ -108,15 +123,20 @@
           {isSavingProfile ? 'Salvando...' : 'Salvar Perfil'}
         </Button>
       {/if}
-      <Select bind:value={mapState.selectedCollection} options={[
-        { value: 'cbers4a', label: 'CBERS-4A' },
-        { value: 'sentinel2', label: 'Sentinel-2' },
-        { value: 'landsat8', label: 'Landsat 8' },
-        { value: 'landsat9', label: 'Landsat 9' },
-      ]} class="!w-28 !text-xs" />
+      <Select.Root type="single" bind:value={mapState.selectedCollection}>
+        <Select.Trigger class="!w-28 !text-xs">
+          Coleção...
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="cbers4a">CBERS-4A</Select.Item>
+          <Select.Item value="sentinel2">Sentinel-2</Select.Item>
+          <Select.Item value="landsat8">Landsat 8</Select.Item>
+          <Select.Item value="landsat9">Landsat 9</Select.Item>
+        </Select.Content>
+      </Select.Root>
       <HistoryPanel onRestore={handleRestore} />
       <MonitoringPanel />
-      <Bookmarks currentCoords={mapState.polygonCoords} />
+      <Bookmarks currentCoords={mapState.polygonCoords} onSelect={handleBookmarkSelect} />
       <AlertBell />
       <button
         onclick={toggleMode}

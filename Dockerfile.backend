@@ -1,18 +1,19 @@
 # Build stage
-FROM python:3.12-slim AS builder
+FROM python:3.12.8-slim AS builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN pip install --no-cache-dir uv && uv sync --prod --no-dev
 COPY backend/ backend/
 COPY pipeline/ pipeline/
-RUN uv pip install --no-cache-dir .
 
 # Runtime stage
-FROM python:3.12-slim AS runtime
+FROM python:3.12.8-slim AS runtime
+ENV PYTHONUNBUFFERED=1
 RUN groupadd -r spaceeye && useradd -r -g spaceeye -d /app -s /sbin/nologin spaceeye
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy specific binaries instead of entire /usr/local/bin to minimize attack surface
+COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
 COPY --from=builder /app/backend /app/backend
 COPY --from=builder /app/pipeline /app/pipeline
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml

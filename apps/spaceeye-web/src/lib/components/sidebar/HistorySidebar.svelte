@@ -1,7 +1,7 @@
 <script lang="ts">
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
-  import { restorePolygonOnMap } from '$lib/utils/map-helpers';
-  import { mapState } from '$lib/stores/map.svelte.ts';
+  import { restorePolygonOnMap } from '$lib/helpers/map-helpers';
+  import { mapState } from '$lib/stores/map.svelte';
   import type { AnalysisRecord } from '$lib/api/types';
 
   let expanded = $state(true);

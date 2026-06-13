@@ -27,18 +27,19 @@
 
   $effect(() => {
     if (lat && lon) {
+      const controller = new AbortController();
       const timer = setTimeout(() => {
-        fetchWeather();
+        fetchWeather(controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => { clearTimeout(timer); controller.abort(); };
     }
   });
 
 
-  async function fetchWeather() {
+  async function fetchWeather(signal?: AbortSignal) {
     loading = true; error = '';
     try {
-      const resp = await fetch(`${API_URL}/weather/${lat}/${lon}`);
+      const resp = await fetch(`${API_URL}/weather/${lat}/${lon}`, { signal });
       if (!resp.ok) throw new Error('Weather fetch failed');
       weather = await resp.json();
       if (weather?.current) {
@@ -61,7 +62,7 @@
   <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Clima</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
       <span>Carregando...</span>
     </div>
   {:else if error}

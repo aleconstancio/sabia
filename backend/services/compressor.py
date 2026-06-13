@@ -1,9 +1,9 @@
 import os
 
+import matplotlib
 import numpy as np
 import pyproj
 import rasterio
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -46,8 +46,6 @@ def _compress_ndvi(img, bounds, crs):
     nodata = img.nodata
     if nodata is not None:
         data = np.where(data == nodata, np.nan, data)
-    else:
-        data = np.where(data == 0, np.nan, data)
 
     if np.all(np.isnan(data)):
         data = np.zeros_like(data)
@@ -56,7 +54,7 @@ def _compress_ndvi(img, bounds, crs):
 
     cache_dir = os.path.join(settings.temp_dir, "cache")
     os.makedirs(cache_dir, exist_ok=True)
-    temp_path = os.path.join(cache_dir, f"ndvi_{os.urandom(4).hex()}.png")
+    temp_path = os.path.join(cache_dir, f"ndvi_{os.urandom(8).hex()}.png")
 
     plt.imsave(temp_path, data, cmap="RdYlGn", vmin=-1, vmax=1)
 
@@ -71,10 +69,7 @@ def _compress_tci(img, bounds, crs):
 
     rgb = np.dstack((red, green, blue))
     nodata = img.nodata
-    if nodata is not None:
-        mask = np.all(rgb == nodata, axis=-1)
-    else:
-        mask = np.all(rgb == 0, axis=-1)
+    mask = np.all(rgb == nodata, axis=-1) if nodata is not None else np.all(rgb == 0, axis=-1)
 
     rgb_min = np.nanmin(rgb)
     rgb_max = np.nanmax(rgb)
@@ -89,7 +84,7 @@ def _compress_tci(img, bounds, crs):
 
     cache_dir = os.path.join(settings.temp_dir, "cache")
     os.makedirs(cache_dir, exist_ok=True)
-    temp_path = os.path.join(cache_dir, f"tci_{os.urandom(4).hex()}.png")
+    temp_path = os.path.join(cache_dir, f"tci_{os.urandom(8).hex()}.png")
 
     plt.imsave(temp_path, rgb)
 

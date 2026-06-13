@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import type { ImageResult } from '$lib/api/types';
+  import { processImage as apiProcessImage } from '$lib/api/client';
+  import { pollTaskStatus } from '$lib/helpers/pollTask';
 
   let {
     imageA = null as ImageResult | null,
@@ -66,52 +68,24 @@
     else { loadingB = true; errorB = ''; }
 
     try {
-      const resp = await fetch(`${API_URL}/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_id: image.id,
-          coordinates: polygonCoords,
-          product: product,
-        }),
-      });
-      if (!resp.ok) throw new Error('Process request failed');
-      const data = await resp.json();
-
-      let remaining = 120;
-      const poll = setInterval(async () => {
-        if (--remaining <= 0) {
-          clearInterval(poll);
-          if (side === 'A') { errorA = 'Timeout'; loadingA = false; }
-          else { errorB = 'Timeout'; loadingB = false; }
-          return;
+      const data = await apiProcessImage(image.id, polygonCoords, product);
+      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000 });
+      if (result.status === 'done') {
+        const bounds = result.result?.bounds as [[number, number], [number, number]];
+        const map = side === 'A' ? mapA : mapB;
+        if (map && bounds) {
+          const overlay = L.imageOverlay(`${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`, bounds, { opacity: 0.8 });
+          map.addLayer(overlay);
+          map.flyToBounds(bounds, { duration: 1 });
+          if (side === 'A') overlayA = overlay; else overlayB = overlay;
         }
-        try {
-          const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
-          const status = await sr.json();
-          if (status.status === 'done') {
-            clearInterval(poll);
-            const bounds = status.result?.bounds as [[number, number], [number, number]];
-            const map = side === 'A' ? mapA : mapB;
-            if (map && bounds) {
-              const overlay = L.imageOverlay(`${API_URL}/overlay/${status.result.path.split('/').pop()}`, bounds, { opacity: 0.8 });
-              map.addLayer(overlay);
-              map.flyToBounds(bounds, { duration: 1 });
-              if (side === 'A') overlayA = overlay; else overlayB = overlay;
-            }
-            if (side === 'A') { taskIdA = data.task_id; loadingA = false; }
-            else { taskIdB = data.task_id; loadingB = false; }
-          } else if (status.status === 'error') {
-            clearInterval(poll);
-            if (side === 'A') { errorA = status.error || 'Erro'; loadingA = false; }
-            else { errorB = status.error || 'Erro'; loadingB = false; }
-          }
-        } catch {
-          console.warn('RegionComparison poll error for side:', side);
-          clearInterval(poll);
-          if (side === 'A') loadingA = false; else loadingB = false;
-        }
-      }, 1000);
+        if (side === 'A') { taskIdA = data.task_id; }
+        else { taskIdB = data.task_id; }
+      } else {
+        if (side === 'A') { errorA = result.error || 'Erro'; }
+        else { errorB = result.error || 'Erro'; }
+      }
+      if (side === 'A') loadingA = false; else loadingB = false;
     } catch (e: unknown) {
       if (side === 'A') { errorA = (e as Error).message; loadingA = false; }
       else { errorB = (e as Error).message; loadingB = false; }
@@ -131,33 +105,18 @@
         }),
       });
       const data = await resp.json();
-      let remaining = 120;
-      const poll = setInterval(async () => {
-        if (--remaining <= 0) {
-          clearInterval(poll);
-          computingDiff = false;
-          diffError = 'Timeout';
-          return;
-        }
-        try {
-          const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
-          const status = await sr.json();
-          if (status.status === 'done') {
-            clearInterval(poll);
-            computingDiff = false;
-            const bounds = status.result.bounds as [[number, number], [number, number]];
-            const overlay = L.imageOverlay(`${API_URL}/overlay/${status.result.path.split('/').pop()}`, bounds, { opacity: 0.7 });
-            if (diffOverlay) { mapA.removeLayer(diffOverlay); mapB.removeLayer(diffOverlay); }
-            mapA.addLayer(overlay);
-            mapB.addLayer(overlay);
-            diffOverlay = overlay;
-          } else if (status.status === 'error') {
-            clearInterval(poll);
-            computingDiff = false;
-            diffError = status.error || 'Erro ao calcular diferença';
-          }
-        } catch { console.warn('RegionComparison diff poll error'); clearInterval(poll); computingDiff = false; diffError = 'Falha na conexão'; }
-      }, 2000);
+      const result = await pollTaskStatus(data.task_id, { intervalMs: 2000 });
+      if (result.status === 'done') {
+        const bounds = result.result?.bounds as [[number, number], [number, number]];
+        const overlay = L.imageOverlay(`${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`, bounds, { opacity: 0.7 });
+        if (diffOverlay) { mapA.removeLayer(diffOverlay); mapB.removeLayer(diffOverlay); }
+        mapA.addLayer(overlay);
+        mapB.addLayer(overlay);
+        diffOverlay = overlay;
+      } else {
+        diffError = result.error || 'Erro ao calcular diferença';
+      }
+      computingDiff = false;
     } catch {
       console.warn('RegionComparison computeDifference error');
       computingDiff = false;

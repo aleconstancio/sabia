@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dialog from '$lib/ui/components/Dialog.svelte';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
   let step = $state(0);

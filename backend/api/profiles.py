@@ -1,4 +1,6 @@
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,30 +10,35 @@ from backend.services.data_fusion import fuse_region_data
 router = APIRouter()
 
 
+class CreateProfileRequest(BaseModel):
+    name: str = Field(max_length=200)
+    polygon: dict
+    satellite_data: dict | None = None
+    notes: str | None = None
+
+
 @router.post("")
-async def create_profile(data: dict, db: AsyncSession = Depends(get_db)):
+async def create_profile(data: CreateProfileRequest, db: AsyncSession = Depends(get_db)):
     """Create a region profile with fused multi-source data."""
-    polygon = data.get("polygon")
-    if not polygon:
-        raise HTTPException(422, "polygon is required")
+    polygon = data.polygon
 
     fused = await fuse_region_data(polygon["coordinates"])
 
     result = await db.execute(
         text("""
             INSERT INTO region_profiles (name, polygon, centroid, weather_data, soil_data, landcover_data, satellite_data, notes)
-            VALUES (:name, :polygon, :centroid, :weather, :soil, :landcover, :satellite, :notes)
+            VALUES (:name, :polygon, :centroid, :weather_data, :soil_data, :landcover_data, :satellite_data, :notes)
             RETURNING id
         """),
         {
-            "name": data.get("name"),
+            "name": data.name,
             "polygon": polygon,
             "centroid": fused["centroid"],
-            "weather": fused["weather"],
-            "soil": fused["soil"],
-            "landcover": fused["landcover"],
-            "satellite": data.get("satellite_data"),
-            "notes": data.get("notes"),
+            "weather_data": fused["weather"],
+            "soil_data": fused["soil"],
+            "landcover_data": fused["landcover"],
+            "satellite_data": data.satellite_data,
+            "notes": data.notes,
         },
     )
     await db.commit()
@@ -98,14 +105,24 @@ async def refresh_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
     coords = polygon["coordinates"] if isinstance(polygon, dict) else polygon
     fused = await fuse_region_data(coords)
 
+    # Map fused data keys to database column names
+    column_mapping = {
+        "weather": "weather_data",
+        "soil": "soil_data",
+        "landcover": "landcover_data",
+        "centroid": "centroid",
+    }
+    db_params = {column_mapping.get(k, k): v for k, v in fused.items()}
+    db_params["id"] = profile_id
+
     await db.execute(
         text("""
             UPDATE region_profiles
-            SET weather_data = :weather, soil_data = :soil, landcover_data = :landcover,
+            SET weather_data = :weather_data, soil_data = :soil_data, landcover_data = :landcover_data,
                 centroid = :centroid, updated_at = now()
             WHERE id = :id
         """),
-        {"id": profile_id, **fused},
+        db_params,
     )
     await db.commit()
     return {"updated": True}
@@ -122,6 +139,7 @@ async def delete_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
     return {"deleted": True}
 
 
+# TODO: Move _summarize_weather/_summarize_soil to a shared utils module
 def _summarize_weather(data: dict) -> dict | None:
     if not data:
         return None

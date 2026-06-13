@@ -17,7 +17,7 @@ export async function processImage(imageId: string, coordinates: number[][][], p
   return api.post('/process', { image_id: imageId, coordinates, product });
 }
 
-export async function getTaskStatus(taskId: string): Promise<{ task_id: string; status: string; progress: number; phase: string; result?: any; error?: string }> {
+export async function getTaskStatus(taskId: string): Promise<{ task_id: string; status: string; progress: number; phase: string; result?: Record<string, unknown>; error?: string }> {
   return api.get(`/tasks/${taskId}`);
 }
 
@@ -36,6 +36,7 @@ export async function saveAnalysis(data: {
   polygon: { type: string; coordinates: number[][][] };
   centroid?: { lat: number; lon: number };
   statistics?: Record<string, unknown>;
+  overlay_path?: string;
 }): Promise<{ id: string }> {
   return api.post('/analyses', data);
 }
@@ -111,7 +112,11 @@ export async function exportEsgCsv(data: { region: string; coordinates: number[]
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => 'Unknown error');
+    throw new Error(`ESG CSV export failed (${resp.status}): ${text}`);
+  }
   return resp.blob();
 }
 
-export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, AlertThreshold, ESGExportData } from './types';
+export type { ImageResult, SoilData, WeatherData, LandCoverData, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, Alert, AlertThreshold, ESGExportData } from './types';

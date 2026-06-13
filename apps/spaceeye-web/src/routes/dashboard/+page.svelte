@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { dashboardState, loadProfiles } from '$lib/stores/dashboard.svelte';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { dashboardState } from '$lib/stores/dashboard.svelte';
+  import { Button } from '$lib/components/ui/button';
   import Spinner from '$lib/ui/components/Spinner.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import Scorecard from './Scorecard.svelte';
   import PortfolioGrid from './PortfolioGrid.svelte';
 
-  onMount(() => loadProfiles());
+  onMount(() => dashboardState.loadProfiles());
 
   let avgNdvi = $derived.by(() => {
     const values = dashboardState.profiles

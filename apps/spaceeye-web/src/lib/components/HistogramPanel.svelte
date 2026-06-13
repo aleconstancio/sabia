@@ -2,13 +2,17 @@
   import type { StatsData } from '$lib/api/types';
 
   let { stats = null as StatsData | null, product = 'NDVI' } = $props();
-  let canvas: HTMLCanvasElement;
+  let canvas: HTMLCanvasElement | undefined = $state(undefined);
 
   function drawHistogram() {
     if (!canvas || !stats?.histogram?.deciles) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
     const W = canvas.width, H = canvas.height;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, W, H);
 
     const deciles = stats.histogram.deciles;

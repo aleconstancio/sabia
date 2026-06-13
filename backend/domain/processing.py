@@ -1,16 +1,20 @@
 import asyncio
+import logging
 import os
+
+import geopandas as gpd
 import numpy as np
 import rasterio
 from rasterio.mask import mask as rio_mask
-from rasterio.warp import reproject, Resampling
+from rasterio.warp import Resampling, reproject
 from shapely.geometry import mapping, shape
-import geopandas as gpd
-from backend.config import get_settings
-from backend.services.downloader import download_bands
-from backend.services.compressor import compress_to_png
 
+from backend.config import get_settings
 from backend.exceptions import ProcessingError
+from backend.services.compressor import compress_to_png
+from backend.services.downloader import download_bands
+
+logger = logging.getLogger(__name__)
 
 
 async def process_image(
@@ -45,7 +49,7 @@ async def process_image(
     if progress_callback:
         await progress_callback(100, "done")
 
-    return {**overlay, "statistics": result_stats}
+    return {**overlay, "geotiff_path": result_path, "statistics": result_stats}
 
 
 def _compute_product(
@@ -147,7 +151,7 @@ def _compute_product(
                 from skimage.transform import resize as skresize
                 scl = skresize(scl.astype(float), result.shape, order=0, preserve_range=True).astype(int)
             except ImportError:
-                pass
+                logger.warning("scikit-image not installed, cloud masking skipped")
         if scl.shape == result.shape:
             cloud_mask = np.isin(scl, [3, 8, 9, 10])
             result = np.where(cloud_mask, np.nan, result)
@@ -187,13 +191,13 @@ def _compute_product(
             "max": float(np.nanmax(result)),
             "std": float(np.nanstd(result)),
         }
-        percentiles = np.percentile(result[np.isfinite(result)], [10, 20, 30, 40, 50, 60, 70, 80, 90])
+        percentiles = np.percentile(valid, [10, 20, 30, 40, 50, 60, 70, 80, 90])
         stats["histogram"] = {
             "deciles": [float(p) for p in percentiles],
             "p10": float(percentiles[0]),
-            "p25": float(np.percentile(result[np.isfinite(result)], 25)),
+            "p25": float(np.percentile(valid, 25)),
             "p50": float(percentiles[4]),
-            "p75": float(np.percentile(result[np.isfinite(result)], 75)),
+            "p75": float(np.percentile(valid, 75)),
             "p90": float(percentiles[8]),
         }
     else:

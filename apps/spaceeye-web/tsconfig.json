@@ -8,6 +8,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "sourceMap": true
-  }
+    "sourceMap": true,
+    "types": ["vitest/globals"]
+  },
+  "exclude": [
+    "src/lib/components/ui/**",
+    "src/__tests__/**"
+  ]
 }

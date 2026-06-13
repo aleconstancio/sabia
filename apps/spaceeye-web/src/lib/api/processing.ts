@@ -1,36 +1,26 @@
 import L from 'leaflet';
 import { toast } from 'svelte-sonner';
 import { mapState } from '$lib/stores/map.svelte';
-import { addRecord } from '$lib/stores/history.svelte';
+import { historyStore } from '$lib/stores/history.svelte';
+import { searchImages as apiSearchImages, processImage as apiProcessImage } from '$lib/api/client';
 import { API_URL } from '$lib/config';
-import { downloadBlob, downloadBlobPost } from '$lib/utils/download';
-import { pollTaskStatus } from '$lib/utils/pollTask';
+import { downloadBlob, downloadBlobPost } from '$lib/helpers/download';
+import { pollTaskStatus } from '$lib/helpers/pollTask';
 import type { Map as LeafletMap } from 'leaflet';
-
-interface SearchRequestBody {
-  coordinates: number[][][];
-  limit: number;
-  collections?: string[];
-  date_from?: string;
-  date_to?: string;
-  max_cloud?: number;
-  sort_by?: string;
-  sort_order?: string;
-}
-
-interface ExportPdfRequestBody {
-  image_id: string;
-  product: string;
-  date: string;
-  cloud_cover: number | null;
-  weather?: Record<string, unknown>;
-  overlay_path?: string;
-}
 
 interface ProcessResult {
   bounds: [[number, number], [number, number]];
   path: string;
   statistics?: Record<string, unknown>;
+}
+
+function isProcessResult(val: unknown): val is ProcessResult {
+  return (
+    typeof val === 'object' &&
+    val !== null &&
+    'bounds' in val &&
+    'path' in val
+  );
 }
 
 export async function searchImages() {
@@ -39,21 +29,8 @@ export async function searchImages() {
   mapState.isLoading = true;
   mapState.searchError = '';
   try {
-    const body: SearchRequestBody = { coordinates: mapState.polygonCoords, limit: 50 };
-    if (mapState.selectedCollection) body.collections = [mapState.selectedCollection];
-    if (mapState.filterDateFrom) body.date_from = mapState.filterDateFrom;
-    if (mapState.filterDateTo) body.date_to = mapState.filterDateTo;
-    if (mapState.filterMaxCloud !== undefined) body.max_cloud = mapState.filterMaxCloud;
-    body.sort_by = mapState.filterSortBy || 'acquired_at';
-    body.sort_order = mapState.filterSortOrder || 'desc';
-
-    const resp = await fetch(`${API_URL}/images/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) throw new Error(await resp.text());
-    const data = await resp.json();
+    const collections = mapState.selectedCollection ? [mapState.selectedCollection] : undefined;
+    const data = await apiSearchImages(mapState.polygonCoords, collections);
     mapState.results = data.images || [];
     mapState.showPolygonModal = false;
     mapState.showImageGallery = true;
@@ -73,17 +50,7 @@ export async function processImage(imageId: string) {
   mapState.showProcessingViewer = true;
 
   try {
-    const resp = await fetch(`${API_URL}/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image_id: imageId,
-        coordinates: mapState.polygonCoords,
-        product: mapState.selectedProduct,
-      })
-    });
-    if (!resp.ok) throw new Error('Process request failed');
-    const data = await resp.json();
+    const data = await apiProcessImage(imageId, mapState.polygonCoords || [], mapState.selectedProduct);
     mapState.taskId = data.task_id;
 
     const result = await pollTaskStatus(data.task_id, {
@@ -103,8 +70,10 @@ export async function processImage(imageId: string) {
     if (result.status === 'done') {
       mapState.isLoading = false;
       mapState.showProcessingViewer = false;
-      showOverlayResult(result.result as unknown as ProcessResult);
-      addRecord({
+      if (isProcessResult(result.result)) {
+        showOverlayResult(result.result);
+      }
+      historyStore.add({
         imageId: imageId,
         product: mapState.selectedProduct,
         collection: mapState.selectedCollection || 'unknown',
@@ -113,22 +82,6 @@ export async function processImage(imageId: string) {
         centroid: mapState.polygonCentroid,
         stats: result.result?.statistics as Record<string, unknown> | undefined,
       });
-      // Auto-save to backend for dashboard
-      try {
-        await fetch(`${API_URL}/analyses`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            image_id: imageId,
-            collection: mapState.selectedCollection || 'unknown',
-            product: mapState.selectedProduct,
-            polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
-            centroid: mapState.polygonCentroid,
-            statistics: result.result?.statistics,
-            overlay_path: result.result?.path,
-          }),
-        });
-      } catch { /* non-critical, history store has backup */ }
     } else {
       mapState.isLoading = false;
       mapState.processingPhase = 'Erro: ' + (result.error || 'Falha no processamento');
@@ -156,7 +109,7 @@ export function showOverlayResult(result: ProcessResult) {
 
 export async function exportPdf(imageId: string, cloudCover: number | null) {
   const weather = mapState.lastWeatherData;
-  const body: ExportPdfRequestBody = {
+  const body = {
     image_id: imageId,
     product: mapState.selectedProduct,
     date: new Date().toISOString(),
@@ -166,8 +119,8 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
       humidity: weather.humidity,
       precipitation: weather.precipitation,
     } : undefined,
+    overlay_path: mapState.lastOverlayPath || undefined,
   };
-  if (mapState.lastOverlayPath) body.overlay_path = mapState.lastOverlayPath;
   try {
     await downloadBlobPost(`${API_URL}/export/pdf`, body, `spaceeye-${imageId.slice(0, 20)}.pdf`);
   } catch {

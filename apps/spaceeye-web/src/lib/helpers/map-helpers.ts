@@ -3,7 +3,7 @@ import type { Map as LeafletMap } from 'leaflet';
 export async function restorePolygonOnMap(coords: number[][][]) {
   try {
     const L = await import('leaflet');
-    const { mapState } = await import('$lib/stores/map.svelte.ts');
+    const { mapState } = await import('$lib/stores/map.svelte');
     if (!mapState.map || !coords) return;
     const polygon = L.default.polygon(coords[0].map((c: number[]) => [c[1], c[0]]));
     const map = mapState.map as LeafletMap;

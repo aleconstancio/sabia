@@ -2,6 +2,7 @@ import json
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,39 +12,37 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("")
-async def create_analysis(data: dict, db: AsyncSession = Depends(get_db)):
-    """Save a completed analysis record."""
-    required = ["image_id", "collection", "product", "polygon"]
-    missing = [f for f in required if f not in data]
-    if missing:
-        raise HTTPException(422, f"Missing fields: {', '.join(missing)}")
+class CreateAnalysisRequest(BaseModel):
+    image_id: str
+    collection: str
+    product: str
+    polygon: list
+    statistics: dict | None = None
+    overlay_path: str | None = None
+    weather: dict | None = None
 
+
+@router.post("")
+async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depends(get_db)):
+    """Save a completed analysis record."""
     result = await db.execute(
         text("""
-            INSERT INTO analyses (image_id, collection, product, polygon, centroid, statistics, overlay_path, acquired_at, cloud_cover, weather)
-            VALUES (:image_id, :collection, :product, :polygon, :centroid, :statistics, :overlay_path, :acquired_at, :cloud_cover, :weather)
+            INSERT INTO analyses (image_id, collection, product, polygon, statistics, overlay_path, weather)
+            VALUES (:image_id, :collection, :product, :polygon, :statistics, :overlay_path, :weather)
             RETURNING id
         """),
         {
-            "image_id": data["image_id"],
-            "collection": data["collection"],
-            "product": data["product"],
-            "polygon": json.dumps(data["polygon"])
-            if isinstance(data["polygon"], dict)
-            else data["polygon"],
-            "centroid": json.dumps(data["centroid"])
-            if isinstance(data.get("centroid"), dict)
-            else data.get("centroid"),
-            "statistics": json.dumps(data["statistics"])
-            if isinstance(data.get("statistics"), dict)
-            else data.get("statistics"),
-            "overlay_path": data.get("overlay_path"),
-            "acquired_at": data.get("acquired_at"),
-            "cloud_cover": data.get("cloud_cover"),
-            "weather": json.dumps(data["weather"])
-            if isinstance(data.get("weather"), dict)
-            else data.get("weather"),
+            "image_id": data.image_id,
+            "collection": data.collection,
+            "product": data.product,
+            "polygon": data.polygon,
+            "statistics": json.dumps(data.statistics)
+            if isinstance(data.statistics, dict)
+            else data.statistics,
+            "overlay_path": data.overlay_path,
+            "weather": json.dumps(data.weather)
+            if isinstance(data.weather, dict)
+            else data.weather,
         },
     )
     await db.commit()
@@ -60,6 +59,10 @@ async def list_analyses(
     db: AsyncSession = Depends(get_db),
 ):
     """List saved analyses with optional filters."""
+    if limit < 1:
+        limit = 50
+    if offset < 0:
+        offset = 0
     limit = min(limit, 200)
     conditions = []
     params = {"limit": limit, "offset": offset}
@@ -72,6 +75,10 @@ async def list_analyses(
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
+    # SECURITY NOTE: The `where` clause is built from fixed column names
+    # (product, collection) validated above — not user-supplied free text.
+    # All dynamic values use named parameters (:product, :collection) via
+    # the `params` dict, so there is no SQL injection vector here.
     result = await db.execute(
         text(
             f"SELECT * FROM analyses {where} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"

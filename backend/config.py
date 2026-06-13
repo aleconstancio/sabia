@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     email_inpe: str = ""
     temp_dir: str = "/tmp/spaceeye"
-    cache_ttl_days: int = 7
+    cache_ttl_days: int = 7  # Used by pipeline/cleanup.py (via CLI --ttl, not this setting)
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"

@@ -8,20 +8,21 @@
 
   $effect(() => {
     if (lat && lon) {
+      const controller = new AbortController();
       const timer = setTimeout(() => {
-        fetchLandcover();
+        fetchLandcover(controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => { clearTimeout(timer); controller.abort(); };
     }
   });
 
 
-  async function fetchLandcover() {
+  async function fetchLandcover(signal?: AbortSignal) {
     loading = true;
     try {
       const url = polygonCoords ? `${API_URL}/landcover/zonal` : `${API_URL}/landcover/${lat}/${lon}`;
       const body = polygonCoords ? JSON.stringify({ coordinates: polygonCoords }) : undefined;
-      const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body });
+      const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body, signal });
       if (resp.ok) landcover = await resp.json();
     } catch { fetchError = 'Falha ao carregar cobertura do solo'; } finally { loading = false; }
   }
@@ -38,7 +39,7 @@
   <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Cobertura do Solo</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
       <span>Carregando...</span>
     </div>
   {:else if landcover}

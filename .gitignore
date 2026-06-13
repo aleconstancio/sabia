@@ -46,3 +46,13 @@ dump.rdb
 apps/spaceeye-web/test-results/
 apps/spaceeye-web/playwright-report/
 apps/spaceeye-web/playwright/.cache/
+
+# direnv
+.direnv/
+.envrc
+
+# opencode
+.opencode/
+
+# Superpowers
+docs/superpowers/

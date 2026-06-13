@@ -6,6 +6,7 @@ router = APIRouter()
 @router.get("/{task_id}")
 async def get_task_status(task_id: str):
     from celery.result import AsyncResult
+
     from backend.tasks.celery_app import celery_app
 
     result = AsyncResult(task_id, app=celery_app)
@@ -21,12 +22,15 @@ async def get_task_status(task_id: str):
             "phase": meta.get("phase", "processing"),
         }
     elif result.state == "SUCCESS":
+        result_data = result.result
+        if isinstance(result_data, dict):
+            result_data = {k: v for k, v in result_data.items() if k != "path"}
         return {
             "task_id": task_id,
             "status": "done",
             "progress": 100,
             "phase": "done",
-            "result": result.result,
+            "result": result_data,
         }
     elif result.state == "FAILURE":
         return {
@@ -47,6 +51,7 @@ async def task_websocket(websocket: WebSocket, task_id: str):
     await websocket.accept()
     try:
         from celery.result import AsyncResult
+
         from backend.tasks.celery_app import celery_app
 
         while True:
@@ -59,7 +64,10 @@ async def task_websocket(websocket: WebSocket, task_id: str):
             elif result.state == "SUCCESS":
                 data["progress"] = 100
                 data["phase"] = "done"
-                data["result"] = result.result
+                result_data = result.result
+                if isinstance(result_data, dict):
+                    result_data = {k: v for k, v in result_data.items() if k != "path"}
+                data["result"] = result_data
             elif result.state == "FAILURE":
                 data["error"] = str(result.info) if result.info else "Unknown error"
 

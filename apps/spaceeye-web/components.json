@@ -1,0 +1,19 @@
+{
+  "$schema": "https://next.shadcn.com/schema/components.json",
+  "style": "default",
+  "tailwind": {
+    "config": "",
+    "css": "src/app.css",
+    "cssVariables": true,
+    "baseColor": "neutral"
+  },
+  "aliases": {
+    "components": "$lib/components",
+    "utils": "$lib/utils",
+    "ui": "$lib/components/ui",
+    "hooks": "$lib/hooks"
+  },
+  "extensions": {
+    "svelte": ".svelte"
+  }
+}

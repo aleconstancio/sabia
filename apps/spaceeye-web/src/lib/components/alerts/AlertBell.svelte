@@ -1,10 +1,21 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
   import { alertStore } from '$lib/stores/alerts.svelte';
 
   let showPanel = $state(false);
+  let panelRef: HTMLDivElement;
+
+  function handleClickOutside(e: MouseEvent) {
+    if (panelRef && !panelRef.contains(e.target as Node)) {
+      showPanel = false;
+    }
+  }
+
+  onMount(() => document.addEventListener('mousedown', handleClickOutside));
+  onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
 </script>
 
-<div class="relative">
+<div class="relative" bind:this={panelRef}>
   <button
     onclick={() => showPanel = !showPanel}
     class="relative inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"

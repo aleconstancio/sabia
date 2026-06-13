@@ -1,14 +1,14 @@
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class PolygonRequest(BaseModel):
     coordinates: list[list[list[float]]]
-    collections: Optional[list[str]] = None
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    max_cloud: Optional[float] = Field(default=None, ge=0, le=100)
+    collections: list[str] | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+    max_cloud: float | None = Field(default=None, ge=0, le=100)
     sort_by: str = Field(default="acquired_at", pattern="^(acquired_at|cloud_cover)$")
     sort_order: str = Field(default="desc", pattern="^(asc|desc)$")
     limit: int = Field(default=50, le=100)
@@ -18,9 +18,9 @@ class PolygonRequest(BaseModel):
 class ImageResponse(BaseModel):
     id: str
     collection: str
-    cloud_cover: Optional[float] = None
+    cloud_cover: float | None = None
     acquired_at: datetime
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     footprint: dict
 
 
@@ -40,8 +40,8 @@ class TaskStatusResponse(BaseModel):
     status: str
     progress: int = Field(default=0, ge=0, le=100)
     phase: str = ""
-    result: Optional[dict] = None
-    error: Optional[str] = None
+    result: dict | None = None
+    error: str | None = None
 
 
 class UfResponse(BaseModel):
@@ -59,9 +59,9 @@ class ExportPdfRequest(BaseModel):
 
 
 class ProcessBatchRequest(BaseModel):
-    image_ids: list[str]
+    image_ids: list[str] = Field(max_length=20)
     coordinates: list[list[list[float]]]
-    product: str
+    product: str = Field(pattern="^(NDVI|TCI|NDWI|SAVI|EVI|MSAVI2|VARI|MNDWI|CIR|NBR|NDMI)$")
 
 
 class ComputeDifferenceRequest(BaseModel):

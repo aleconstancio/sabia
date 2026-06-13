@@ -1,13 +1,13 @@
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from backend.config import get_settings
 from backend.api.router import router
+from backend.config import get_settings
 
 settings = get_settings()
 
@@ -18,9 +18,10 @@ async def lifespan(app: FastAPI):
     os.makedirs(os.path.join(settings.temp_dir, "downloads"), exist_ok=True)
     os.makedirs(os.path.join(settings.temp_dir, "cache"), exist_ok=True)
     yield
-    from backend.api.deps import _http_client
-    if _http_client is not None and not _http_client.is_closed:
-        await _http_client.aclose()
+    from backend.models.database import get_engine
+    await get_engine().dispose()
+    from backend.api.deps import close_http_client
+    await close_http_client()
 
 
 app = FastAPI(
@@ -39,13 +40,16 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 
-from prometheus_fastapi_instrumentator import Instrumentator
-Instrumentator().instrument(app).expose(app)
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+
+    Instrumentator().instrument(app).expose(app)
+except ImportError:
+    pass
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    import traceback
     logger = logging.getLogger(__name__)
     logger.error("Unhandled exception: %s", exc, exc_info=True)
     return JSONResponse(

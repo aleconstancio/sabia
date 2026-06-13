@@ -1,3 +1,4 @@
+# IMPORTANT: This migration duplicates the SQL init files in sql/. Any schema changes must be applied to BOTH locations. Consider consolidating to Alembic-only.
 """Initial schema
 
 Revision ID: 001_initial

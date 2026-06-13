@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   let {
     showLegend = $bindable(false),
@@ -13,22 +13,34 @@
     onBasemapChange = (b: string) => {},
     opacity = 0.8,
     onOpacityChange = (o: number) => {},
+  }: {
+    showLegend?: boolean;
+    onZoomIn?: (e: MouseEvent) => void;
+    onZoomOut?: (e: MouseEvent) => void;
+    onClearOverlay?: (e: MouseEvent) => void;
+    onMeasure?: (e: MouseEvent) => void;
+    hasOverlay?: boolean;
+    product?: string;
+    basemap?: string;
+    onBasemapChange?: (b: string) => void;
+    opacity?: number;
+    onOpacityChange?: (o: number) => void;
   } = $props();
 
   let showBasemapMenu = $state(false);
 </script>
 
 <div class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[999] flex flex-col gap-1.5 sm:gap-2">
-  <Button size="sm" onclick={onZoomIn} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-base sm:!text-lg" ariaLabel="Aumentar zoom">+</Button>
-  <Button size="sm" onclick={onZoomOut} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-base sm:!text-lg" ariaLabel="Diminuir zoom">−</Button>
+  <Button size="sm" onclick={onZoomIn} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-base sm:!text-lg" aria-label="Aumentar zoom">+</Button>
+  <Button size="sm" onclick={onZoomOut} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-base sm:!text-lg" aria-label="Diminuir zoom">−</Button>
   {#if hasOverlay}
-    <Button size="sm" variant="secondary" onclick={onClearOverlay} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" ariaLabel="Remover overlay">✕</Button>
+    <Button size="sm" variant="secondary" onclick={onClearOverlay} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" aria-label="Remover overlay">✕</Button>
   {/if}
-  <Button size="sm" variant="secondary" onclick={() => showLegend = !showLegend} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" ariaLabel="Mostrar legenda">N</Button>
-  <Button size="sm" variant="secondary" onclick={onMeasure} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" ariaLabel="Medir coordenadas">
+  <Button size="sm" variant="secondary" onclick={() => showLegend = !showLegend} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" aria-label="Mostrar legenda">N</Button>
+  <Button size="sm" variant="secondary" onclick={onMeasure} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" aria-label="Medir coordenadas">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 6 1 22 8 22 8 8"/><path d="M20 10c-3-3-6 3-10 0"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
   </Button>
-  <Button size="sm" variant="secondary" onclick={() => showBasemapMenu = !showBasemapMenu} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" ariaLabel="Alterar mapa base">
+  <Button size="sm" variant="secondary" onclick={() => showBasemapMenu = !showBasemapMenu} class="!w-8 !h-8 sm:!w-10 sm:!h-10 !p-0 !text-xs" aria-label="Alterar mapa base">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
   </Button>
 </div>
@@ -45,8 +57,8 @@
       </button>
     {/each}
     <div class="border-t border-border mt-1 pt-1">
-      <label class="text-xs text-muted-foreground block mb-1">Opacidade</label>
-      <input type="range" min="0.1" max="1" step="0.1" value={opacity}
+      <label for="opacity-slider" class="text-xs text-muted-foreground block mb-1">Opacidade</label>
+      <input id="opacity-slider" type="range" min="0.1" max="1" step="0.1" value={opacity}
         oninput={(e) => onOpacityChange(parseFloat((e.target as HTMLInputElement).value))}
         class="w-full accent-emerald-500" />
     </div>

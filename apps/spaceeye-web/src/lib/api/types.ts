@@ -160,6 +160,15 @@ export interface FireRisk {
   precipitation_factor: number;
 }
 
+export interface Alert {
+  id: string;
+  type: string;
+  message: string;
+  region: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface AlertThreshold {
   id: string;
   regionId: string;

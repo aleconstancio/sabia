@@ -1,7 +1,12 @@
 import asyncio
+import logging
 
-from backend.tasks.celery_app import celery_app
+from backend.config import get_settings
 from backend.domain.processing import process_image
+from backend.exceptions import DownloadError
+from backend.tasks.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=30)
@@ -24,19 +29,20 @@ def process_image_task(self, image_id: str, polygon_coords: list, product: str, 
 
     try:
         return asyncio.run(run())
-    except (ConnectionError, TimeoutError, IOError) as exc:
-        raise self.retry(exc=exc, max_retries=3)
+    except (OSError, ConnectionError, TimeoutError, DownloadError) as exc:
+        raise self.retry(exc=exc) from exc
     except Exception:
+        logger.exception("Unexpected error in process_image_task")
         raise
 
 
 @celery_app.task(bind=True, max_retries=2)
 def compute_difference_task(self, task_id_a: str, task_id_b: str):
     """Compute NDVI difference: result_B - result_A, return colormap overlay."""
-    from celery.result import AsyncResult
-    from backend.tasks.celery_app import celery_app
-    import rasterio
+    settings = get_settings()
     import numpy as np
+    import rasterio
+    from celery.result import AsyncResult
 
     res_a = AsyncResult(task_id_a, app=celery_app)
     res_b = AsyncResult(task_id_b, app=celery_app)
@@ -44,8 +50,8 @@ def compute_difference_task(self, task_id_a: str, task_id_b: str):
     if res_a.state != "SUCCESS" or res_b.state != "SUCCESS":
         raise ValueError("Both tasks must be completed")
 
-    path_a = res_a.result["path"]
-    path_b = res_b.result["path"]
+    path_a = res_a.result.get("geotiff_path") or res_a.result["path"]
+    path_b = res_b.result.get("geotiff_path") or res_b.result["path"]
 
     with rasterio.open(path_a) as src_a, rasterio.open(path_b) as src_b:
         ndvi_a = src_a.read(1).astype(np.float32)
@@ -53,13 +59,14 @@ def compute_difference_task(self, task_id_a: str, task_id_b: str):
 
         diff = ndvi_b - ndvi_a
 
-        import tempfile, os
+        import os
+        import tempfile
+
         import matplotlib
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
-        from matplotlib.colors import TwoSlopeNorm
 
-        fd, out_path = tempfile.mkstemp(suffix=".png")
+        fd, out_path = tempfile.mkstemp(suffix=".png", dir=settings.temp_dir)
         os.close(fd)
 
         vmax = max(abs(np.nanmin(diff)), abs(np.nanmax(diff)), 0.1)

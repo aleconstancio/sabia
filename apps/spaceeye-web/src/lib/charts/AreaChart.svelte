@@ -63,7 +63,7 @@
 
 <div class="relative" style="height: {height}px;" bind:clientWidth={containerWidth}>
   {#if data.length > 0}
-    <svg width={containerWidth} height={height} class="overflow-visible">
+    <svg width={containerWidth} height={height} class="overflow-visible" role="img" aria-label="Area chart showing NDVI time series data">
       <!-- Area fill -->
       <path d={areaPath} fill={color} fill-opacity={0.15} />
       <!-- Line -->

@@ -30,7 +30,7 @@
 </script>
 
 <div class="flex items-center gap-3">
-  <svg width={size} height={size} viewBox="0 0 {size} {size}">
+  <svg width={size} height={size} viewBox="0 0 {size} {size}" role="img" aria-label="Donut chart showing proportional data">
     {#each segments as seg}
       <path d={seg.path} fill={seg.color} />
     {/each}

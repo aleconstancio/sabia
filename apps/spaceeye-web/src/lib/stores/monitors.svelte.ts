@@ -1,17 +1,5 @@
-import type { Bookmark } from '$lib/api/types';
+import type { Bookmark, Monitor } from '$lib/api/types';
 import { API_URL } from '$lib/config';
-
-export interface Monitor {
-  id: string;
-  bookmarkId: string;
-  bookmarkName: string;
-  polygonCoords: number[][][];
-  product: string;
-  minCloudCover: number;
-  active: boolean;
-  lastChecked: string | null;
-  lastResult: string | null;
-}
 
 let _monitors = $state<Monitor[]>([]);
 
@@ -23,7 +11,15 @@ function load() {
 }
 
 function persist() {
-  localStorage.setItem('spaceeye_monitors', JSON.stringify(_monitors));
+  try {
+    localStorage.setItem('spaceeye_monitors', JSON.stringify(_monitors));
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      console.warn('Monitors localStorage quota exceeded');
+    } else {
+      console.warn('Monitors persist failed:', e);
+    }
+  }
 }
 
 export function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover: number = 30): Monitor {

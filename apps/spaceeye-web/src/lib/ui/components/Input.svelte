@@ -59,7 +59,7 @@
              {className}"
       rows={4}
       oninput={(e) => value = (e.target as HTMLTextAreaElement).value}
-    />
+    ></textarea>
   {:else}
     <input
       {type}

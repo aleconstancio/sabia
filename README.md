@@ -179,7 +179,6 @@ spaceeye/
 │   │   └── processing.py        # Image processing orchestrator
 │   ├── services/                # Infrastructure services
 │   │   ├── downloader.py        # Async band downloader
-│   │   ├── raster_processor.py  # Crop/reproject helpers
 │   │   ├── compressor.py        # GeoTIFF → PNG conversion
 │   │   └── data_fusion.py       # Multi-source data fusion
 │   ├── repositories/            # Database access layer

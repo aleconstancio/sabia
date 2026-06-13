@@ -5,12 +5,12 @@
   import SpaceEyeShell from '$lib/layout/SpaceEyeShell.svelte';
   import Header from '$lib/layout/Header.svelte';
   import { SearchPanel, ResultsPanel, AnalyticsPanel, HistorySidebar } from '$lib/components/sidebar';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import Dialog from '$lib/ui/components/Dialog.svelte';
   import Spinner from '$lib/ui/components/Spinner.svelte';
-  import Progress from '$lib/ui/components/Progress.svelte';
+  import { Progress } from '$lib/components/ui/progress';
   import Badge from '$lib/ui/components/Badge.svelte';
-  import Select from '$lib/ui/components/Select.svelte';
+  import * as Select from '$lib/components/ui/select';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import ImageGallery from '$lib/components/ImageGallery.svelte';
   import MapToolbar from '$lib/components/MapToolbar.svelte';
@@ -25,7 +25,7 @@
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
   import { createProfile } from '$lib/api/client';
-  import { addBookmark } from '$lib/stores/bookmarks.svelte.ts';
+  import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
   import SwipeComparison from '$lib/components/SwipeComparison.svelte';
   import { SPECTRAL_PRODUCTS } from '$lib/constants';
@@ -43,6 +43,10 @@
   let drawnItemsGroup = $state<L.FeatureGroup | null>(null);
   let showOnboarding = $state(false);
   let isSavingProfile = $state(false);
+  let showPromptDialog = $state(false);
+  let promptValue = $state('');
+  let promptLabel = $state('');
+  let onPromptSubmit: ((value: string) => void) | null = $state(null);
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -80,9 +84,9 @@
     const drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
       draw: {
-        polygon: true,
+        polygon: {},
         polyline: false,
-        rectangle: true,
+        rectangle: {},
         circle: false,
         circlemarker: false,
         marker: false,
@@ -127,7 +131,7 @@
 
   function clearOverlay() {
     if (mapState.rasterOverlay && map) {
-      map.removeLayer(mapState.rasterOverlay);
+      map.removeLayer(mapState.rasterOverlay as L.Layer);
       mapState.rasterOverlay = null;
       mapState.hasOverlay = false;
     }
@@ -154,8 +158,8 @@
       }
     }
     if (mapState.selectedIds.length === 2) {
-      mapState.comparisonFirst = mapState.results.find(i => i.id === mapState.selectedIds[0]);
-      mapState.comparisonSecond = mapState.results.find(i => i.id === mapState.selectedIds[1]);
+      mapState.comparisonFirst = mapState.results.find(i => i.id === mapState.selectedIds[0]) ?? null;
+      mapState.comparisonSecond = mapState.results.find(i => i.id === mapState.selectedIds[1]) ?? null;
     } else {
       mapState.comparisonFirst = null;
       mapState.comparisonSecond = null;
@@ -168,24 +172,28 @@
 
   async function saveAsProfile() {
     if (!mapState.polygonCoords || isSavingProfile) return;
-    const name = prompt('Nome para este perfil:');
-    if (!name?.trim()) return;
-    isSavingProfile = true;
-    try {
-      await createProfile({
-        name: name.trim(),
-        polygon: { type: 'Polygon', coordinates: mapState.polygonCoords },
-        satellite_data: mapState.lastStats ? {
-          product: mapState.selectedProduct,
-          stats: mapState.lastStats,
-        } : undefined,
-      });
-      toast.success('Perfil salvo com sucesso!');
-    } catch {
-      toast.error('Falha ao salvar perfil');
-    } finally {
-      isSavingProfile = false;
-    }
+    promptLabel = 'Nome para este perfil:';
+    promptValue = '';
+    showPromptDialog = true;
+    onPromptSubmit = async (name: string) => {
+      if (!name?.trim()) return;
+      isSavingProfile = true;
+      try {
+        await createProfile({
+          name: name.trim(),
+          polygon: { type: 'Polygon', coordinates: mapState.polygonCoords! },
+          satellite_data: mapState.lastStats ? {
+            product: mapState.selectedProduct,
+            stats: mapState.lastStats,
+          } : undefined,
+        });
+        toast.success('Perfil salvo com sucesso!');
+      } catch {
+        toast.error('Falha ao salvar perfil');
+      } finally {
+        isSavingProfile = false;
+      }
+    };
   }
 
   function restoreBookmark(coords: number[][][], name: string) {
@@ -206,8 +214,20 @@
 
   function saveCurrentPolygon() {
     if (!mapState.polygonCoords) return;
-    const name = prompt('Nome para este local:');
-    if (name) addBookmark(name, mapState.polygonCoords);
+    promptLabel = 'Nome para este local:';
+    promptValue = '';
+    showPromptDialog = true;
+    onPromptSubmit = (name: string) => {
+      if (name && mapState.polygonCoords) bookmarksStore.add(name, mapState.polygonCoords);
+    };
+  }
+
+  function handlePromptSubmit(e: Event) {
+    e.preventDefault();
+    if (onPromptSubmit) onPromptSubmit(promptValue);
+    showPromptDialog = false;
+    onPromptSubmit = null;
+    promptValue = '';
   }
 
   function unionPolygons() {
@@ -222,7 +242,7 @@
     drawnItemsGroup.addLayer(polygon);
 
     const geoJSON = polygon.toGeoJSON();
-    mapState.polygonCoords = geoJSON.geometry.coordinates;
+    mapState.polygonCoords = geoJSON.geometry.coordinates as number[][][];
     mapState.polygonCentroid = { lat: polygon.getCenter().lat, lon: polygon.getCenter().lng };
   }
 
@@ -236,9 +256,22 @@
     if (coords && image && product) {
       try {
         const parsed = JSON.parse(coords);
-        mapState.polygonCoords = parsed;
-        mapState.selectedProduct = product;
-        if (map && mapState.polygonCoords) {
+        if (!Array.isArray(parsed) || !parsed.every((ring: unknown) =>
+          Array.isArray(ring) && ring.every((coord: unknown) =>
+            Array.isArray(coord) && coord.length >= 2 && coord.every((v: unknown) => typeof v === 'number')
+          )
+        )) {
+          toast.error('Coordenadas inválidas no link compartilhado');
+          return;
+        }
+        const allowedProducts = SPECTRAL_PRODUCTS.map(p => p.value);
+        if (!allowedProducts.includes(product)) {
+          toast.error('Produto inválido no link compartilhado');
+          return;
+        }
+      mapState.polygonCoords = parsed;
+      mapState.selectedProduct = product;
+      if (map && mapState.polygonCoords!) {
           const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
           map.addLayer(polygon);
           map.fitBounds(polygon.getBounds());
@@ -316,8 +349,17 @@
 <Dialog bind:open={mapState.showPolygonModal} title="Buscar imagens deste local?">
   <div class="space-y-4">
     <div>
-      <label class="text-sm font-medium">Produto</label>
-      <Select bind:value={mapState.selectedProduct} options={SPECTRAL_PRODUCTS} />
+      <label for="product-select" class="text-sm font-medium">Produto</label>
+      <Select.Root type="single" bind:value={mapState.selectedProduct}>
+        <Select.Trigger class="w-full">
+          Produto...
+        </Select.Trigger>
+        <Select.Content>
+          {#each SPECTRAL_PRODUCTS as option}
+            <Select.Item value={option.value}>{option.label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
       <ProductInfo product={mapState.selectedProduct} />
     </div>
     {#if drawnItemsGroup && drawnItemsGroup.getLayers().length > 1}
@@ -333,7 +375,10 @@
   {#snippet actions()}
     <Button variant="ghost" onclick={() => mapState.showPolygonModal = false}>Cancelar</Button>
     <Button variant="ghost" onclick={saveCurrentPolygon}>Salvar local</Button>
-    <Button onclick={searchImages} loading={mapState.isLoading}>Buscar imagens</Button>
+    <Button onclick={searchImages}>
+      {#if mapState.isLoading}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
+      Buscar imagens
+    </Button>
   {/snippet}
 </Dialog>
 
@@ -367,7 +412,7 @@
 <Dialog bind:open={mapState.showProcessingViewer} title="Processando imagem">
   <div class="space-y-4 text-center py-8">
     <Spinner size="lg" />
-    <p class="text-muted-foreground">{mapState.processingPhase || 'Iniciando...'}</p>
+    <p class="text-muted-foreground" aria-live="polite">{mapState.processingPhase || 'Iniciando...'}</p>
     <Progress value={mapState.processingProgress} />
       <p class="text-sm text-muted-foreground">{mapState.processingProgress}%</p>
     {#if mapState.lastStats}
@@ -385,7 +430,7 @@
 {#if mapState.showComparison && mapState.comparisonFirst && mapState.comparisonSecond}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
     <div class="flex justify-end mb-1">
-      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe} ariaLabel="Alternar modo de comparacao">
+      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe} aria-label="Alternar modo de comparacao">
         {useSwipe ? 'Lado a lado' : 'Deslizar'}
       </Button>
     </div>
@@ -415,10 +460,28 @@
 
 {#if showTimelapse && mapState.results.length > 0 && !mapState.showImageGallery && !mapState.showProcessingViewer}
   <div class="absolute left-4 bottom-36 z-[999] w-72">
-    <TimelapsePlayer images={mapState.results} polygonCoords={mapState.polygonCoords} product={mapState.selectedProduct} onFrameChange={(id) => {
+    <TimelapsePlayer images={mapState.results} polygonCoords={mapState.polygonCoords} product={mapState.selectedProduct} onFrameChange={(id: string) => {
       const img = mapState.results.find(i => i.id === id);
       if (img) processImage(img.id);
     }} />
+  </div>
+{/if}
+
+{#if showPromptDialog}
+  <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
+    <form onsubmit={handlePromptSubmit} class="bg-card border border-border rounded-lg p-6 shadow-xl w-80 space-y-4">
+      <label class="text-sm font-medium" for="prompt-input">{promptLabel}</label>
+      <input
+        id="prompt-input"
+        type="text"
+        bind:value={promptValue}
+        class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+      />
+      <div class="flex justify-end gap-2">
+        <Button type="button" variant="ghost" onclick={() => { showPromptDialog = false; onPromptSubmit = null; }}>Cancelar</Button>
+        <Button type="submit">OK</Button>
+      </div>
+    </form>
   </div>
 {/if}
 

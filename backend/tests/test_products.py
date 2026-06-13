@@ -1,8 +1,19 @@
 import numpy as np
 import pytest
-from backend.domain.products import get_product, NdviProduct, TciProduct, NdwiProduct
-from backend.domain.products import SaviProduct, EviProduct, Msavi2Product, VariProduct
-from backend.domain.products import MndwiProduct, NbrProduct, NdmiProduct, ColorInfraredProduct
+
+from backend.domain.products import (
+    ColorInfraredProduct,
+    EviProduct,
+    MndwiProduct,
+    Msavi2Product,
+    NbrProduct,
+    NdmiProduct,
+    NdviProduct,
+    SaviProduct,
+    TciProduct,
+    VariProduct,
+    get_product,
+)
 from backend.exceptions import ProcessingError
 
 

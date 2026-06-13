@@ -1,3 +1,16 @@
+/**
+ * Global map state — 34 reactive properties covering map instance, polygon drawing,
+ * image search results, processing pipeline, comparison mode, weather data, filters,
+ * sidebar, and overlay management.
+ *
+ * NOTE: This is a god object. Consider decomposing into sub-stores:
+ *   - mapStore: map, polygonCoords, polygonCentroid, rasterOverlay, hasOverlay, lastOverlayPath
+ *   - searchStore: results, selectedCollection, filter*, searchError, isLoading
+ *   - processingStore: taskId, processingProgress, processingPhase, lastStats
+ *   - uiStore: showLegend, showPolygonModal, showImageGallery, showProcessingViewer, showComparison, sidebarOpen
+ *   - comparisonStore: comparisonFirst, comparisonSecond, selectedIds
+ *   - weatherStore: lastWeatherData
+ */
 import type { Map as LeafletMap } from 'leaflet';
 import type { ImageResult, WeatherData, AnalysisRecord } from '$lib/api/types';
 

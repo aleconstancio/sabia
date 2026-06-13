@@ -9,7 +9,7 @@
 </script>
 
 <div style="height: {height}px;" class="overflow-hidden">
-  <svg width="100%" height={height} viewBox="0 0 100 {height}" preserveAspectRatio="none">
+  <svg width="100%" height={height} viewBox="0 0 100 {height}" preserveAspectRatio="none" role="img" aria-label="Bar chart showing categorical data">
     {#each data as d, i}
       {#if horizontal}
         {@const barWidth = (d.value / maxVal) * 90}

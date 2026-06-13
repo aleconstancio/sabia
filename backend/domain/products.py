@@ -1,6 +1,8 @@
-from backend.exceptions import ProcessingError
 from abc import ABC, abstractmethod
+
 import numpy as np
+
+from backend.exceptions import ProcessingError
 
 
 class RasterProduct(ABC):

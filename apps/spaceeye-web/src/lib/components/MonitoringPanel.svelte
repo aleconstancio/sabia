@@ -1,12 +1,26 @@
 <script lang="ts">
-  import { getMonitors, removeMonitor, checkMonitor, addMonitor } from '$lib/stores/monitors.svelte.ts';
-  import { getBookmarks } from '$lib/stores/bookmarks.svelte.ts';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { getMonitors, removeMonitor, checkMonitor, addMonitor } from '$lib/stores/monitors.svelte';
+  import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   let show = $state(false);
   let monitors = $state<any[]>([]);
   let checking = $state(false);
   let statusMsg = $state('');
+  let showNameInput = $state(false);
+  let nameInputValue = $state('');
+  let availableBookmarks = $state<any[]>([]);
+  let panelRef: HTMLDivElement;
+
+  function handleClickOutside(e: MouseEvent) {
+    if (panelRef && !panelRef.contains(e.target as Node) && !showNameInput) {
+      show = false;
+    }
+  }
+
+  onMount(() => document.addEventListener('mousedown', handleClickOutside));
+  onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
 
   function refresh() { monitors = getMonitors(); }
 
@@ -24,11 +38,15 @@
   }
 
   function addFromBookmark() {
-    const bookmarks = getBookmarks();
+    const bookmarks = bookmarksStore.all;
     if (bookmarks.length === 0) { statusMsg = 'Nenhum local salvo'; return; }
-    const name = prompt('Qual local monitorar?', bookmarks[0]?.name || '');
-    if (!name) return;
-    const bm = bookmarks.find(b => b.name === name);
+    availableBookmarks = bookmarks;
+    nameInputValue = bookmarks[0]?.name || '';
+    showNameInput = true;
+  }
+
+  function handleNameSubmit() {
+    const bm = availableBookmarks.find(b => b.name === nameInputValue);
     if (bm) {
       addMonitor(bm);
       refresh();
@@ -36,10 +54,11 @@
     } else {
       statusMsg = 'Local não encontrado';
     }
+    showNameInput = false;
   }
 </script>
 
-<div class="relative">
+<div class="relative" bind:this={panelRef}>
   <Button size="sm" variant="ghost" onclick={() => { show = !show; refresh(); }} class="!text-xs">
     {monitors.length > 0 ? `${monitors.length} monitores` : 'Monitorar'}
   </Button>
@@ -61,18 +80,41 @@
                 <p class="text-xs text-muted-foreground">{new Date(m.lastChecked).toLocaleString('pt-BR')}</p>
               {/if}
             </div>
-            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => { if (confirm('Remover este monitor?')) { removeMonitor(m.id); refresh(); } }}>✕</button>
+            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => { // TODO: Replace with custom Dialog component for consistency
+              if (confirm('Remover este monitor?')) { removeMonitor(m.id); refresh(); }
+            }}>✕</button>
           </div>
         {/each}
         <div class="mt-2 pt-2 border-t border-border">
-          <Button size="sm" variant="outline" class="!w-full !text-xs" onclick={runAllChecks} loading={checking}>
+          <Button size="sm" variant="outline" class="!w-full !text-xs" onclick={runAllChecks}>
+            {#if checking}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
             {checking ? 'Verificando...' : 'Verificar todos agora'}
           </Button>
         </div>
       {/if}
       {#if statusMsg}
-        <p class="text-xs text-muted-foreground mt-1 px-1">{statusMsg}</p>
+        <p class="text-xs text-muted-foreground mt-1 px-1" aria-live="polite">{statusMsg}</p>
       {/if}
+    </div>
+  {/if}
+  {#if showNameInput}
+    <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
+      <form onsubmit={(e) => { e.preventDefault(); handleNameSubmit(); }} class="bg-card border border-border rounded-lg p-6 shadow-xl w-80 space-y-4">
+        <label class="text-sm font-medium" for="monitor-name-input">Qual local monitorar?</label>
+        <select
+          id="monitor-name-input"
+          bind:value={nameInputValue}
+          class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {#each availableBookmarks as bm}
+            <option value={bm.name}>{bm.name}</option>
+          {/each}
+        </select>
+        <div class="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onclick={() => { showNameInput = false; }}>Cancelar</Button>
+          <Button type="submit">Monitorar</Button>
+        </div>
+      </form>
     </div>
   {/if}
 </div>

@@ -2,7 +2,7 @@
   import WeatherPanel from '$lib/components/WeatherPanel.svelte';
   import SoilPanel from '$lib/components/SoilPanel.svelte';
   import LandCoverPanel from '$lib/components/LandCoverPanel.svelte';
-  import { mapState } from '$lib/stores/map.svelte.ts';
+  import { mapState } from '$lib/stores/map.svelte';
 
   let expanded = $state(true);
   let activeTab = $state<'weather' | 'soil' | 'landcover'>('weather');

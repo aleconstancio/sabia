@@ -15,6 +15,7 @@ if os.getenv("DATABASE_URL"):
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Note: target_metadata is None because migrations use raw SQL via op.execute(). Autogenerate is not supported.
 target_metadata = None
 
 

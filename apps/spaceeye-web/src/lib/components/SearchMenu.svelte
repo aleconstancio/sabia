@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { getUfs, getCities } from '$lib/api/client';
+  import { API_URL } from '$lib/config';
 
   let {
     navigateToCity = (lat: number, lng: number) => {}
@@ -13,7 +15,6 @@
   let cityFilter = $state('');
   let showUfDropdown = $state(false);
   let showCityDropdown = $state(false);
-  import { API_URL } from '$lib/config';
 
   let apiError = $state('');
 
@@ -28,8 +29,7 @@
   onMount(async () => {
     document.addEventListener('click', handleClickOutside);
     try {
-      const resp = await fetch(`${API_URL}/ibge/uf`);
-      ufs = await resp.json();
+      ufs = await getUfs();
     } catch {
       console.warn('SearchMenu failed to load UFs');
       apiError = 'Falha ao carregar estados';
@@ -43,8 +43,7 @@
     ufFilter = uf;
     showUfDropdown = false;
     try {
-      const resp = await fetch(`${API_URL}/ibge/cidades/${uf}`);
-      cities = await resp.json();
+      cities = await getCities(uf);
     } catch {
       console.warn('SearchMenu failed to load cities for UF:', uf);
       cities = [];
@@ -58,6 +57,7 @@
     showCityDropdown = false;
 
     try {
+      // TODO: Add a typed geocode() function to $lib/api/client.ts
       const resp = await fetch(`${API_URL}/geocode?q=${city}-${selectedUf}`);
       const data = await resp.json();
       if (data.length > 0) {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Card from '$lib/ui/components/Card.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import type { RegionProfile } from '$lib/api/types';
 
   let { profile, onDelete }: { profile: RegionProfile; onDelete: () => void } = $props();

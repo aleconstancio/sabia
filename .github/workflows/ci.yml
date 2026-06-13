@@ -41,23 +41,19 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check .
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/spaceeye-web/package-lock.json
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
         working-directory: apps/spaceeye-web
 
-      - name: Run eslint
-        run: npm run lint
+      - name: Run biome lint
+        run: bun run lint
         working-directory: apps/spaceeye-web
 
-      - name: Run prettier check
-        run: npm run format:check
+      - name: Run biome format check
+        run: bun run format:check
         working-directory: apps/spaceeye-web
 
   type-check:
@@ -87,19 +83,15 @@ jobs:
       - name: Run mypy
         run: uv run mypy backend/
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/spaceeye-web/package-lock.json
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
         working-directory: apps/spaceeye-web
 
       - name: Run svelte-check
-        run: npm run check
+        run: bun run check
         working-directory: apps/spaceeye-web
 
   test-backend:
@@ -160,19 +152,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/spaceeye-web/package-lock.json
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
         working-directory: apps/spaceeye-web
 
       - name: Run frontend tests
-        run: npm test -- --run
+        run: bun run test -- --run
         working-directory: apps/spaceeye-web
 
   security:
@@ -194,19 +182,15 @@ jobs:
       - name: Run pip-audit
         run: uv run pip-audit
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/spaceeye-web/package-lock.json
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
         working-directory: apps/spaceeye-web
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
+        run: bunx npm audit --audit-level=high
         working-directory: apps/spaceeye-web
 
   docker-build:

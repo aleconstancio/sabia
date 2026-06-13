@@ -1,17 +1,42 @@
 import json
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
+
+
+def _sanitize_url(url: str) -> str:
+    """Remove the `email` query parameter from a URL to prevent token leakage."""
+    parsed = urlparse(url)
+    if not parsed.query:
+        return url
+    params = parse_qs(parsed.query, keep_blank_values=True)
+    params.pop("email", None)
+    sanitized_query = urlencode(params, doseq=True) if params else ""
+    return urlunparse(parsed._replace(query=sanitized_query))
+
+
+def _sanitize_metadata(metadata: dict) -> dict:
+    """Recursively strip email tokens from asset URLs in metadata."""
+    if not metadata:
+        return metadata
+    sanitized = dict(metadata)
+    assets = sanitized.get("assets")
+    if isinstance(assets, dict):
+        sanitized["assets"] = {
+            k: _sanitize_url(v) if isinstance(v, str) else v
+            for k, v in assets.items()
+        }
+    return sanitized
 
 
 async def find_images_by_polygon(
     db: AsyncSession,
     polygon_coords: list[list[list[float]]],
-    collections: Optional[list[str]] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    max_cloud: Optional[float] = None,
+    collections: list[str] | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    max_cloud: float | None = None,
     sort_by: str = "acquired_at",
     sort_order: str = "desc",
     limit: int = 50,
@@ -105,10 +130,10 @@ async def get_images_by_ids(db: AsyncSession, image_ids: list[str]) -> dict[str,
         WHERE id IN ({','.join(placeholders)})
     """)
     result = await db.execute(query, params)
-    return {row[0]: row[1] for row in result.fetchall()}
+    return {row[0]: _sanitize_metadata(row[1]) for row in result.fetchall()}
 
 
-async def get_image_by_id(db: AsyncSession, image_id: str) -> Optional[dict]:
+async def get_image_by_id(db: AsyncSession, image_id: str) -> dict | None:
     select_cols = "id, collection, ST_AsGeoJSON(footprint) as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
     # Removed: PostGIS is required
     # select_cols = "id, collection, footprint_geojson as footprint_json, cloud_cover, acquired_at, thumbnail_url, metadata"
@@ -125,6 +150,7 @@ async def get_image_by_id(db: AsyncSession, image_id: str) -> Optional[dict]:
         except (json.JSONDecodeError, TypeError):
             fp = None
 
+    metadata = row.metadata if hasattr(row, 'metadata') else {}
     return {
         "id": row.id,
         "collection": row.collection,
@@ -132,5 +158,5 @@ async def get_image_by_id(db: AsyncSession, image_id: str) -> Optional[dict]:
         "cloud_cover": row.cloud_cover,
         "acquired_at": row.acquired_at.isoformat() if row.acquired_at else None,
         "thumbnail_url": row.thumbnail_url,
-        "metadata": row.metadata if hasattr(row, 'metadata') else {},
+        "metadata": _sanitize_metadata(metadata),
     }

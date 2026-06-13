@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mapState } from '$lib/stores/map.svelte.ts';
+  import { mapState } from '$lib/stores/map.svelte';
 
   let {
     sidebarContent,
@@ -18,6 +18,8 @@
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
       class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
+      role="button"
+      tabindex="-1"
       onclick={() => mapState.sidebarOpen = false}
     ></div>
   {/if}

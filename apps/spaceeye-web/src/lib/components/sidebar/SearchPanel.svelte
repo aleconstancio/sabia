@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Select from '$lib/ui/components/Select.svelte';
-  import Button from '$lib/ui/components/Button.svelte';
-  import { mapState } from '$lib/stores/map.svelte.ts';
+  import * as Select from '$lib/components/ui/select';
+  import { Button } from '$lib/components/ui/button';
+  import { mapState } from '$lib/stores/map.svelte';
   import { searchImages } from '$lib/api/processing';
   import ProductInfo from '$lib/components/ProductInfo.svelte';
   import { SPECTRAL_PRODUCTS } from '$lib/constants';
@@ -20,10 +20,22 @@
       <div class="text-xs text-muted-foreground">
         Desenhe um polígono no mapa para buscar imagens
       </div>
-      <Select bind:value={mapState.selectedProduct} options={SPECTRAL_PRODUCTS} />
+      <Select.Root type="single" bind:value={mapState.selectedProduct}>
+        <Select.Trigger class="w-full">
+          Produto...
+        </Select.Trigger>
+        <Select.Content>
+          {#each SPECTRAL_PRODUCTS as option}
+            <Select.Item value={option.value}>{option.label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
       <ProductInfo product={mapState.selectedProduct} />
       {#if mapState.polygonCoords}
-        <Button onclick={searchImages} loading={mapState.isLoading} class="!w-full">Buscar imagens</Button>
+        <Button onclick={searchImages} class="!w-full">
+          {#if mapState.isLoading}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
+          Buscar imagens
+        </Button>
       {/if}
       {#if mapState.searchError}
         <p class="text-xs text-destructive">{mapState.searchError}</p>

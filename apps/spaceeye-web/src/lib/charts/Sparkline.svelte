@@ -42,7 +42,7 @@
 </script>
 
 {#if data.length > 1}
-  <svg {width} {height} class="overflow-visible">
+  <svg {width} {height} class="overflow-visible" role="img" aria-label="Sparkline showing trend data">
     <path d={areaPath} fill={color} fill-opacity={0.1} />
     <path d={linePath} fill="none" stroke={color} stroke-width={1.5} stroke-linecap="round" />
   </svg>

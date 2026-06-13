@@ -1,11 +1,4 @@
-export interface Alert {
-  id: string;
-  type: string;
-  message: string;
-  region: string;
-  timestamp: string;
-  read: boolean;
-}
+import type { Alert } from '$lib/api/types';
 
 let _alerts = $state<Alert[]>([]);
 
@@ -17,7 +10,17 @@ function load() {
 }
 
 function persist() {
-  localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts));
+  try {
+    localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts));
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      console.warn('Alerts localStorage quota exceeded, trimming old entries');
+      _alerts = _alerts.slice(0, 25);
+      try { localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts)); } catch { /* give up */ }
+    } else {
+      console.warn('Alerts persist failed:', e);
+    }
+  }
 }
 
 export const alertStore = {

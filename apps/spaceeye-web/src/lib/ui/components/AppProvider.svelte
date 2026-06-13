@@ -8,7 +8,7 @@
     toasterVisibleToasts = 5,
     children,
   }: {
-    toasterPosition?: string;
+    toasterPosition?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
     toasterDuration?: number;
     toasterVisibleToasts?: number;
     children?: import('svelte').Snippet;

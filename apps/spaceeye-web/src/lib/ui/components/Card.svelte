@@ -44,6 +44,7 @@
     {#if footer}<div class="mt-2 pt-2 border-t border-border">{@render footer()}</div>{/if}
   </a>
 {:else}
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     class="rounded-[--radius,0.625rem] transition-all duration-[--duration-snappy,150ms]
            {vars[variant]} {padding ? 'p-[--radius,0.625rem]' : ''}
@@ -52,7 +53,7 @@
     role={interactive ? 'button' : undefined}
     tabindex={interactive ? 0 : undefined}
     onclick={interactive ? onclick : undefined}
-    onkeydown={interactive ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick?.(e as any); } } : undefined}
+    onkeydown={interactive ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick?.(e as unknown as MouseEvent); } } : undefined}
   >
     {#if header}<div class="mb-2">{@render header()}</div>{/if}
     {#if children}<div>{@render children()}</div>{/if}

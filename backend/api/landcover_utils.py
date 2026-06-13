@@ -15,8 +15,9 @@ def build_worldcover_tile_url(lat: float, lon: float) -> str:
 
 
 def sample_points_in_polygon(polygon, step=0.1, max_points=20):
-    from shapely.geometry import shape
     import random
+
+    from shapely.geometry import shape
 
     bounds = polygon.bounds
     step = min(bounds[2] - bounds[0], bounds[3] - bounds[1], 0.5) or step

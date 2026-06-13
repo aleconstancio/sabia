@@ -22,22 +22,25 @@
   let maxCloud = $state(100);
   let filteredImages = $derived(images.filter(i => (i.cloud_cover ?? 100) <= maxCloud));
 
-  let loadedMap = $state(new Map<string, boolean>());
+  let loadedIds = $state(new Set<string>());
   let errorMap = $state(new Map<string, boolean>());
+  let loadCounter = $state(0);
   let hoveredImage = $state<ImageResult | null>(null);
 
   function onImgLoad(id: string) {
-    loadedMap = new Map(loadedMap).set(id, true);
+    loadedIds.add(id);
+    loadCounter++;
   }
   function onImgError(id: string) {
     errorMap.set(id, true);
-    loadedMap = new Map(loadedMap).set(id, true);
+    loadedIds.add(id);
+    loadCounter++;
   }
 </script>
 
 <div class="flex items-center gap-3 px-2 py-2 border-b border-border mb-2">
-  <label class="text-xs text-muted-foreground whitespace-nowrap">Nuvem max:</label>
-  <input type="range" min="0" max="100" bind:value={maxCloud} class="flex-1 accent-emerald-500" />
+  <label for="cloud-filter" class="text-xs text-muted-foreground whitespace-nowrap">Nuvem max:</label>
+  <input id="cloud-filter" type="range" min="0" max="100" bind:value={maxCloud} class="flex-1 accent-emerald-500" />
   <span class="text-xs font-mono w-8 text-right">{maxCloud}%</span>
   <span class="text-xs text-muted-foreground">({filteredImages.length}/{images.length})</span>
 </div>
@@ -60,14 +63,14 @@
         onmouseleave={() => hoveredImage = null}
       >
         {#if img.thumbnail_url && !errorMap.get(img.id)}
-          {#if !loadedMap.get(img.id)}
+          {#if !loadedIds.has(img.id)}
             <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse"></div>
           {/if}
           <img
             src={img.thumbnail_url}
             alt="Satelite {img.collection || 'imagem'} {new Date(img.acquired_at).toLocaleDateString('pt-BR')}"
             class="w-full h-40 object-cover rounded-md mb-2"
-            class:hidden={!loadedMap.get(img.id)}
+            class:hidden={!loadedIds.has(img.id)}
             loading="lazy"
             onload={() => onImgLoad(img.id)}
             onerror={() => onImgError(img.id)}
@@ -90,7 +93,7 @@
           </span>
         </div>
         {#if hoveredImage === img}
-          <div class="absolute left-0 right-0 bottom-0 translate-y-full z-50">
+          <div class="absolute left-0 right-0 bottom-full z-50">
             <ImageMetadata image={img} />
           </div>
         {/if}

@@ -1,0 +1,22 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:python:
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+    format:python:
+      glob: "*.py"
+      run: uv run ruff format {staged_files}
+    lint:frontend:
+      glob: "*.{js,ts,svelte}"
+      run: cd apps/spaceeye-web && bun run lint
+    typecheck:
+      glob: "*.{ts,svelte}"
+      run: cd apps/spaceeye-web && bun run check
+
+pre-push:
+  commands:
+    lint:python:
+      run: uv run ruff check . && uv run ruff format --check .
+    test:backend:
+      run: uv run pytest backend/tests/ -v -x

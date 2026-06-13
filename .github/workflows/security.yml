@@ -30,9 +30,20 @@ jobs:
         run: docker build -f Dockerfile.backend -t spaceeye-backend:scan .
 
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: spaceeye-backend:scan
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+
+      - name: Build frontend image
+        run: docker build -f Dockerfile.frontend -t spaceeye-frontend:scan .
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: spaceeye-frontend:scan
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH

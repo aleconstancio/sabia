@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import Button from '$lib/ui/components/Button.svelte';
+  import { Button } from '$lib/components/ui/button';
   import type { ImageResult } from '$lib/api/types';
   import { API_URL } from '$lib/config';
+  import { pollTaskStatus } from '$lib/helpers/pollTask';
 
   let {
     images = [] as ImageResult[],
@@ -30,16 +31,12 @@
       });
       if (!resp.ok) return false;
       const { task_id } = await resp.json();
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 2000));
-        const sr = await fetch(`${API_URL}/tasks/${task_id}`);
-        const st = await sr.json();
-        if (st.status === 'done') {
-          processedIds = new Set([...processedIds, imageId]);
-          return true;
-        }
-        if (st.status === 'error') return false;
+      const result = await pollTaskStatus(task_id, { maxAttempts: 60 });
+      if (result.status === 'done') {
+        processedIds = new Set([...processedIds, imageId]);
+        return true;
       }
+      return false;
     } catch {
       console.warn('TimelapsePlayer ensureProcessed error for image:', imageId);
       processError = 'Falha ao processar frame';
@@ -111,8 +108,8 @@
     </div>
   {:else}
     <div class="flex items-center gap-2 mb-2">
-      <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0" ariaLabel="Parar timelapse">⏹</Button>
-      <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0" ariaLabel={playing ? 'Pausar timelapse' : 'Iniciar timelapse'}>{playing ? '⏸' : '▶'}</Button>
+      <Button size="sm" variant="ghost" onclick={stop} class="!w-8 !h-8 !p-0" aria-label="Parar timelapse">⏹</Button>
+      <Button size="sm" variant="default" onclick={playing ? pause : play} class="!w-8 !h-8 !p-0" aria-label={playing ? 'Pausar timelapse' : 'Iniciar timelapse'}>{playing ? '⏸' : '▶'}</Button>
       <input type="range" min="200" max="5000" step="100" bind:value={speed} class="flex-1 accent-emerald-500 h-1" aria-label="Velocidade do timelapse" />
       <span class="text-xs text-muted-foreground w-10">{(speed / 1000).toFixed(1)}s</span>
     </div>

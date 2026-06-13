@@ -10,20 +10,21 @@
 
   $effect(() => {
     if (lat && lon) {
+      const controller = new AbortController();
       const timer = setTimeout(() => {
-        fetchSoil();
+        fetchSoil(controller.signal);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => { clearTimeout(timer); controller.abort(); };
     }
   });
 
 
-  async function fetchSoil() {
+  async function fetchSoil(signal?: AbortSignal) {
     loading = true; error = '';
     try {
       const url = polygonCoords ? `${API_URL}/soil/zonal` : `${API_URL}/soil/${lat}/${lon}`;
       const body = polygonCoords ? JSON.stringify({ coordinates: polygonCoords }) : undefined;
-      const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body });
+      const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body, signal });
       if (!resp.ok) throw new Error('Soil fetch failed');
       soil = await resp.json();
     } catch (e: unknown) {

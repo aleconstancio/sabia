@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import type { ImageResult } from '$lib/api/types';
+  import { processImage as apiProcessImage } from '$lib/api/client';
+  import { pollTaskStatus } from '$lib/helpers/pollTask';
 
   let {
     imageA = null as ImageResult | null,
@@ -37,36 +39,18 @@
     if (!image || !polygonCoords) return;
     loading = true;
     try {
-      const resp = await fetch(`${API_URL}/process`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_id: image.id, coordinates: polygonCoords, product }),
-      });
-      if (!resp.ok) throw new Error('Process request failed');
-      const data = await resp.json();
-      let remaining = 120;
-      const poll = setInterval(async () => {
-        if (--remaining <= 0) {
-          clearInterval(poll); loading = false;
-          swipeError = 'Timeout';
-          return;
-        }
-        try {
-          const sr = await fetch(`${API_URL}/tasks/${data.task_id}`);
-          const status = await sr.json();
-          if (status.status === 'done') {
-            clearInterval(poll);
-            const b = status.result?.bounds as [[number, number], [number, number]];
-            bounds = b;
-            const url = `${API_URL}/overlay/${status.result.path.split('/').pop()}`;
-            if (side === 'A') { urlA = url; }
-            else { urlB = url; }
-            loading = false;
-          } else if (status.status === 'error') {
-            clearInterval(poll); loading = false;
-            swipeError = status.error || 'Erro';
-          }
-        } catch { console.warn('SwipeComparison poll error for side:', side); clearInterval(poll); loading = false; swipeError = 'Falha na conexão'; }
-      }, 1000);
+      const data = await apiProcessImage(image.id, polygonCoords, product);
+      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000 });
+      if (result.status === 'done') {
+        const b = result.result?.bounds as [[number, number], [number, number]];
+        bounds = b;
+        const url = `${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`;
+        if (side === 'A') { urlA = url; }
+        else { urlB = url; }
+      } else {
+        swipeError = result.error || 'Erro';
+      }
+      loading = false;
     } catch {
       console.warn('SwipeComparison processImage error');
       loading = false; swipeError = 'Falha ao iniciar processamento'; }
@@ -83,7 +67,7 @@
       if (overlayB) map.removeLayer(overlayB);
       overlayA = L.imageOverlay(urlA, bounds, { opacity: 1 }).addTo(map);
       overlayB = L.imageOverlay(urlB, bounds, { opacity: 1 }).addTo(map);
-      overlayB.getContainer().style.clipPath = `inset(0 50% 0 0)`;
+      (overlayB as any).getContainer().style.clipPath = `inset(0 50% 0 0)`;
       map.flyToBounds(bounds, { duration: 1 });
     }
   });
@@ -96,14 +80,17 @@
     const rect = container.getBoundingClientRect();
     const x = (e.type.startsWith('touch') ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
     swipePos = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    overlayB.getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+    (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
   }
   function handleEnd() { dragging = false; }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={container}
   class="relative w-full h-[400px] rounded-lg overflow-hidden border border-border"
+  role="application"
+  aria-label="Comparação de imagens"
   onmousedown={handleStart}
   onmousemove={handleMove}
   onmouseup={handleEnd}
@@ -128,10 +115,10 @@
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-sm font-bold text-gray-600">↔</div>
     </div>
     <div class="absolute top-2 left-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at).toLocaleDateString('pt-BR')}
+      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at ?? Date.now()).toLocaleDateString('pt-BR')}
     </div>
     <div class="absolute top-2 right-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at).toLocaleDateString('pt-BR')}
+      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at ?? Date.now()).toLocaleDateString('pt-BR')}
     </div>
   {/if}
 </div>

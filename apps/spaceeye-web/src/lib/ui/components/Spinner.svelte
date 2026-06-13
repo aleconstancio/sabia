@@ -11,7 +11,7 @@
 </script>
 
 <svg
-  class="animate-spin text-primary {sizes[size]}"
+  class="thoth-spinner text-primary {sizes[size]}"
   viewBox="0 0 24 24"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
@@ -28,7 +28,7 @@
 
 <style>
   @layer thoth.components {
-    .animate-spin {
+    .thoth-spinner {
       animation: thoth-spin 1s linear infinite;
     }
     @keyframes thoth-spin {

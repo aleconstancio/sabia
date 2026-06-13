@@ -6,7 +6,7 @@ describe('mapState store', () => {
   });
 
   it('provides default values', async () => {
-    const { mapState } = await import('$lib/stores/map.svelte.ts');
+    const { mapState } = await import('$lib/stores/map.svelte');
     expect(mapState.selectedProduct).toBe('NDVI');
     expect(mapState.selectedCollection).toBe('cbers4a');
     expect(mapState.isLoading).toBe(false);
@@ -15,7 +15,7 @@ describe('mapState store', () => {
   });
 
   it('updates reactive state', async () => {
-    const { mapState } = await import('$lib/stores/map.svelte.ts');
+    const { mapState } = await import('$lib/stores/map.svelte');
     mapState.selectedProduct = 'SAVI';
     expect(mapState.selectedProduct).toBe('SAVI');
     mapState.isLoading = true;
@@ -30,18 +30,18 @@ describe('bookmarks store', () => {
   });
 
   it('adds and retrieves bookmarks', async () => {
-    const { addBookmark, getBookmarks } = await import('$lib/stores/bookmarks.svelte.ts');
-    addBookmark('Test Farm', [[[-35, -6], [-34, -6], [-34, -5], [-35, -5], [-35, -6]]]);
-    const bookmarks = getBookmarks();
+    const { bookmarksStore } = await import('$lib/stores/bookmarks.svelte');
+    bookmarksStore.add('Test Farm', [[[-35, -6], [-34, -6], [-34, -5], [-35, -5], [-35, -6]]]);
+    const bookmarks = bookmarksStore.all;
     expect(bookmarks).toHaveLength(1);
     expect(bookmarks[0].name).toBe('Test Farm');
   });
 
   it('removes bookmarks', async () => {
-    const { addBookmark, removeBookmark, getBookmarks } = await import('$lib/stores/bookmarks.svelte.ts');
-    addBookmark('Farm A', [[[0, 0]]]);
-    const bm = getBookmarks();
-    removeBookmark(bm[0].id);
-    expect(getBookmarks()).toHaveLength(0);
+    const { bookmarksStore } = await import('$lib/stores/bookmarks.svelte');
+    bookmarksStore.add('Farm A', [[[0, 0]]]);
+    const bm = bookmarksStore.all;
+    bookmarksStore.remove(bm[0].id);
+    expect(bookmarksStore.all).toHaveLength(0);
   });
 });

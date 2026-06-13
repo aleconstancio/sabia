@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ImageResult } from '$lib/api/types';
+  import { pollTaskStatus } from '$lib/helpers/pollTask';
+  import { downloadBlob } from '$lib/helpers/download';
 
   let {
     images = [] as ImageResult[],
@@ -8,7 +10,7 @@
     product = 'NDVI',
   } = $props();
 
-  let canvas: HTMLCanvasElement;
+  let canvas: HTMLCanvasElement | undefined = $state(undefined);
   let timelineData = $state<{date: string; value: number}[]>([]);
   import { API_URL } from '$lib/config';
 
@@ -31,20 +33,14 @@
 
       const results: {date: string; value: number}[] = [];
       for (const task of tasks) {
-        for (let attempt = 0; attempt < 120; attempt++) {
-          await new Promise(r => setTimeout(r, 2000));
-          const sr = await fetch(`${API_URL}/tasks/${task.task_id}`);
-          const status = await sr.json();
-          if (status.status === 'done') {
-            const img = images.find((i) => i.id === task.image_id);
-            const rawValue = status.result?.statistics?.mean;
-            const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
-            if (img) {
-              results.push({ date: img.acquired_at, value });
-            }
-            break;
+        const result = await pollTaskStatus(task.task_id);
+        if (result.status === 'done') {
+          const img = images.find((i) => i.id === task.image_id);
+          const rawValue = (result.result as Record<string, any>)?.statistics?.mean;
+          const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
+          if (img) {
+            results.push({ date: img.acquired_at, value });
           }
-          if (status.status === 'error') break;
         }
       }
       results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -68,8 +64,12 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const dpr = window.devicePixelRatio || 1;
     const W = canvas.width;
     const H = canvas.height;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
     const pad = { top: 10, bottom: 25, left: 5, right: 5 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top - pad.bottom;
@@ -102,12 +102,14 @@
     const rows = barData.map(d => `${d.date},${d.value.toFixed(4)}`).join('\n');
     const csv = headers + rows;
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = blobUrl;
     a.download = 'ndvi_timeline.csv';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
   }
 
   $effect(() => {
@@ -123,7 +125,7 @@
     {/if}
   </div>
   {#if barData.length > 0}
-    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]" role="img" aria-label="Grafico de serie temporal NDVI"></canvas>
+    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]" aria-label="Grafico de serie temporal NDVI"></canvas>
     <button
       class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none mt-1"
       onclick={exportCsv}
@@ -132,7 +134,7 @@
     </button>
   {:else if loading}
     <div class="h-[140px] flex items-center justify-center">
-      <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
     </div>
   {:else}
     <div class="h-[140px] flex items-center justify-center text-xs text-muted-foreground">

@@ -1,10 +1,13 @@
-import respx
+from datetime import UTC
+from unittest.mock import AsyncMock, MagicMock
+
 import httpx
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from httpx import AsyncClient, ASGITransport
-from backend.main import app
+import respx
+from httpx import ASGITransport, AsyncClient
+
 from backend.api.deps import get_db
+from backend.main import app
 
 
 @pytest.fixture
@@ -51,11 +54,7 @@ def client_with_search_db():
                 result.mappings.return_value.all.return_value = []
                 result.fetchone.return_value = None
             return result
-        elif "INSERT" in query_str:
-            result = MagicMock()
-            result.fetchone.return_value = ["test-id"]
-            return result
-        elif "DELETE" in query_str:
+        elif "INSERT" in query_str or "DELETE" in query_str:
             result = MagicMock()
             result.fetchone.return_value = ["test-id"]
             return result
@@ -236,7 +235,7 @@ def client_with_analyses_db():
     """Mock DB that handles analyses CRUD operations."""
     mock_session = AsyncMock()
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     analyses_store = []
     next_id = 1
@@ -259,7 +258,7 @@ def client_with_analyses_db():
                     "statistics": params.get("statistics"),
                     "acquired_at": None,
                     "cloud_cover": params.get("cloud_cover"),
-                    "created_at": datetime(2025, 1, 1, tzinfo=timezone.utc),
+                    "created_at": datetime(2025, 1, 1, tzinfo=UTC),
                 }
             )
             result = MagicMock()
@@ -274,7 +273,7 @@ def client_with_analyses_db():
                 if "collection" in params and params["collection"]:
                     filtered = [a for a in filtered if a.get("collection") == params["collection"]]
             filtered.sort(
-                key=lambda a: a.get("created_at") or datetime.min.replace(tzinfo=timezone.utc),
+                key=lambda a: a.get("created_at") or datetime.min.replace(tzinfo=UTC),
                 reverse=True,
             )
             limit = params.get("limit", 50) if params else 50
