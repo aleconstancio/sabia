@@ -41,6 +41,7 @@ class Cbers4ACollection(Collection):
         return None
 
 
+# NOTE: Amazonia1Collection is not yet implemented — STAC integration pending.
 class Amazonia1Collection(Collection):
     id = "amazonia1"
     stac_url = ""
@@ -48,7 +49,7 @@ class Amazonia1Collection(Collection):
     available_products = ["TCI", "NDVI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
 
     def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        return None
+        raise NotImplementedError("Amazonia1 STAC integration not yet implemented")
 
 
 class Sentinel2Collection(Collection):

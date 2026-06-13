@@ -20,6 +20,7 @@ class CreateAnalysisRequest(BaseModel):
     statistics: dict | None = None
     overlay_path: str | None = None
     weather: dict | None = None
+    centroid: dict | None = None
 
 
 @router.post("")
@@ -27,8 +28,8 @@ async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depend
     """Save a completed analysis record."""
     result = await db.execute(
         text("""
-            INSERT INTO analyses (image_id, collection, product, polygon, statistics, overlay_path, weather)
-            VALUES (:image_id, :collection, :product, :polygon, :statistics, :overlay_path, :weather)
+            INSERT INTO analyses (image_id, collection, product, polygon, statistics, overlay_path, weather, centroid)
+            VALUES (:image_id, :collection, :product, :polygon, :statistics, :overlay_path, :weather, :centroid)
             ON CONFLICT (image_id, product, (polygon::text)) DO NOTHING
             RETURNING id
         """),
@@ -44,6 +45,7 @@ async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depend
             "weather": json.dumps(data.weather)
             if isinstance(data.weather, dict)
             else data.weather,
+            "centroid": data.centroid,
         },
     )
     await db.commit()

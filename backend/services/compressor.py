@@ -74,10 +74,7 @@ def _compress_tci(img, bounds, crs):
     rgb_min = np.nanmin(rgb)
     rgb_max = np.nanmax(rgb)
     denom = max((rgb_max - rgb_min), 1e-10)
-    if denom == 0:
-        rgb = np.zeros_like(rgb, dtype=np.uint8)
-    else:
-        rgb = ((rgb - rgb_min) / denom * 255).astype(np.uint8)
+    rgb = ((rgb - rgb_min) / denom * 255).astype(np.uint8)
     rgb[mask] = [255, 255, 255]
 
     bounds2 = _bounds_to_wgs84(bounds, crs)

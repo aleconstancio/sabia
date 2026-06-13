@@ -6,7 +6,8 @@ let _monitors = $state<Monitor[]>([]);
 function load() {
   try {
     const raw = localStorage.getItem('spaceeye_monitors');
-    _monitors = raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    _monitors = Array.isArray(parsed) ? parsed : [];
   } catch (e) { console.warn('Monitors load failed:', e); _monitors = []; }
 }
 
@@ -45,7 +46,6 @@ export function removeMonitor(id: string) {
 }
 
 export function getMonitors(): Monitor[] {
-  load();
   return _monitors;
 }
 

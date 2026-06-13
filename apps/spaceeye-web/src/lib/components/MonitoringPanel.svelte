@@ -46,7 +46,7 @@
   }
 
   function handleNameSubmit() {
-    const bm = availableBookmarks.find(b => b.name === nameInputValue);
+    const bm = availableBookmarks.find(b => b.id === nameInputValue);
     if (bm) {
       addMonitor(bm);
       refresh();
@@ -107,7 +107,7 @@
           class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {#each availableBookmarks as bm}
-            <option value={bm.name}>{bm.name}</option>
+            <option value={bm.id}>{bm.name}</option>
           {/each}
         </select>
         <div class="flex justify-end gap-2">

@@ -5,7 +5,8 @@ let _bookmarks = $state<Bookmark[]>([]);
 function load() {
   try {
     const raw = localStorage.getItem('spaceeye_bookmarks');
-    _bookmarks = raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    _bookmarks = Array.isArray(parsed) ? parsed : [];
   } catch (e) { console.warn('Bookmarks load failed:', e); _bookmarks = []; }
 }
 
@@ -14,7 +15,9 @@ function persist() {
     localStorage.setItem('spaceeye_bookmarks', JSON.stringify(_bookmarks));
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      console.warn('Bookmarks localStorage quota exceeded');
+      console.warn('Bookmarks localStorage quota exceeded, trimming old entries');
+      _bookmarks = _bookmarks.slice(0, 25);
+      try { localStorage.setItem('spaceeye_bookmarks', JSON.stringify(_bookmarks)); } catch { /* give up */ }
     } else {
       console.warn('Bookmarks persist failed:', e);
     }

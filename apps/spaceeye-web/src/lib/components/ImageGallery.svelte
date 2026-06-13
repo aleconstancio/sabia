@@ -22,19 +22,16 @@
   let maxCloud = $state(100);
   let filteredImages = $derived(images.filter(i => (i.cloud_cover ?? 100) <= maxCloud));
 
-  let loadedIds = $state(new Set<string>());
-  let errorMap = $state(new Map<string, boolean>());
-  let loadCounter = $state(0);
+  let loadedIds = $state<Record<string, boolean>>({});
+  let errorMap = $state<Record<string, boolean>>({});
   let hoveredImage = $state<ImageResult | null>(null);
 
   function onImgLoad(id: string) {
-    loadedIds.add(id);
-    loadCounter++;
+    loadedIds[id] = true;
   }
   function onImgError(id: string) {
-    errorMap.set(id, true);
-    loadedIds.add(id);
-    loadCounter++;
+    errorMap[id] = true;
+    loadedIds[id] = true;
   }
 </script>
 
@@ -52,7 +49,7 @@
   </div>
 {:else}
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2">
-    {#each filteredImages as img}
+    {#each filteredImages as img (img.id)}
       <button
         class="relative rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary hover:shadow-md cursor-pointer"
         class:border-emerald-500={selectionMode && selectedIds.includes(img.id)}
@@ -62,15 +59,15 @@
         onmouseenter={() => hoveredImage = img}
         onmouseleave={() => hoveredImage = null}
       >
-        {#if img.thumbnail_url && !errorMap.get(img.id)}
-          {#if !loadedIds.has(img.id)}
+        {#if img.thumbnail_url && !errorMap[img.id]}
+          {#if !loadedIds[img.id]}
             <div class="w-full h-40 bg-muted rounded-md mb-2 animate-pulse"></div>
           {/if}
           <img
             src={img.thumbnail_url}
             alt="Satelite {img.collection || 'imagem'} {new Date(img.acquired_at).toLocaleDateString('pt-BR')}"
             class="w-full h-40 object-cover rounded-md mb-2"
-            class:hidden={!loadedIds.has(img.id)}
+            class:hidden={!loadedIds[img.id]}
             loading="lazy"
             onload={() => onImgLoad(img.id)}
             onerror={() => onImgError(img.id)}

@@ -30,6 +30,7 @@ async def fetch_weather_snapshot(lat: float, lon: float) -> dict:
                 "timezone": "America/Sao_Paulo",
                 "forecast_days": 7,
             },
+            timeout=10.0,
         )
         resp.raise_for_status()
         return resp.json()
@@ -51,6 +52,7 @@ async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
                 "depth": "0-5cm",
                 "value": "mean",
             },
+            timeout=10.0,
         )
         if resp.status_code == 200:
             return resp.json()

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class PolygonRequest(BaseModel):
     coordinates: list[list[list[float]]]
+    # Product/collection validation happens at the domain layer (catalog.get_collection).
     collections: list[str] | None = None
     date_from: str | None = None
     date_to: str | None = None
@@ -54,8 +55,8 @@ class CityResponse(BaseModel):
 
 class ExportPdfRequest(BaseModel):
     task_id: str
-    format: str = "pdf"
-    overlays: list[str] = []
+    format: str = Field(default="pdf", pattern="^pdf$")
+    overlays: list[str] = Field(max_length=20, default=[])
 
 
 class ProcessBatchRequest(BaseModel):
@@ -71,4 +72,4 @@ class ComputeDifferenceRequest(BaseModel):
 
 
 class DownloadBatchRequest(BaseModel):
-    task_ids: list[str]
+    task_ids: list[str] = Field(max_length=5)

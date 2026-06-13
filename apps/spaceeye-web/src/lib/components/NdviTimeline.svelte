@@ -47,6 +47,8 @@
     }
   }
 
+  let isFallback = $derived(timelineData.length === 0);
+
   let barData = $derived(timelineData.length > 0 ? timelineData : images.slice(0, 10).map((i) => ({
     date: i.acquired_at,
     value: Math.max(0, 1 - (i.cloud_cover || 0) / 100),
@@ -115,7 +117,7 @@
 
 <div class="rounded-lg border border-border bg-card p-3">
   <div class="flex items-center justify-between mb-2">
-    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Série Temporal</h4>
+    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isFallback ? 'Cloud Cover Proxy' : 'Série Temporal'}</h4>
     {#if loading}
       <span class="text-xs text-muted-foreground">Processando...</span>
     {/if}

@@ -5,7 +5,7 @@ export async function restorePolygonOnMap(coords: number[][][]) {
     const L = await import('leaflet');
     const { mapState } = await import('$lib/stores/map.svelte');
     if (!mapState.map || !coords) return;
-    const polygon = L.default.polygon(coords[0].map((c: number[]) => [c[1], c[0]]));
+    const polygon = (L as any).polygon(coords[0].map((c: number[]) => [c[1], c[0]]));
     const map = mapState.map as LeafletMap;
     map.addLayer(polygon);
     map.fitBounds(polygon.getBounds());

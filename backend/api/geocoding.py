@@ -17,8 +17,8 @@ _datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cida
 try:
     with open(_datasets_path, encoding="utf-8") as f:
         _cidades_data = json.load(f)
-except Exception:
-    logger.warning("Failed to load %s, using empty dataset", _datasets_path)
+except Exception as exc:
+    logger.warning("Failed to load %s: %s — using empty dataset", _datasets_path, exc)
     _cidades_data = {}
 
 

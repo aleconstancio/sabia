@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db
 from backend.services.data_fusion import fuse_region_data
+from backend.utils import _summarize_weather, _summarize_soil
 
 router = APIRouter()
 
@@ -139,26 +140,4 @@ async def delete_profile(profile_id: str, db: AsyncSession = Depends(get_db)):
     return {"deleted": True}
 
 
-# TODO: Move _summarize_weather/_summarize_soil to a shared utils module
-def _summarize_weather(data: dict) -> dict | None:
-    if not data:
-        return None
-    current = data.get("current", {})
-    return {
-        "temperature": current.get("temperature_2m"),
-        "humidity": current.get("relative_humidity_2m"),
-        "precipitation": current.get("precipitation"),
-        "weather_code": current.get("weather_code"),
-    }
 
-
-def _summarize_soil(data: dict) -> dict | None:
-    if not data:
-        return None
-    layers = data.get("properties", {}).get("layers", [])
-    summary = {}
-    for layer in layers:
-        name = layer.get("name")
-        if name and layer.get("depths"):
-            summary[name] = layer["depths"][0].get("values", {}).get("mean")
-    return summary

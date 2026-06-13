@@ -75,6 +75,44 @@
     map.addLayer(drawnItems);
     drawnItemsGroup = drawnItems;
 
+    if (browser) {
+      const params = new URLSearchParams(window.location.search);
+      const coords = params.get('coords');
+      const image = params.get('image');
+      const product = params.get('product');
+
+      if (coords && image && product) {
+        try {
+          const parsed = JSON.parse(coords);
+          if (!Array.isArray(parsed) || !parsed.every((ring: unknown) =>
+            Array.isArray(ring) && ring.every((coord: unknown) =>
+              Array.isArray(coord) && coord.length >= 2 && coord.every((v: unknown) => typeof v === 'number')
+            )
+          )) {
+            toast.error('Coordenadas inválidas no link compartilhado');
+            return;
+          }
+          const allowedProducts = SPECTRAL_PRODUCTS.map(p => p.value);
+          if (!allowedProducts.includes(product)) {
+            toast.error('Produto inválido no link compartilhado');
+            return;
+          }
+          mapState.polygonCoords = parsed;
+          mapState.selectedProduct = product;
+          const polygon = L.polygon(parsed[0].map((c: number[]) => [c[1], c[0]]));
+          map.addLayer(polygon);
+          map.fitBounds(polygon.getBounds());
+          const center = polygon.getCenter();
+          mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
+          searchImages().then(() => {
+            processImage(image);
+          }).catch((e) => {
+            console.warn('Share URL auto-process failed:', e);
+          });
+        } catch(e) { console.warn('Invalid share URL params:', e); }
+      }
+    }
+
     map.on('mousemove', (e: any) => {
       if (measureMode) {
         mouseCoords = { lat: e.latlng.lat.toFixed(4), lng: e.latlng.lng.toFixed(4) };
@@ -252,47 +290,6 @@
     mapState.polygonCoords = geoJSON.geometry.coordinates as number[][][];
     mapState.polygonCentroid = { lat: polygon.getCenter().lat, lon: polygon.getCenter().lng };
   }
-
-  $effect(() => {
-    if (!browser) return;
-    const params = new URLSearchParams(window.location.search);
-    const coords = params.get('coords');
-    const image = params.get('image');
-    const product = params.get('product');
-
-    if (coords && image && product) {
-      try {
-        const parsed = JSON.parse(coords);
-        if (!Array.isArray(parsed) || !parsed.every((ring: unknown) =>
-          Array.isArray(ring) && ring.every((coord: unknown) =>
-            Array.isArray(coord) && coord.length >= 2 && coord.every((v: unknown) => typeof v === 'number')
-          )
-        )) {
-          toast.error('Coordenadas inválidas no link compartilhado');
-          return;
-        }
-        const allowedProducts = SPECTRAL_PRODUCTS.map(p => p.value);
-        if (!allowedProducts.includes(product)) {
-          toast.error('Produto inválido no link compartilhado');
-          return;
-        }
-      mapState.polygonCoords = parsed;
-      mapState.selectedProduct = product;
-      if (map && mapState.polygonCoords!) {
-          const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
-          map.addLayer(polygon);
-          map.fitBounds(polygon.getBounds());
-          const center = polygon.getCenter();
-          mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
-        }
-        searchImages().then(() => {
-          processImage(image);
-        }).catch((e) => {
-          console.warn('Share URL auto-process failed:', e);
-        });
-      } catch(e) { console.warn('Invalid share URL params:', e); }
-    }
-  });
 
   $effect(() => {
     if (browser && !localStorage.getItem('spaceeye_onboarded')) {
@@ -477,7 +474,8 @@
 {/if}
 
 {#if showPromptDialog}
-  <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" tabindex="-1" onkeydown={(e) => { if (e.key === 'Escape') { showPromptDialog = false; onPromptSubmit = null; } }}>
     <form onsubmit={handlePromptSubmit} class="bg-card border border-border rounded-lg p-6 shadow-xl w-80 space-y-4">
       <label class="text-sm font-medium" for="prompt-input">{promptLabel}</label>
       <input

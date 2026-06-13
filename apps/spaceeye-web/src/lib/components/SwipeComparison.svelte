@@ -26,6 +26,7 @@
   import { API_URL } from '$lib/config';
 
   let swipeError = $state('');
+  let pendingCount = $state(0);
 
   onMount(() => {
     map = L.map(container, {
@@ -37,23 +38,31 @@
 
   async function processImage(image: ImageResult, side: 'A' | 'B') {
     if (!image || !polygonCoords) return;
+    pendingCount++;
     loading = true;
     try {
       const data = await apiProcessImage(image.id, polygonCoords, product);
       const result = await pollTaskStatus(data.task_id, { intervalMs: 1000 });
+      pendingCount--;
+      if (pendingCount === 0) loading = false;
       if (result.status === 'done') {
         const b = result.result?.bounds as [[number, number], [number, number]];
-        bounds = b;
-        const url = `${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`;
-        if (side === 'A') { urlA = url; }
-        else { urlB = url; }
+        if (side === 'A' && imageA?.id === image.id) {
+          bounds = b;
+          urlA = `${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`;
+        } else if (side === 'B' && imageB?.id === image.id) {
+          bounds = b;
+          urlB = `${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`;
+        }
       } else {
         swipeError = result.error || 'Erro';
       }
-      loading = false;
     } catch {
+      pendingCount--;
+      if (pendingCount === 0) loading = false;
       console.warn('SwipeComparison processImage error');
-      loading = false; swipeError = 'Falha ao iniciar processamento'; }
+      swipeError = 'Falha ao iniciar processamento';
+    }
   }
 
   $effect(() => {

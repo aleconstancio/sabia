@@ -45,6 +45,16 @@
     }
   });
 
+  $effect(() => {
+    if (playing && intervalId) {
+      clearInterval(intervalId);
+      intervalId = setInterval(() => {
+        frameIndex = (frameIndex + 1) % images.length;
+        onFrameChange(images[frameIndex].id);
+      }, speed);
+    }
+  });
+
   async function processAllFrames() {
     if (images.length === 0) return;
     processing = true;

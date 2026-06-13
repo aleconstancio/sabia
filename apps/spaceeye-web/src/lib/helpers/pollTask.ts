@@ -50,7 +50,7 @@ export async function pollTaskStatus(
       if (signal?.aborted) {
         return { status: 'error', error: 'Aborted' };
       }
-      // Network error, continue polling
+      console.debug('Poll network error:', e);
     }
   }
 

@@ -2,7 +2,7 @@ import L from 'leaflet';
 import { toast } from 'svelte-sonner';
 import { mapState } from '$lib/stores/map.svelte';
 import { historyStore } from '$lib/stores/history.svelte';
-import { searchImages as apiSearchImages, processImage as apiProcessImage } from '$lib/api/client';
+import { searchImages as apiSearchImages, processImage as apiProcessImage, exportEsgCsv as apiExportEsgCsv } from '$lib/api/client';
 import { API_URL } from '$lib/config';
 import { downloadBlob, downloadBlobPost } from '$lib/helpers/download';
 import { pollTaskStatus } from '$lib/helpers/pollTask';
@@ -147,7 +147,15 @@ export async function downloadBatch(taskIds: string[]) {
 
 export async function exportEsgCsv(module: string, coordinates: number[][][]) {
   try {
-    await downloadBlobPost(`${API_URL}/export/esg-csv`, { coordinates }, `spaceeye-${module}-export.csv`);
+    const blob = await apiExportEsgCsv({ region: module, coordinates, module });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `spaceeye-${module}-export.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
   } catch {
     toast.error('Failed to export CSV');
   }

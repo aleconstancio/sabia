@@ -6,7 +6,8 @@ let _history = $state<AnalysisRecord[]>([]);
 function load() {
   try {
     const raw = localStorage.getItem('spaceeye_history');
-    _history = raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    _history = Array.isArray(parsed) ? parsed : [];
   } catch (e) { console.warn('History load failed:', e); _history = []; }
 }
 
@@ -43,7 +44,7 @@ export const historyStore = {
     const r: AnalysisRecord = { id: crypto.randomUUID(), timestamp: new Date().toISOString(), ...rec };
     _history = [r, ..._history].slice(0, 50);
     persist();
-    persistToBackend(r);
+    persistToBackend(r).catch(e => console.warn('Background backend persistence failed:', e));
     return r;
   },
   clear() {

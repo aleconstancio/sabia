@@ -21,13 +21,21 @@ router.include_router(downloads_router, tags=["downloads"])
 router.include_router(geocoding_router, tags=["geocoding"])
 router.include_router(reports_router, tags=["reports"])
 
-router.include_router(__import__("backend.api.analyses", fromlist=["router"]).router, prefix="/analyses", tags=["analyses"])
-router.include_router(__import__("backend.api.profiles", fromlist=["router"]).router, prefix="/profiles", tags=["profiles"])
-router.include_router(__import__("backend.api.weather", fromlist=["router"]).router, prefix="/weather", tags=["weather"])
-router.include_router(__import__("backend.api.soil", fromlist=["router"]).router, prefix="/soil", tags=["soil"])
-router.include_router(__import__("backend.api.landcover", fromlist=["router"]).router, prefix="/landcover", tags=["landcover"])
-router.include_router(__import__("backend.api.esg", fromlist=["router"]).router, prefix="", tags=["esg"])
-router.include_router(__import__("backend.api.tasks_api", fromlist=["router"]).router, prefix="/tasks", tags=["tasks"])
+from backend.api.analyses import router as analyses_router
+from backend.api.profiles import router as profiles_router
+from backend.api.weather import router as weather_router
+from backend.api.soil import router as soil_router
+from backend.api.landcover import router as landcover_router
+from backend.api.esg import router as esg_router
+from backend.api.tasks_api import router as tasks_api_router
+
+router.include_router(analyses_router, prefix="/analyses", tags=["analyses"])
+router.include_router(profiles_router, prefix="/profiles", tags=["profiles"])
+router.include_router(weather_router, prefix="/weather", tags=["weather"])
+router.include_router(soil_router, prefix="/soil", tags=["soil"])
+router.include_router(landcover_router, prefix="/landcover", tags=["landcover"])
+router.include_router(esg_router, prefix="", tags=["esg"])
+router.include_router(tasks_api_router, prefix="/tasks", tags=["tasks"])
 
 
 @router.get("/health")
