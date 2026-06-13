@@ -17,6 +17,10 @@ export async function processImage(imageId: string, coordinates: number[][][], p
   return api.post('/process', { image_id: imageId, coordinates, product });
 }
 
+export async function processBatch(imageIds: string[], coordinates: number[][][], product: string): Promise<{ tasks: { image_id: string; task_id: string }[] }> {
+  return api.post('/process/batch', { image_ids: imageIds, coordinates, product });
+}
+
 export async function getTaskStatus(taskId: string): Promise<{ task_id: string; status: string; progress: number; phase: string; result?: Record<string, unknown>; error?: string }> {
   return api.get(`/tasks/${taskId}`);
 }

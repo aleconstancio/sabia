@@ -33,12 +33,15 @@ async def get_task_status(task_id: str):
             "result": result_data,
         }
     elif result.state == "FAILURE":
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error("Task %s failed: %s", task_id, result.info)
         return {
             "task_id": task_id,
             "status": "error",
             "progress": 0,
             "phase": "error",
-            "error": str(result.info) if result.info else "Unknown error",
+            "error": "Task processing failed",
         }
     else:
         return {"task_id": task_id, "status": result.state.lower(), "progress": 0, "phase": ""}
@@ -69,7 +72,10 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                     result_data = {k: v for k, v in result_data.items() if k != "path"}
                 data["result"] = result_data
             elif result.state == "FAILURE":
-                data["error"] = str(result.info) if result.info else "Unknown error"
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error("Task %s failed: %s", task_id, result.info)
+                data["error"] = "Task processing failed"
 
             await websocket.send_json(data)
 

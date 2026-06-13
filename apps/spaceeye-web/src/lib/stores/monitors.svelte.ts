@@ -1,5 +1,5 @@
 import type { Bookmark, Monitor } from '$lib/api/types';
-import { API_URL } from '$lib/config';
+import { searchImages } from '$lib/api/client';
 
 let _monitors = $state<Monitor[]>([]);
 
@@ -51,23 +51,16 @@ export function getMonitors(): Monitor[] {
 
 export async function checkMonitor(m: Monitor): Promise<string> {
   try {
-    const resp = await fetch(`${API_URL}/images/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ coordinates: m.polygonCoords, max_cloud: m.minCloudCover, sort_by: 'acquired_at', sort_order: 'desc', limit: 1 }),
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      const newImages = data.images || [];
-      const result = newImages.length > 0 ? `Nova imagem: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'Sem novidades';
-      _monitors = _monitors.map(monitor =>
-        monitor.id === m.id
-          ? { ...monitor, lastChecked: new Date().toISOString(), lastResult: result }
-          : monitor
-      );
-      persist();
-      return result;
-    }
+    const data = await searchImages(m.polygonCoords, undefined);
+    const newImages = data.images || [];
+    const result = newImages.length > 0 ? `Nova imagem: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'Sem novidades';
+    _monitors = _monitors.map(monitor =>
+      monitor.id === m.id
+        ? { ...monitor, lastChecked: new Date().toISOString(), lastResult: result }
+        : monitor
+    );
+    persist();
+    return result;
   } catch (e) { console.warn('Monitor check failed:', e); }
   return 'Falha na verificação';
 }

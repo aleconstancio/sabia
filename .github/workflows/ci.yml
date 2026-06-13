@@ -110,6 +110,15 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -131,6 +140,18 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync --dev
+
+      - name: Initialize database schema
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: spaceeye_test
+        run: |
+          for f in sql/001_init.sql sql/003_analyses.sql sql/004_profiles.sql sql/005_triggers.sql; do
+            psql -f "$f"
+          done
 
       - name: Run backend tests with coverage
         env:

@@ -287,6 +287,8 @@
         }
         searchImages().then(() => {
           processImage(image);
+        }).catch((e) => {
+          console.warn('Share URL auto-process failed:', e);
         });
       } catch(e) { console.warn('Invalid share URL params:', e); }
     }

@@ -49,6 +49,7 @@ def upgrade() -> None:
 
     op.execute("CREATE INDEX IF NOT EXISTS idx_images_collection ON images (collection)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_images_acquired_at ON images (acquired_at DESC)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_images_collection_acquired ON images (collection, acquired_at DESC)")
 
     op.execute("""
         CREATE TABLE IF NOT EXISTS analyses (
@@ -133,10 +134,10 @@ def upgrade() -> None:
         CREATE TABLE IF NOT EXISTS processing_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             task_id VARCHAR NOT NULL UNIQUE,
-            image_id VARCHAR,
+            image_id VARCHAR REFERENCES images(id) ON DELETE SET NULL,
             product VARCHAR NOT NULL,
             polygon JSONB,
-            status VARCHAR NOT NULL DEFAULT 'pending',
+            status VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
             result_path TEXT,
             statistics JSONB,
             error TEXT,

@@ -27,7 +27,6 @@ STAC_URLS = {
     "cbers4a": "http://www.dgi.inpe.br/lgi-stac/collections/CBERS4A_WPM_L4_DN/items",
     "sentinel2": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items",
     "landsat8": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
-    "landsat9": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
 }
 
 
@@ -66,7 +65,11 @@ def parse_item(item: dict, collection: str) -> Optional[dict]:
             for stac_key, internal_key in mapping.items():
                 metadata_assets[internal_key] = assets.get(stac_key, {}).get("href", "")
         
-        footprint_coords = item["geometry"]["coordinates"][0]
+        footprint_coords = item["geometry"]["coordinates"]
+        if item["geometry"]["type"] == "MultiPolygon":
+            footprint_coords = footprint_coords[0][0]
+        else:
+            footprint_coords = footprint_coords[0]
         footprint_geojson = json.dumps({
             "type": "Polygon",
             "coordinates": [footprint_coords],

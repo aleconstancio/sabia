@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS analyses (
     cloud_cover DOUBLE PRECISION,
     weather JSONB,
     created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
     CONSTRAINT check_analyses_cloud_cover CHECK (cloud_cover >= 0 AND cloud_cover <= 100)
 );

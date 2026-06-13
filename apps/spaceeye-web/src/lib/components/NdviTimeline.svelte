@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ImageResult } from '$lib/api/types';
+  import { processBatch } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
   import { downloadBlob } from '$lib/helpers/download';
 
@@ -12,7 +13,6 @@
 
   let canvas: HTMLCanvasElement | undefined = $state(undefined);
   let timelineData = $state<{date: string; value: number}[]>([]);
-  import { API_URL } from '$lib/config';
 
   let loading = $state(false);
   let error = $state('');
@@ -23,13 +23,7 @@
 
     const ids = images.map((i) => i.id);
     try {
-      const resp = await fetch(`${API_URL}/process/batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_ids: ids.slice(0, 10), coordinates: polygonCoords, product }),
-      });
-      if (!resp.ok) throw new Error('Batch process failed');
-      const { tasks } = await resp.json();
+      const { tasks } = await processBatch(ids.slice(0, 10), polygonCoords || [], product);
 
       const results: {date: string; value: number}[] = [];
       for (const task of tasks) {
@@ -65,10 +59,12 @@
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const W = canvas.width;
-    const H = canvas.height;
+    const W = 280;
+    const H = 140;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
     ctx.scale(dpr, dpr);
     const pad = { top: 10, bottom: 25, left: 5, right: 5 };
     const chartW = W - pad.left - pad.right;

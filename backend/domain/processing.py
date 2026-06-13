@@ -34,7 +34,8 @@ async def process_image(
     if progress_callback:
         await progress_callback(30, "cropping")
 
-    output_path = os.path.join(settings.temp_dir, "cache", f"{product_name}_{image_id}.tif")
+    import uuid
+    output_path = os.path.join(settings.temp_dir, "cache", f"{product_name}_{image_id}_{uuid.uuid4().hex[:8]}.tif")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     result = await asyncio.to_thread(_compute_product, downloaded, polygon_coords, product_name, output_path)

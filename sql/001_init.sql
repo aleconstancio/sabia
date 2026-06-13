@@ -11,7 +11,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS images (
     id VARCHAR PRIMARY KEY,
     collection VARCHAR NOT NULL,
-    cloud_cover DOUBLE PRECISION,
+    cloud_cover DOUBLE PRECISION NOT NULL DEFAULT 0,
     acquired_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),

@@ -95,6 +95,8 @@ async def download_batch(req: DownloadBatchRequest):
             if result.state == "SUCCESS" and result.result:
                 path = result.result.get("path", "")
                 if path and os.path.exists(path):
+                    if not os.path.realpath(path).startswith(os.path.realpath(cache_dir)):
+                        raise HTTPException(403, "Access denied")
                     name = f"{tid[:8]}.png"
                     zf.write(path, name)
                     geotiff = result.result.get("geotiff_path", "")

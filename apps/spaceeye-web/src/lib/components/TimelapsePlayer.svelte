@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import type { ImageResult } from '$lib/api/types';
-  import { API_URL } from '$lib/config';
+  import { processImage as apiProcessImage } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
 
   let {
@@ -25,12 +25,7 @@
   async function ensureProcessed(imageId: string): Promise<boolean> {
     if (processedIds.has(imageId)) return true;
     try {
-      const resp = await fetch(`${API_URL}/process`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_id: imageId, coordinates: polygonCoords, product }),
-      });
-      if (!resp.ok) return false;
-      const { task_id } = await resp.json();
+      const { task_id } = await apiProcessImage(imageId, polygonCoords || [], product);
       const result = await pollTaskStatus(task_id, { maxAttempts: 60 });
       if (result.status === 'done') {
         processedIds = new Set([...processedIds, imageId]);
