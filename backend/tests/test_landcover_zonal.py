@@ -1,6 +1,7 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+
 from backend.services.landcover_zonal import compute_landcover_zonal
 
 

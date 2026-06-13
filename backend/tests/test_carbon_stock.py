@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from backend.services.carbon_stock import estimate_carbon_stock
 
 
