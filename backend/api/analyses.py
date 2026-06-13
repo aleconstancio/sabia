@@ -1,7 +1,7 @@
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +16,7 @@ class CreateAnalysisRequest(BaseModel):
     image_id: str
     collection: str
     product: str
-    polygon: list
+    polygon: list[list[list[float]]]
     statistics: dict | None = None
     overlay_path: str | None = None
     weather: dict | None = None
@@ -57,16 +57,11 @@ async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depend
 async def list_analyses(
     product: str = None,
     collection: str = None,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
     """List saved analyses with optional filters."""
-    if limit < 1:
-        limit = 50
-    if offset < 0:
-        offset = 0
-    limit = min(limit, 200)
     conditions = []
     params = {"limit": limit, "offset": offset}
     if product:

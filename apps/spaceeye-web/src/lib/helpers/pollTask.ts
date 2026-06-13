@@ -35,7 +35,10 @@ export async function pollTaskStatus(
 
     try {
       const resp = await fetch(`${API_URL}/tasks/${taskId}`, { signal });
-      if (!resp.ok) continue;
+      if (!resp.ok) {
+        console.warn(`pollTaskStatus: HTTP ${resp.status} for task ${taskId}`);
+        continue;
+      }
 
       const status = await resp.json();
       onProgress?.(status.progress || 0, status.phase || '');

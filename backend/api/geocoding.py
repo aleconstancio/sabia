@@ -13,22 +13,32 @@ router = APIRouter()
 
 _geocode_last_request: float = 0.0
 
-_datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
-try:
-    with open(_datasets_path, encoding="utf-8") as f:
-        _cidades_data = json.load(f)
-except Exception as exc:
-    logger.warning("Failed to load %s: %s — using empty dataset", _datasets_path, exc)
-    _cidades_data = {}
+_cidades_data: dict = {}
+_cidades_loaded = False
+
+
+def _load_cidades():
+    global _cidades_data, _cidades_loaded
+    if _cidades_loaded:
+        return
+    _cidades_loaded = True
+    datasets_path = os.path.join(os.path.dirname(__file__), "..", "datasets", "cidades_brasileiras.json")
+    try:
+        with open(datasets_path, encoding="utf-8") as f:
+            _cidades_data = json.load(f)
+    except Exception as exc:
+        logger.warning("Failed to load %s: %s — using empty dataset", datasets_path, exc)
 
 
 @router.get("/ibge/uf")
 async def list_ufs():
+    _load_cidades()
     return list(_cidades_data.keys())
 
 
 @router.get("/ibge/cidades/{uf}")
 async def list_cidades(uf: str):
+    _load_cidades()
     return list(_cidades_data.get(uf.upper(), []))
 
 

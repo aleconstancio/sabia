@@ -28,6 +28,17 @@ BEGIN
     END IF;
 END $$;
 
+-- Apply to analyses table
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_analyses_updated_at') THEN
+        CREATE TRIGGER trg_analyses_updated_at
+        BEFORE UPDATE ON analyses
+        FOR EACH ROW
+        EXECUTE FUNCTION update_timestamp();
+    END IF;
+END $$;
+
 -- Processing task results table
 CREATE TABLE IF NOT EXISTS processing_tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,6 +51,7 @@ CREATE TABLE IF NOT EXISTS processing_tasks (
     statistics JSONB,
     error TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
     completed_at TIMESTAMPTZ
 );
 

@@ -18,7 +18,7 @@
     try {
       const raw = localStorage.getItem(`spaceeye_thresholds_${module}`);
       if (raw) thresholds = { ...thresholds, ...JSON.parse(raw) };
-    } catch { /* ignore */ }
+    } catch (e: unknown) { console.warn('Failed to load thresholds:', e); }
   });
 </script>
 

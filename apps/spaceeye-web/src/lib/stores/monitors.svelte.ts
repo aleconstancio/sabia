@@ -23,7 +23,7 @@ function persist() {
   }
 }
 
-export function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover: number = 30): Monitor {
+function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover: number = 30): Monitor {
   const m: Monitor = {
     id: crypto.randomUUID(),
     bookmarkId: bookmark.id,
@@ -40,16 +40,16 @@ export function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minClou
   return m;
 }
 
-export function removeMonitor(id: string) {
+function removeMonitor(id: string) {
   _monitors = _monitors.filter(m => m.id !== id);
   persist();
 }
 
-export function getMonitors(): Monitor[] {
+function getMonitors(): Monitor[] {
   return _monitors;
 }
 
-export async function checkMonitor(m: Monitor): Promise<string> {
+async function checkMonitor(m: Monitor): Promise<string> {
   try {
     const data = await searchImages(m.polygonCoords, undefined);
     const newImages = data.images || [];
@@ -66,3 +66,11 @@ export async function checkMonitor(m: Monitor): Promise<string> {
 }
 
 load();
+
+export const monitorsStore = {
+  get all() { return _monitors; },
+  add: addMonitor,
+  remove: removeMonitor,
+  getAll: getMonitors,
+  check: checkMonitor,
+};

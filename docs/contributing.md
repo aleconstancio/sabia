@@ -177,7 +177,7 @@ uv run pytest backend/tests/ -v
 ```bash
 just test-frontend
 # or
-cd apps/spaceeye-web && npm test
+cd apps/spaceeye-web && bun run test
 ```
 
 - Write tests for new utility functions

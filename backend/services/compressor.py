@@ -1,3 +1,4 @@
+import logging
 import os
 
 import matplotlib
@@ -9,6 +10,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from backend.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def compress_to_png(raster_path: str, product_name: str) -> dict:
@@ -36,7 +39,8 @@ def _bounds_to_wgs84(bounds, src_crs):
         left, bottom = transformer.transform(bounds.left, bounds.bottom)
         right, top = transformer.transform(bounds.right, bounds.top)
         return [[bottom, left], [top, right]]
-    except Exception:
+    except Exception as e:
+        logger.warning("CRS transformation failed: %s", e)
         return [[bounds.bottom, bounds.left], [bounds.top, bounds.right]]
 
 

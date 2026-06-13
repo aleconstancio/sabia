@@ -27,8 +27,12 @@
 
   let swipeError = $state('');
   let pendingCount = $state(0);
+  let _processAbort: AbortController | null = null;
 
   onMount(() => {
+    if (container && (container as any)._leaflet_id) {
+      (container as any)._leaflet_map?.remove();
+    }
     map = L.map(container, {
       center: [polygonCentroid?.lat ?? -3.35, polygonCentroid?.lon ?? -23.21],
       zoom: 14, zoomControl: false, attributionControl: false,
@@ -38,11 +42,13 @@
 
   async function processImage(image: ImageResult, side: 'A' | 'B') {
     if (!image || !polygonCoords) return;
+    if (_processAbort) _processAbort.abort();
+    _processAbort = new AbortController();
     pendingCount++;
     loading = true;
     try {
       const data = await apiProcessImage(image.id, polygonCoords, product);
-      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000 });
+      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000, signal: _processAbort.signal });
       pendingCount--;
       if (pendingCount === 0) loading = false;
       if (result.status === 'done') {
@@ -57,15 +63,17 @@
       } else {
         swipeError = result.error || 'Erro';
       }
-    } catch {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') return;
       pendingCount--;
       if (pendingCount === 0) loading = false;
-      console.warn('SwipeComparison processImage error');
+      console.warn('SwipeComparison processImage error:', e);
       swipeError = 'Falha ao iniciar processamento';
     }
   }
 
   $effect(() => {
+    if (_processAbort) _processAbort.abort();
     if (imageA) processImage(imageA, 'A');
     if (imageB) processImage(imageB, 'B');
   });
@@ -92,6 +100,15 @@
     (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
   }
   function handleEnd() { dragging = false; }
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'ArrowLeft') {
+      swipePos = Math.max(0, swipePos - 5);
+      if (overlayB) (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+    } else if (e.key === 'ArrowRight') {
+      swipePos = Math.min(100, swipePos + 5);
+      if (overlayB) (overlayB as any).getContainer().style.clipPath = `inset(0 ${100 - swipePos}% 0 0)`;
+    }
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -120,6 +137,13 @@
     <div
       class="absolute top-0 bottom-0 z-[1001] w-1 bg-white cursor-col-resize shadow-lg"
       style="left: {swipePos}%; transform: translateX(-50%)"
+      tabindex="0"
+      role="slider"
+      aria-label="Divisor de comparação"
+      aria-valuenow={swipePos}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      onkeydown={handleKeyDown}
     >
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-sm font-bold text-gray-600">↔</div>
     </div>

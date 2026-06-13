@@ -33,6 +33,7 @@ class ImageSearchResponse(BaseModel):
 class ProcessRequest(BaseModel):
     image_id: str
     coordinates: list[list[list[float]]]
+    # Product validation (allowed values) is enforced at the domain layer via catalog.get_collection.
     product: str = Field(pattern="^(NDVI|TCI|NDWI|SAVI|EVI|MSAVI2|VARI|MNDWI|CIR|NBR|NDMI)$")
 
 
@@ -54,7 +55,7 @@ class CityResponse(BaseModel):
 
 
 class ExportPdfRequest(BaseModel):
-    task_id: str
+    task_id: str = Field(min_length=1)
     format: str = Field(default="pdf", pattern="^pdf$")
     overlays: list[str] = Field(max_length=20, default=[])
 

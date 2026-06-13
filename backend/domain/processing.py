@@ -145,6 +145,7 @@ def _compute_product(
 
     # Cloud masking: if SCL (Scene Classification Layer) is available,
     # mask out clouds, cloud shadows, and cirrus pixels
+    cloud_masking_skipped = False
     if "scl" in band_data and result.ndim == 2:
         scl = band_data["scl"]
         if scl.shape != result.shape:
@@ -153,7 +154,8 @@ def _compute_product(
                 scl = skresize(scl.astype(float), result.shape, order=0, preserve_range=True).astype(int)
             except ImportError:
                 logger.warning("scikit-image not installed, cloud masking skipped")
-        if scl.shape == result.shape:
+                cloud_masking_skipped = True
+        if not cloud_masking_skipped and scl.shape == result.shape:
             cloud_mask = np.isin(scl, [3, 8, 9, 10])
             result = np.where(cloud_mask, np.nan, result)
 
@@ -192,16 +194,16 @@ def _compute_product(
             "max": float(np.nanmax(result)),
             "std": float(np.nanstd(result)),
         }
-        percentiles = np.percentile(valid, [10, 20, 30, 40, 50, 60, 70, 80, 90])
+        percentiles = np.percentile(valid, [10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90])
         stats["histogram"] = {
             "deciles": [float(p) for p in percentiles],
             "p10": float(percentiles[0]),
-            "p25": float(np.percentile(valid, 25)),
-            "p50": float(percentiles[4]),
-            "p75": float(np.percentile(valid, 75)),
-            "p90": float(percentiles[8]),
+            "p25": float(percentiles[2]),
+            "p50": float(percentiles[5]),
+            "p75": float(percentiles[8]),
+            "p90": float(percentiles[10]),
         }
     else:
         stats = {"mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0, "histogram": {}}
 
-    return {"path": output_path, "statistics": stats}
+    return {"path": output_path, "statistics": stats, "cloud_masking_skipped": cloud_masking_skipped}

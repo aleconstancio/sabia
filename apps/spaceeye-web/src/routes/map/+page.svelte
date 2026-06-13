@@ -21,6 +21,7 @@
   import HistogramPanel from '$lib/components/HistogramPanel.svelte';
   import OnboardingDialog from '$lib/components/OnboardingDialog.svelte';
   import ProductInfo from '$lib/components/ProductInfo.svelte';
+  import ErrorBoundary from '$lib/ui/components/ErrorBoundary.svelte';
   import { toast } from 'svelte-sonner';
   import { mapState } from '$lib/stores/map.svelte';
   import { searchImages, processImage, exportPdf } from '$lib/api/processing';
@@ -38,7 +39,6 @@
   let layerOpacity = $state(0.8);
   let tileLayer: L.TileLayer | null = $state(null);
   let showTimelapse = $state(false);
-  let timelapseOverlay = $state<any>(null);
   let useSwipe = $state(false);
   let drawnItemsGroup = $state<L.FeatureGroup | null>(null);
   let showOnboarding = $state(false);
@@ -66,7 +66,6 @@
       center: [-3.359202, -23.211370],
       zoom: 3,
       layers: [tileLayer],
-      keyboard: false,
     });
 
     mapState.map = map;
@@ -170,7 +169,7 @@
   function setOpacity(o: number) {
     layerOpacity = o;
     if (mapState.rasterOverlay) {
-      (mapState.rasterOverlay as any).setOpacity(o);
+      mapState.rasterOverlay.setOpacity(o);
     }
   }
 
@@ -233,7 +232,8 @@
           } : undefined,
         });
         toast.success('Perfil salvo com sucesso!');
-      } catch {
+      } catch (e: unknown) {
+        console.error('saveAsProfile error:', e);
         toast.error('Falha ao salvar perfil');
       } finally {
         isSavingProfile = false;
@@ -318,7 +318,9 @@
     showTimelapse={showTimelapse}
   />
 
-  <div bind:this={mapContainer} id="map" class="flex-1 min-h-0"></div>
+  <ErrorBoundary>
+    <div bind:this={mapContainer} id="map" class="flex-1 min-h-0" role="application" aria-label="Mapa interativo SpaceEye"></div>
+  </ErrorBoundary>
 
   {#if !mapState.polygonCoords && !mapState.hasOverlay && !mapState.isLoading}
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[100]">

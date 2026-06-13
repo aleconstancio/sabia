@@ -18,14 +18,14 @@ export const dashboardState = {
       const data = await listProfiles({ limit: 100 });
       _profiles = data.profiles || [];
       _total = data.total || 0;
-    } catch (e) { _error = (e as Error).message || 'Failed to load profiles'; console.error('Dashboard load failed:', e); }
+    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to load profiles'; console.error('Dashboard load failed:', e); }
     _isLoading = false;
   },
   async deleteProfile(id: string) {
     try {
       await apiDeleteProfile(id);
       _profiles = _profiles.filter(p => p.id !== id);
-      _total--;
-    } catch (e) { _error = (e as Error).message || 'Failed to delete profile'; console.error('Profile delete failed:', e); }
+      _total = Math.max(0, _total - 1);
+    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to delete profile'; console.error('Profile delete failed:', e); }
   },
 };

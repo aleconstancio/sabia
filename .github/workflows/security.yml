@@ -26,8 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build backend image
-        run: docker build -f Dockerfile.backend -t spaceeye-backend:scan .
+        run: docker build -f Dockerfile.backend -t spaceeye-backend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@0.28.0
@@ -38,7 +41,7 @@ jobs:
           severity: CRITICAL,HIGH
 
       - name: Build frontend image
-        run: docker build -f Dockerfile.frontend -t spaceeye-frontend:scan .
+        run: docker build -f Dockerfile.frontend -t spaceeye-frontend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
 
       - name: Scan frontend image
         uses: aquasecurity/trivy-action@0.28.0

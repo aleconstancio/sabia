@@ -11,7 +11,7 @@ router = APIRouter()
 async def get_landcover(lat: float, lon: float):
     """Get land cover classification for a point using open data."""
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
-        raise HTTPException(400, "Latitude must be in [-90, 90], longitude in [-180, 180]")
+        raise HTTPException(400, detail="Latitude must be in [-90, 90], longitude in [-180, 180]")
 
     return {
         "source": "ESA WorldCover 2021",

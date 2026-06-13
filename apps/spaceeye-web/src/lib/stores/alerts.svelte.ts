@@ -17,7 +17,7 @@ function persist() {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       console.warn('Alerts localStorage quota exceeded, trimming old entries');
       _alerts = _alerts.slice(0, 25);
-      try { localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts)); } catch { /* give up */ }
+      try { localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts)); } catch (e: unknown) { console.warn('Alerts give-up persist:', e); }
     } else {
       console.warn('Alerts persist failed:', e);
     }

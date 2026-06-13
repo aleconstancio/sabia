@@ -21,6 +21,7 @@
       role="button"
       tabindex="-1"
       onclick={() => mapState.sidebarOpen = false}
+      onkeydown={(e) => { if (e.key === 'Escape') mapState.sidebarOpen = false; }}
     ></div>
   {/if}
 

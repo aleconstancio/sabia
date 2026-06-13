@@ -87,8 +87,8 @@
       }
       if (side === 'A') loadingA = false; else loadingB = false;
     } catch (e: unknown) {
-      if (side === 'A') { errorA = (e as Error).message; loadingA = false; }
-      else { errorB = (e as Error).message; loadingB = false; }
+      if (side === 'A') { errorA = e instanceof Error ? e.message : String(e); loadingA = false; }
+      else { errorB = e instanceof Error ? e.message : String(e); loadingB = false; }
     }
   }
 
@@ -117,8 +117,8 @@
         diffError = result.error || 'Erro ao calcular diferença';
       }
       computingDiff = false;
-    } catch {
-      console.warn('RegionComparison computeDifference error');
+    } catch (e: unknown) {
+      console.warn('RegionComparison computeDifference error:', e);
       computingDiff = false;
       diffError = 'Falha ao iniciar diferença';
     }

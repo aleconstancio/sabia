@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { dashboardState } from '$lib/stores/dashboard.svelte';
+  import { alertStore } from '$lib/stores/alerts.svelte';
   import { Button } from '$lib/components/ui/button';
   import Spinner from '$lib/ui/components/Spinner.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
@@ -19,9 +20,8 @@
 
   let alertCount = $derived.by(() => {
     try {
-      const raw = localStorage.getItem('spaceeye_alerts');
-      return raw ? JSON.parse(raw).length : 0;
-    } catch { return 0; }
+      return alertStore.alerts.length;
+    } catch (e: unknown) { console.warn('alertCount error:', e); return 0; }
   });
 
   let avgTemp = $derived.by(() => {

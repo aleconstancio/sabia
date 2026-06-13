@@ -47,7 +47,11 @@ async def soil_zonal(req: PolygonRequest):
         while y <= bounds[3]:
             if poly.contains(shape({"type": "Point", "coordinates": [x, y]})):
                 points.append({"lat": y, "lon": x})
+            if len(points) >= 100:
+                break
             y += max(step, 0.1)
+        if len(points) >= 100:
+            break
         x += max(step, 0.1)
 
     # Deterministic grid sampling for reproducible results

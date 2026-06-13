@@ -11,8 +11,9 @@
  *   - comparisonStore: comparisonFirst, comparisonSecond, selectedIds
  *   - weatherStore: lastWeatherData
  */
+import L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
-import type { ImageResult, WeatherData, AnalysisRecord } from '$lib/api/types';
+import type { ImageResult, WeatherData, AnalysisRecord, StatsData } from '$lib/api/types';
 
 let _map: LeafletMap | null = $state(null);
 let _polygonCoords = $state<number[][][] | null>(null);
@@ -21,7 +22,7 @@ let _results = $state<ImageResult[]>([]);
 let _selectedProduct = $state('NDVI');
 let _showLegend = $state(false);
 let _hasOverlay = $state(false);
-let _rasterOverlay: unknown = $state(null);
+let _rasterOverlay: L.ImageOverlay | null = $state(null);
 let _showPolygonModal = $state(false);
 let _showImageGallery = $state(false);
 let _showProcessingViewer = $state(false);
@@ -42,7 +43,7 @@ let _filterDateTo = $state('');
 let _filterMaxCloud = $state<number | undefined>(undefined);
 let _filterSortBy = $state('acquired_at');
 let _filterSortOrder = $state('desc');
-let _lastStats = $state<Record<string, unknown> | null>(null);
+let _lastStats = $state<StatsData | null>(null);
 let _sidebarOpen = $state(true);
 
 export const mapState = {

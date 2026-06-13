@@ -1,4 +1,21 @@
 /**
+ * Trigger a browser download from a Blob, cleaning up afterwards.
+ */
+function triggerDownload(blob: Blob, filename: string) {
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  try {
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+  } finally {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }
+}
+
+/**
  * Download a file from a URL by fetching it as a blob.
  */
 export async function downloadBlob(url: string, filename: string, options?: RequestInit): Promise<void> {
@@ -7,14 +24,7 @@ export async function downloadBlob(url: string, filename: string, options?: Requ
     throw new Error(`Download failed: ${resp.status}`);
   }
   const blob = await resp.blob();
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(blobUrl);
+  triggerDownload(blob, filename);
 }
 
 /**
@@ -30,12 +40,5 @@ export async function downloadBlobPost(url: string, body: unknown, filename: str
     throw new Error(`Download failed: ${resp.status}`);
   }
   const blob = await resp.blob();
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(blobUrl);
+  triggerDownload(blob, filename);
 }

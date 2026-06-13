@@ -1,7 +1,7 @@
 -- Region profiles: fused multi-source ecology data
 CREATE TABLE IF NOT EXISTS region_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR,
+    name VARCHAR NOT NULL,
     polygon JSONB NOT NULL,
     centroid JSONB,
     weather_data JSONB,

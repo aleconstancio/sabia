@@ -133,7 +133,7 @@ For detailed architecture, see [docs/architecture.md](./docs/architecture.md).
 | **Processing** | Rasterio, NumPy, scikit-image, aiohttp |
 | **External Data** | Open-Meteo (weather), ISRIC SoilGrids (soil), ESA WorldCover (land cover) |
 | **Infrastructure** | Docker, docker-compose, NGINX, Alembic (migrations) |
-| **Package Mgmt** | uv (Python), npm (Node.js) |
+| **Package Mgmt** | uv (Python), bun (Node.js) |
 
 ---
 
@@ -223,11 +223,11 @@ spaceeye/
 ## Development
 
 ```bash
-make test          # Run all tests
-make test-backend  # Backend only (pytest)
-make test-frontend # Frontend only (vitest)
-make format        # Format Python (ruff)
-make lint          # Type-check frontend (svelte-check)
+just test          # Run all tests
+just test-backend  # Backend only (pytest)
+just test-frontend # Frontend only (vitest)
+just format        # Format Python (ruff)
+just lint          # Type-check frontend (svelte-check)
 ```
 
 See [docs/development.md](./docs/development.md) for full setup and workflow.

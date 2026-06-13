@@ -26,14 +26,22 @@
       const { tasks } = await processBatch(ids.slice(0, 10), polygonCoords || [], product);
 
       const results: {date: string; value: number}[] = [];
-      for (const task of tasks) {
-        const result = await pollTaskStatus(task.task_id);
-        if (result.status === 'done') {
-          const img = images.find((i) => i.id === task.image_id);
-          const rawValue = (result.result as Record<string, any>)?.statistics?.mean;
-          const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
-          if (img) {
-            results.push({ date: img.acquired_at, value });
+      const pollResults = await Promise.allSettled(
+        tasks.map(async (task) => {
+          const result = await pollTaskStatus(task.task_id);
+          return { task, result };
+        })
+      );
+      for (const settled of pollResults) {
+        if (settled.status === 'fulfilled') {
+          const { task, result } = settled.value;
+          if (result.status === 'done') {
+            const img = images.find((i) => i.id === task.image_id);
+            const rawValue = (result.result as Record<string, any>)?.statistics?.mean;
+            const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
+            if (img) {
+              results.push({ date: img.acquired_at, value });
+            }
           }
         }
       }
@@ -41,7 +49,7 @@
       timelineData = results;
     } catch (e: unknown) {
       console.warn('NdviTimeline fetchTimeline error:', e);
-      error = (e as Error).message;
+      error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
     }
@@ -102,12 +110,15 @@
     const blob = new Blob([csv], { type: 'text/csv' });
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = 'ndvi_timeline.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    try {
+      a.href = blobUrl;
+      a.download = 'ndvi_timeline.csv';
+      document.body.appendChild(a);
+      a.click();
+    } finally {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }
   }
 
   $effect(() => {

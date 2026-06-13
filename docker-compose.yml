@@ -8,12 +8,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Init SQL files are mounted read-only; Docker handles permissions via the entrypoint script.
       - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./sql/003_analyses.sql:/docker-entrypoint-initdb.d/003_analyses.sql
       - ./sql/004_profiles.sql:/docker-entrypoint-initdb.d/004_profiles.sql
       - ./sql/005_triggers.sql:/docker-entrypoint-initdb.d/005_triggers.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d spaceeye"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -123,6 +124,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A backend.tasks.celery_app inspect ping --timeout 5 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
     networks:
       - backend
       - database

@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,12 +49,11 @@ async def create_profile(data: CreateProfileRequest, db: AsyncSession = Depends(
 
 @router.get("")
 async def list_profiles(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
     """List all region profiles."""
-    limit = min(limit, 200)
     result = await db.execute(
         text("SELECT * FROM region_profiles ORDER BY created_at DESC LIMIT :limit OFFSET :offset"),
         {"limit": limit, "offset": offset},

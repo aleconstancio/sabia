@@ -4,12 +4,19 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.analyses import router as analyses_router
 from backend.api.deps import get_db
 from backend.api.downloads import router as downloads_router
+from backend.api.esg import router as esg_router
 from backend.api.geocoding import router as geocoding_router
 from backend.api.images import router as images_router
+from backend.api.landcover import router as landcover_router
 from backend.api.processing import router as processing_router
+from backend.api.profiles import router as profiles_router
 from backend.api.reports import router as reports_router
+from backend.api.soil import router as soil_router
+from backend.api.tasks_api import router as tasks_api_router
+from backend.api.weather import router as weather_router
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +27,6 @@ router.include_router(processing_router, tags=["processing"])
 router.include_router(downloads_router, tags=["downloads"])
 router.include_router(geocoding_router, tags=["geocoding"])
 router.include_router(reports_router, tags=["reports"])
-
-from backend.api.analyses import router as analyses_router
-from backend.api.profiles import router as profiles_router
-from backend.api.weather import router as weather_router
-from backend.api.soil import router as soil_router
-from backend.api.landcover import router as landcover_router
-from backend.api.esg import router as esg_router
-from backend.api.tasks_api import router as tasks_api_router
-
 router.include_router(analyses_router, prefix="/analyses", tags=["analyses"])
 router.include_router(profiles_router, prefix="/profiles", tags=["profiles"])
 router.include_router(weather_router, prefix="/weather", tags=["weather"])

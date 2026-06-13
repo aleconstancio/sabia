@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str = ""
+    database_url: str
     redis_url: str = "redis://localhost:6379/0"
     email_inpe: str = ""
     temp_dir: str = "/tmp/spaceeye"

@@ -34,9 +34,9 @@ async def fetch_weather_snapshot(lat: float, lon: float) -> dict:
         )
         resp.raise_for_status()
         return resp.json()
-    except Exception:
-        logger.warning("Failed to fetch weather snapshot for (%s, %s)", lat, lon)
-        return {}
+    except Exception as e:
+        logger.warning("Failed to fetch weather snapshot for (%s, %s): %s", lat, lon, e)
+        return {"error": str(e)}
 
 
 async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
@@ -56,10 +56,10 @@ async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
         )
         if resp.status_code == 200:
             return resp.json()
-        return {}
-    except Exception:
-        logger.warning("Failed to fetch soil snapshot for (%s, %s)", lat, lon)
-        return {}
+        return {"error": f"Non-200 status: {resp.status_code}"}
+    except Exception as e:
+        logger.warning("Failed to fetch soil snapshot for (%s, %s): %s", lat, lon, e)
+        return {"error": str(e)}
 
 
 async def fetch_landcover_snapshot(lat: float, lon: float) -> dict:

@@ -53,6 +53,8 @@ async def _download_one(
     filepath: str | None,
     band_name: str,
 ):
+    MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024  # 500 MB
+
     if filepath is None:
         return
 
@@ -65,8 +67,15 @@ async def _download_one(
 
     async with session.get(url) as resp:
         resp.raise_for_status()
+        downloaded = 0
         with open(temp_path, "wb") as f:
             async for chunk in resp.content.iter_chunked(1024 * 1024):
+                downloaded += len(chunk)
+                if downloaded > MAX_DOWNLOAD_SIZE:
+                    os.remove(temp_path)
+                    raise DownloadError(
+                        f"Download exceeds {MAX_DOWNLOAD_SIZE // (1024 * 1024)} MB limit"
+                    )
                 f.write(chunk)
             f.flush()
             os.fsync(f.fileno())

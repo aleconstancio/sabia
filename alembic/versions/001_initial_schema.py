@@ -25,7 +25,7 @@ def upgrade() -> None:
         CREATE TABLE IF NOT EXISTS images (
             id VARCHAR PRIMARY KEY,
             collection VARCHAR NOT NULL,
-            cloud_cover DOUBLE PRECISION,
+            cloud_cover DOUBLE PRECISION NOT NULL DEFAULT 0,
             acquired_at TIMESTAMPTZ NOT NULL,
             created_at TIMESTAMPTZ DEFAULT now(),
             updated_at TIMESTAMPTZ DEFAULT now(),
@@ -131,6 +131,18 @@ def upgrade() -> None:
     """)
 
     op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_analyses_updated_at') THEN
+                CREATE TRIGGER trg_analyses_updated_at
+                BEFORE UPDATE ON analyses
+                FOR EACH ROW
+                EXECUTE FUNCTION update_timestamp();
+            END IF;
+        END $$
+    """)
+
+    op.execute("""
         CREATE TABLE IF NOT EXISTS processing_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             task_id VARCHAR NOT NULL UNIQUE,
@@ -142,11 +154,24 @@ def upgrade() -> None:
             statistics JSONB,
             error TEXT,
             created_at TIMESTAMPTZ DEFAULT now(),
+            updated_at TIMESTAMPTZ DEFAULT now(),
             completed_at TIMESTAMPTZ
         )
     """)
 
     op.execute("CREATE INDEX IF NOT EXISTS idx_processing_tasks_status ON processing_tasks (status)")
+
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_processing_tasks_updated_at') THEN
+                CREATE TRIGGER trg_processing_tasks_updated_at
+                BEFORE UPDATE ON processing_tasks
+                FOR EACH ROW
+                EXECUTE FUNCTION update_timestamp();
+            END IF;
+        END $$
+    """)
     op.execute("CREATE INDEX IF NOT EXISTS idx_processing_tasks_image_id ON processing_tasks (image_id)")
 
     op.execute("""

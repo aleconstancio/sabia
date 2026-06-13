@@ -18,7 +18,7 @@ function persist() {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       console.warn('History localStorage quota exceeded, trimming old entries');
       _history = _history.slice(0, 25);
-      try { localStorage.setItem('spaceeye_history', JSON.stringify(_history)); } catch { /* give up */ }
+      try { localStorage.setItem('spaceeye_history', JSON.stringify(_history)); } catch (e: unknown) { console.warn('History give-up persist:', e); }
     } else {
       console.warn('History persist failed:', e);
     }

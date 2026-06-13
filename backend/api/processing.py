@@ -40,8 +40,6 @@ async def process_image_endpoint(
 @router.post("/process/batch")
 async def process_batch(req: ProcessBatchRequest, db: AsyncSession = Depends(get_db)):
     """Process multiple images for the same polygon and return task IDs."""
-    if len(req.image_ids) > 20:
-        raise HTTPException(status_code=400, detail="Maximum 20 images per batch")
     from backend.repositories.images import get_images_by_ids
     from backend.tasks.processing import process_image_task
 

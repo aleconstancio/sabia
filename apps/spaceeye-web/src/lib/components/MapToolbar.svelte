@@ -15,10 +15,10 @@
     onOpacityChange = (o: number) => {},
   }: {
     showLegend?: boolean;
-    onZoomIn?: (e: MouseEvent) => void;
-    onZoomOut?: (e: MouseEvent) => void;
-    onClearOverlay?: (e: MouseEvent) => void;
-    onMeasure?: (e: MouseEvent) => void;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onClearOverlay?: () => void;
+    onMeasure?: () => void;
     hasOverlay?: boolean;
     product?: string;
     basemap?: string;

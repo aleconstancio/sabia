@@ -2,7 +2,7 @@ import { createApiClient } from '$lib/ui/utils/createApiClient';
 import type { ImageResult, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, ESGExportData } from './types';
 import { API_URL } from '$lib/config';
 
-export const api = createApiClient({ baseUrl: API_URL });
+export const api = createApiClient({ baseUrl: API_URL, onError: (e: unknown, path?: string) => console.warn('API error:', path, e) });
 
 export interface SearchResponse {
   images: ImageResult[];

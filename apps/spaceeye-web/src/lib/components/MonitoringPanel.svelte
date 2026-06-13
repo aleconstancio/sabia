@@ -1,16 +1,19 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { getMonitors, removeMonitor, checkMonitor, addMonitor } from '$lib/stores/monitors.svelte';
+  import { monitorsStore } from '$lib/stores/monitors.svelte';
   import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import { Button } from '$lib/components/ui/button';
+  import type { Monitor, Bookmark } from '$lib/api/types';
+  // i18n: All user-facing strings below are hardcoded in Portuguese.
+  // For production, extract them to a localization framework (e.g. svelte-i18n).
 
   let show = $state(false);
-  let monitors = $state<any[]>([]);
+  let monitors = $state<Monitor[]>([]);
   let checking = $state(false);
   let statusMsg = $state('');
   let showNameInput = $state(false);
   let nameInputValue = $state('');
-  let availableBookmarks = $state<any[]>([]);
+  let availableBookmarks = $state<Bookmark[]>([]);
   let panelRef: HTMLDivElement;
 
   function handleClickOutside(e: MouseEvent) {
@@ -22,7 +25,7 @@
   onMount(() => document.addEventListener('mousedown', handleClickOutside));
   onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
 
-  function refresh() { monitors = getMonitors(); }
+  function refresh() { monitors = monitorsStore.getAll(); }
 
   $effect(() => { if (show) refresh(); });
 
@@ -30,7 +33,7 @@
     checking = true;
     statusMsg = `Verificando ${monitors.length} locais...`;
     for (const m of monitors) {
-      if (m.active) await checkMonitor(m);
+      if (m.active) await monitorsStore.check(m);
     }
     refresh();
     statusMsg = 'Verificação concluída';
@@ -48,7 +51,7 @@
   function handleNameSubmit() {
     const bm = availableBookmarks.find(b => b.id === nameInputValue);
     if (bm) {
-      addMonitor(bm);
+      monitorsStore.add(bm);
       refresh();
       statusMsg = `Monitorando "${bm.name}"`;
     } else {
@@ -81,7 +84,7 @@
               {/if}
             </div>
             <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => { // TODO: Replace with custom Dialog component for consistency
-              if (confirm('Remover este monitor?')) { removeMonitor(m.id); refresh(); }
+              if (confirm('Remover este monitor?')) { monitorsStore.remove(m.id); refresh(); }
             }}>✕</button>
           </div>
         {/each}

@@ -181,6 +181,13 @@ uv run alembic downgrade -1
 uv run alembic revision --autogenerate -m "add feature X"
 ```
 
+### SQL Init vs Alembic
+
+The project has two ways to create the initial schema — each for a different scenario:
+
+- **SQL init files** (`sql/*.sql`): Mounted into the Postgres container at startup via `docker-entrypoint-initdb.d`. These run **only when the database is first created** (empty `pgdata` volume). Use these for fresh Docker deployments.
+- **Alembic migrations** (`alembic/`): For **existing databases**. Run `alembic upgrade head` to apply the initial schema and any future migrations. Do not use SQL init files on an already-initialized database — they will not run.
+
 ### Initial Schema
 
 For fresh databases, the migration `001_initial_schema` creates:

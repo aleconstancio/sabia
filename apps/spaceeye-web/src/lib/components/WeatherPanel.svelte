@@ -51,7 +51,7 @@
         });
       }
     } catch (e: unknown) {
-      error = (e as Error).message;
+      error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
     }

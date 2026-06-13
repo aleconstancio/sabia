@@ -88,6 +88,7 @@ async def download_batch(req: DownloadBatchRequest):
 
     from backend.tasks.celery_app import celery_app
 
+    cache_dir = os.path.join(get_settings().temp_dir, "cache")
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         for tid in req.task_ids:

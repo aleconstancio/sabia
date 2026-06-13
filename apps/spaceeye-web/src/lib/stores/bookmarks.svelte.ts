@@ -17,7 +17,7 @@ function persist() {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       console.warn('Bookmarks localStorage quota exceeded, trimming old entries');
       _bookmarks = _bookmarks.slice(0, 25);
-      try { localStorage.setItem('spaceeye_bookmarks', JSON.stringify(_bookmarks)); } catch { /* give up */ }
+      try { localStorage.setItem('spaceeye_bookmarks', JSON.stringify(_bookmarks)); } catch (e: unknown) { console.warn('Bookmarks give-up persist:', e); }
     } else {
       console.warn('Bookmarks persist failed:', e);
     }

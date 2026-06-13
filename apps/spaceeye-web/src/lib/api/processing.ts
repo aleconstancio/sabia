@@ -23,10 +23,11 @@ function isProcessResult(val: unknown): val is ProcessResult {
   );
 }
 
+let _processAbort: AbortController | null = null;
+
 export async function searchImages() {
-  if (!mapState.polygonCoords) return;
-  if (mapState.isLoading) return;
   mapState.isLoading = true;
+  if (!mapState.polygonCoords) return;
   mapState.searchError = '';
   try {
     const collections = mapState.selectedCollection ? [mapState.selectedCollection] : undefined;
@@ -35,8 +36,8 @@ export async function searchImages() {
     mapState.showPolygonModal = false;
     mapState.showImageGallery = true;
   } catch (e: unknown) {
-    mapState.searchError = (e as Error).message || 'Erro ao buscar imagens';
-    toast.error('Falha ao buscar imagens', { description: (e as Error).message });
+    mapState.searchError = e instanceof Error ? e.message : String(e) || 'Erro ao buscar imagens';
+    toast.error('Falha ao buscar imagens', { description: e instanceof Error ? e.message : String(e) });
   } finally {
     mapState.isLoading = false;
   }
@@ -45,6 +46,10 @@ export async function searchImages() {
 export async function processImage(imageId: string) {
   if (mapState.isLoading) return;
   if (!mapState.polygonCoords) return;
+
+  if (_processAbort) _processAbort.abort();
+  _processAbort = new AbortController();
+  const signal = _processAbort.signal;
 
   mapState.isLoading = true;
   mapState.showImageGallery = false;
@@ -56,6 +61,7 @@ export async function processImage(imageId: string) {
 
     const result = await pollTaskStatus(data.task_id, {
       intervalMs: 1000,
+      signal,
       onProgress: (progress, phase) => {
         if (!mapState.showProcessingViewer) return;
         mapState.processingProgress = progress;
@@ -87,7 +93,8 @@ export async function processImage(imageId: string) {
       mapState.isLoading = false;
       mapState.processingPhase = 'Erro: ' + (result.error || 'Falha no processamento');
     }
-  } catch {
+  } catch (e: unknown) {
+    console.error('processImage error:', e);
     mapState.isLoading = false;
     mapState.processingPhase = 'Erro ao iniciar processamento';
     toast.error('Falha ao iniciar processamento');
@@ -124,7 +131,8 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
   };
   try {
     await downloadBlobPost(`${API_URL}/export/pdf`, body, `spaceeye-${imageId.slice(0, 20)}.pdf`);
-  } catch {
+  } catch (e: unknown) {
+    console.error('exportPdf error:', e);
     toast.error('Falha ao exportar PDF');
   }
 }
@@ -132,7 +140,8 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
 export async function downloadGeotiff(taskId: string) {
   try {
     await downloadBlob(`${API_URL}/download/${taskId}/geotiff`, `spaceeye-${taskId.slice(0, 8)}.tif`);
-  } catch {
+  } catch (e: unknown) {
+    console.error('downloadGeotiff error:', e);
     toast.error('Falha ao baixar GeoTIFF');
   }
 }
@@ -140,7 +149,8 @@ export async function downloadGeotiff(taskId: string) {
 export async function downloadBatch(taskIds: string[]) {
   try {
     await downloadBlobPost(`${API_URL}/download/batch`, { task_ids: taskIds }, 'spaceeye-batch.zip');
-  } catch {
+  } catch (e: unknown) {
+    console.error('downloadBatch error:', e);
     toast.error('Falha ao baixar lote');
   }
 }
@@ -156,15 +166,17 @@ export async function exportEsgCsv(module: string, coordinates: number[][][]) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
-  } catch {
+  } catch (e: unknown) {
+    console.error('exportEsgCsv error:', e);
     toast.error('Failed to export CSV');
   }
 }
 
 export async function exportEsgJson(region: string, coordinates: number[][][]) {
   try {
-    await downloadBlobPost(`${API_URL}/export/esg-json`, { coordinates }, `spaceeye-esg-export.json`);
-  } catch {
+    await downloadBlobPost(`${API_URL}/export/esg-json`, { region, coordinates }, `spaceeye-esg-export.json`);
+  } catch (e: unknown) {
+    console.error('exportEsgJson error:', e);
     toast.error('Failed to export JSON');
   }
 }

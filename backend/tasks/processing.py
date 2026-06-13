@@ -28,6 +28,8 @@ def process_image_task(self, image_id: str, polygon_coords: list, product: str, 
         return result
 
     try:
+        # Celery tasks are synchronous; asyncio.run() is the standard way
+        # to bridge sync Celery workers with async application code.
         return asyncio.run(run())
     except (OSError, ConnectionError, TimeoutError, DownloadError) as exc:
         raise self.retry(exc=exc) from exc
@@ -69,14 +71,17 @@ def compute_difference_task(self, task_id_a: str, task_id_b: str):
         fd, out_path = tempfile.mkstemp(suffix=".png", dir=settings.temp_dir)
         os.close(fd)
 
-        vmax = max(abs(np.nanmin(diff)), abs(np.nanmax(diff)), 0.1)
-        plt.imsave(out_path, diff, cmap='RdBu_r', vmin=-vmax, vmax=vmax)
+        try:
+            vmax = max(abs(np.nanmin(diff)), abs(np.nanmax(diff)), 0.1)
+            plt.imsave(out_path, diff, cmap='RdBu_r', vmin=-vmax, vmax=vmax)
 
-        bounds = src_b.bounds
-        import pyproj
-        transformer = pyproj.Transformer.from_crs(src_b.crs, "EPSG:4326", always_xy=True)
-        left, bottom = transformer.transform(bounds.left, bounds.bottom)
-        right, top = transformer.transform(bounds.right, bounds.top)
-        wgs84_bounds = [[bottom, left], [top, right]]
+            bounds = src_b.bounds
+            import pyproj
+            transformer = pyproj.Transformer.from_crs(src_b.crs, "EPSG:4326", always_xy=True)
+            left, bottom = transformer.transform(bounds.left, bounds.bottom)
+            right, top = transformer.transform(bounds.right, bounds.top)
+            wgs84_bounds = [[bottom, left], [top, right]]
+        finally:
+            plt.close("all")
 
     return {"path": out_path, "bounds": wgs84_bounds, "type": "diff"}

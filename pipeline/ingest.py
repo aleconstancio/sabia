@@ -36,7 +36,7 @@ def get_db_connection():
         port=os.getenv("DB_PORT", "5432"),
         dbname=os.getenv("DB_NAME", "spaceeye"),
         user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "postgres"),
+        password=os.getenv("DB_PASSWORD"),
     )
 
 
@@ -96,8 +96,7 @@ def parse_item(item: dict, collection: str) -> Optional[dict]:
 def ingest_collection(collection_id: str, max_pages: int = 600):
     stac_url = STAC_URLS.get(collection_id)
     if not stac_url:
-        print(f"Unknown collection: {collection_id}")
-        return
+        raise ValueError(f"Unknown collection: {collection_id}")
     
     conn = get_db_connection()
     try:
