@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Card from '$lib/ui/components/Card.svelte';
+  import * as Card from '$lib/components/ui/card';
   import { Sparkline } from '$lib/charts';
 
   let {
@@ -24,22 +24,24 @@
   );
 </script>
 
-<Card>
-  <div class="flex items-start justify-between">
-    <div>
-      <p class="text-xs text-muted-foreground uppercase tracking-wide">{title}</p>
-      <p class="text-2xl font-bold mt-1" style="color: {color}">{value}</p>
-      {#if trend}
-        <p class="text-xs mt-1" style="color: {trendColor}">{trend}</p>
-      {/if}
+<Card.Root>
+  <Card.Content>
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-muted-foreground uppercase tracking-wide">{title}</p>
+        <p class="text-2xl font-bold mt-1" style="color: {color}">{value}</p>
+        {#if trend}
+          <p class="text-xs mt-1" style="color: {trendColor}">{trend}</p>
+        {/if}
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        {#if icon}
+          <span class="text-lg">{icon}</span>
+        {/if}
+        {#if trendData.length > 0}
+          <Sparkline data={trendData} width={60} height={24} color={trendColor} />
+        {/if}
+      </div>
     </div>
-    <div class="flex flex-col items-end gap-1">
-      {#if icon}
-        <span class="text-lg">{icon}</span>
-      {/if}
-      {#if trendData.length > 0}
-        <Sparkline data={trendData} width={60} height={24} color={trendColor} />
-      {/if}
-    </div>
-  </div>
-</Card>
+  </Card.Content>
+</Card.Root>

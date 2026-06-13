@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Dialog from '$lib/ui/components/Dialog.svelte';
+  import * as Dialog from '$lib/components/ui/dialog';
   import { Button } from '$lib/components/ui/button';
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -19,18 +19,24 @@
   function skip() { localStorage.setItem('spaceeye_onboarded', 'true'); open = false; }
 </script>
 
-<Dialog bind:open title={steps[step].title}>
-  <div class="text-center py-4">
-    <div class="text-5xl mb-4">{steps[step].icon}</div>
-    <p class="text-sm text-muted-foreground">{steps[step].description}</p>
-    <div class="flex justify-center gap-1.5 mt-6">
-      {#each steps as _, i}
-        <div class="w-2 h-2 rounded-full transition-colors" class:bg-primary={i === step} class:bg-muted={i !== step}></div>
-      {/each}
-    </div>
-  </div>
-  {#snippet actions()}
-    <Button variant="ghost" onclick={skip}>Pular</Button>
-    <Button onclick={next}>{step < steps.length - 1 ? 'Próximo' : 'Começar'}</Button>
-  {/snippet}
-</Dialog>
+<Dialog.Root bind:open>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+    <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
+      <Dialog.Title>{steps[step].title}</Dialog.Title>
+      <div class="text-center py-4">
+        <div class="text-5xl mb-4">{steps[step].icon}</div>
+        <p class="text-sm text-muted-foreground">{steps[step].description}</p>
+        <div class="flex justify-center gap-1.5 mt-6">
+          {#each steps as _, i}
+            <div class="w-2 h-2 rounded-full transition-colors" class:bg-primary={i === step} class:bg-muted={i !== step}></div>
+          {/each}
+        </div>
+      </div>
+      <Dialog.Footer>
+        <Button variant="ghost" onclick={skip}>Pular</Button>
+        <Button onclick={next}>{step < steps.length - 1 ? 'Próximo' : 'Começar'}</Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>

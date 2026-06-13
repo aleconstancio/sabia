@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Badge from '$lib/ui/components/Badge.svelte';
+  import { Badge } from '$lib/components/ui/badge';
 
   const products: Record<string, { label: string; description: string; category: string }> = {
     NDVI: { label: 'NDVI', description: 'Índice de Vegetação - diferencia solo nuo de vegetação densa', category: 'Vegetação' },

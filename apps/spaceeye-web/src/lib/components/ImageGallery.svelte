@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Badge from '$lib/ui/components/Badge.svelte';
+  import { Badge } from '$lib/components/ui/badge';
   import ImageMetadata from '$lib/components/ImageMetadata.svelte';
   import type { ImageResult } from '$lib/api/types';
 

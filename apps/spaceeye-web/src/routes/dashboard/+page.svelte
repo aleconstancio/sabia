@@ -4,8 +4,6 @@
   import { dashboardState } from '$lib/stores/dashboard.svelte';
   import { alertStore } from '$lib/stores/alerts.svelte';
   import { Button } from '$lib/components/ui/button';
-  import Spinner from '$lib/ui/components/Spinner.svelte';
-  import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import Scorecard from './Scorecard.svelte';
   import PortfolioGrid from './PortfolioGrid.svelte';
 
@@ -47,16 +45,17 @@
 
   <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
     {#if dashboardState.isLoading}
-      <div class="flex justify-center py-16"><Spinner size="lg" /></div>
+      <div class="flex justify-center py-16">
+        <span class="animate-spin h-10 w-10 border-[3px] border-primary border-t-transparent rounded-full"></span>
+      </div>
     {:else if dashboardState.profiles.length === 0}
-      <EmptyState
-        title="No regions monitored"
-        description="Process an image on the map and save as a profile to build your ESG dashboard."
-      >
-        {#snippet action()}
+      <div class="flex flex-col items-center justify-center py-16 text-center">
+        <h3 class="text-lg font-semibold text-foreground mb-1">No regions monitored</h3>
+        <p class="text-sm text-muted-foreground max-w-sm">Process an image on the map and save as a profile to build your ESG dashboard.</p>
+        <div class="mt-4">
           <Button onclick={() => goto('/map')}>Go to Map</Button>
-        {/snippet}
-      </EmptyState>
+        </div>
+      </div>
     {:else}
       <!-- ESG Scorecard -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

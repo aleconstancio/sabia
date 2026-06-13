@@ -3,7 +3,7 @@
   import { monitorsStore } from '$lib/stores/monitors.svelte';
   import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
   import { Button } from '$lib/components/ui/button';
-  import Dialog from '$lib/ui/components/Dialog.svelte';
+  import * as Dialog from '$lib/components/ui/dialog';
   import type { Monitor, Bookmark } from '$lib/api/types';
 
   let show = $state(false);
@@ -135,12 +135,18 @@
   {/if}
 </div>
 
-<Dialog bind:open={showDeleteDialog} title="Remover monitor?">
-  <p class="text-sm text-muted-foreground">
-    Tem certeza que deseja remover o monitor de "{deleteTarget?.bookmarkName}"?
-  </p>
-  {#snippet actions()}
-    <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancelar</Button>
-    <Button variant="destructive" onclick={handleConfirmDeleteMonitor}>Remover</Button>
-  {/snippet}
-</Dialog>
+<Dialog.Root bind:open={showDeleteDialog}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+    <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
+      <Dialog.Title>Remover monitor?</Dialog.Title>
+      <p class="text-sm text-muted-foreground">
+        Tem certeza que deseja remover o monitor de "{deleteTarget?.bookmarkName}"?
+      </p>
+      <Dialog.Footer>
+        <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancelar</Button>
+        <Button variant="destructive" onclick={handleConfirmDeleteMonitor}>Remover</Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
