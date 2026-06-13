@@ -1,12 +1,8 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db
 from backend.models.schemas import PolygonRequest
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

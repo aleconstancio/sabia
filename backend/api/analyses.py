@@ -1,5 +1,4 @@
 import json
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -8,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.deps import get_db, verify_api_key
 
-logger = logging.getLogger(__name__)
 router = APIRouter()
 
 

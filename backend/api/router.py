@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,8 +15,6 @@ from backend.api.reports import router as reports_router
 from backend.api.soil import router as soil_router
 from backend.api.tasks_api import router as tasks_api_router
 from backend.api.weather import router as weather_router
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

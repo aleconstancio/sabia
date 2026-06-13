@@ -1,6 +1,7 @@
 import logging
 
 from backend.api.deps import get_http_client
+from backend.utils import compute_centroid
 
 logger = logging.getLogger(__name__)
 
@@ -8,17 +9,6 @@ TEMP_WEIGHT = 0.3
 HUMIDITY_WEIGHT = 0.25
 PRECIP_WEIGHT = 0.25
 VEG_WEIGHT = 0.2
-
-
-def _compute_centroid(coords: list[list[list[float]]]) -> tuple[float, float]:
-    """Compute centroid of a polygon from coordinate rings."""
-    all_lons = []
-    all_lats = []
-    for ring in coords:
-        for lon, lat in ring:
-            all_lons.append(lon)
-            all_lats.append(lat)
-    return sum(all_lats) / len(all_lats), sum(all_lons) / len(all_lons)
 
 
 def _temperature_score(temp_max: float) -> float:
@@ -65,7 +55,7 @@ def _risk_level(score: float) -> str:
 
 async def fetch_weather_for_fire(coords: list[list[list[float]]]) -> dict:
     """Fetch weather data for fire risk calculation."""
-    lat, lon = _compute_centroid(coords)
+    lat, lon = compute_centroid(coords)
     try:
         client = await get_http_client()
         resp = await client.get(

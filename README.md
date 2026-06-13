@@ -47,7 +47,7 @@
 **Prerequisites**: Docker 24+ · docker-compose v2 · [INPE registered email](http://queimadas.dgi.inpe.br/catalogo/explore)
 
 ```bash
-git clone https://github.com/your-org/spaceeye && cd spaceeye
+git clone https://github.com/spaceeye/spaceeye && cd spaceeye
 cp .env.example .env   # Set EMAIL_INPE in .env
 docker compose up -d --build
 docker compose --profile setup run --rm seed
@@ -60,7 +60,7 @@ Open **http://localhost** — you're ready to analyze satellite imagery.
 **Prerequisites**: `uv` · `node` 20+ · PostgreSQL 16+PostGIS · Redis 7
 
 ```bash
-git clone https://github.com/your-org/spaceeye && cd spaceeye
+git clone https://github.com/spaceeye/spaceeye && cd spaceeye
 just setup     # Installs deps, creates .env
 just dev       # Starts Postgres, Redis, backend, worker, frontend
 ```

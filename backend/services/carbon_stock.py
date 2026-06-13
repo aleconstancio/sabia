@@ -1,21 +1,11 @@
 import logging
 
 from backend.api.deps import get_http_client
+from backend.utils import compute_centroid
 
 logger = logging.getLogger(__name__)
 
 BIOMASS_FACTOR = 2.0
-
-
-def _compute_centroid(coords: list[list[list[float]]]) -> tuple[float, float]:
-    """Compute centroid of a polygon from coordinate rings."""
-    all_lons = []
-    all_lats = []
-    for ring in coords:
-        for lon, lat in ring:
-            all_lons.append(lon)
-            all_lats.append(lat)
-    return sum(all_lats) / len(all_lats), sum(all_lons) / len(all_lons)
 
 
 def _extract_soil_oc(soil_data: dict) -> float:
@@ -47,7 +37,7 @@ def _compute_biomass_proxy(weather: dict) -> float:
 
 async def fetch_weather(coords: list[list[list[float]]]) -> dict:
     """Fetch weather from Open-Meteo for polygon centroid."""
-    lat, lon = _compute_centroid(coords)
+    lat, lon = compute_centroid(coords)
     try:
         client = await get_http_client()
         resp = await client.get(
@@ -71,7 +61,7 @@ async def fetch_weather(coords: list[list[list[float]]]) -> dict:
 
 async def fetch_soil(coords: list[list[list[float]]]) -> dict:
     """Fetch soil properties from ISRIC SoilGrids for polygon centroid."""
-    lat, lon = _compute_centroid(coords)
+    lat, lon = compute_centroid(coords)
     try:
         client = await get_http_client()
         resp = await client.get(

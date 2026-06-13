@@ -1,5 +1,4 @@
 import io
-import logging
 from datetime import datetime as _dt
 
 from fastapi import APIRouter
@@ -8,8 +7,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
 from backend.models.schemas import ExportPdfRequest
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,8 +7,6 @@ from backend.models.schemas import (
     ProcessBatchRequest,
     ProcessRequest,
 )
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
