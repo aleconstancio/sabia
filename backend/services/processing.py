@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import uuid
 
 import geopandas as gpd
 import numpy as np
@@ -34,11 +35,14 @@ async def process_image(
     if progress_callback:
         await progress_callback(30, "cropping")
 
-    import uuid
-    output_path = os.path.join(settings.temp_dir, "cache", f"{product_name}_{image_id}_{uuid.uuid4().hex[:8]}.tif")
+    output_path = os.path.join(
+        settings.temp_dir, "cache", f"{product_name}_{image_id}_{uuid.uuid4().hex[:8]}.tif"
+    )
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    result = await asyncio.to_thread(_compute_product, downloaded, polygon_coords, product_name, output_path)
+    result = await asyncio.to_thread(
+        _compute_product, downloaded, polygon_coords, product_name, output_path
+    )
     result_path = result["path"]
     result_stats = result.get("statistics", {})
 
@@ -59,13 +63,15 @@ def _compute_product(
     product_name: str,
     output_path: str,
 ) -> dict:
+    from pyproj import Geod
+
     from backend.domain.products import get_product
 
     product = get_product(product_name)
 
     # Edge case detection
     poly = shape({"type": "Polygon", "coordinates": polygon_coords})
-    from pyproj import Geod
+
     g = Geod(ellps="WGS84")
     poly_area_m2, _ = g.geometry_area_perimeter(poly)
     poly_area_km2 = abs(poly_area_m2) / 1_000_000
@@ -136,7 +142,9 @@ def _compute_product(
                 if bname == "pan":
                     continue
                 ps = np.zeros_like(pan_data)
-                ps[mask_soma] = (band_data[bname][mask_soma] / soma[mask_soma]) * pan_data[mask_soma]
+                ps[mask_soma] = (band_data[bname][mask_soma] / soma[mask_soma]) * pan_data[
+                    mask_soma
+                ]
                 band_data[bname] = ps
 
     band_data_for_product = {k: v for k, v in band_data.items() if k not in ("pan", "scl")}
@@ -151,7 +159,10 @@ def _compute_product(
         if scl.shape != result.shape:
             try:
                 from skimage.transform import resize as skresize
-                scl = skresize(scl.astype(float), result.shape, order=0, preserve_range=True).astype(int)
+
+                scl = skresize(
+                    scl.astype(float), result.shape, order=0, preserve_range=True
+                ).astype(int)
             except ImportError:
                 logger.warning("scikit-image not installed, cloud masking skipped")
                 cloud_masking_skipped = True
@@ -206,4 +217,8 @@ def _compute_product(
     else:
         stats = {"mean": 0.0, "min": 0.0, "max": 0.0, "std": 0.0, "histogram": {}}
 
-    return {"path": output_path, "statistics": stats, "cloud_masking_skipped": cloud_masking_skipped}
+    return {
+        "path": output_path,
+        "statistics": stats,
+        "cloud_masking_skipped": cloud_masking_skipped,
+    }

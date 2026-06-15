@@ -34,6 +34,7 @@ async def get_task_status(task_id: str):
         }
     elif result.state == "FAILURE":
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error("Task %s failed: %s", task_id, result.info)
         return {
@@ -73,6 +74,7 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                 data["result"] = result_data
             elif result.state == "FAILURE":
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.error("Task %s failed: %s", task_id, result.info)
                 data["error"] = "Task processing failed"

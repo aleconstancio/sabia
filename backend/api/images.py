@@ -12,7 +12,9 @@ async def list_collections_endpoint():
     from backend.domain.catalog import list_collections
 
     cols = list_collections()
-    return [{"id": c.id, "bands": c.available_bands, "products": c.available_products} for c in cols]
+    return [
+        {"id": c.id, "bands": c.available_bands, "products": c.available_products} for c in cols
+    ]
 
 
 @router.post("/images/search")
@@ -23,10 +25,16 @@ async def search_images(
     from backend.repositories.images import find_images_by_polygon
 
     images, total = await find_images_by_polygon(
-        db, req.coordinates, req.collections,
-        date_from=req.date_from, date_to=req.date_to,
-        max_cloud=req.max_cloud, sort_by=req.sort_by,
-        sort_order=req.sort_order, limit=req.limit, offset=req.offset,
+        db,
+        req.coordinates,
+        req.collections,
+        date_from=req.date_from,
+        date_to=req.date_to,
+        max_cloud=req.max_cloud,
+        sort_by=req.sort_by,
+        sort_order=req.sort_order,
+        limit=req.limit,
+        offset=req.offset,
     )
     return {"images": images, "total": total}
 
@@ -47,17 +55,25 @@ async def image_timeline(req: PolygonRequest, db: AsyncSession = Depends(get_db)
     from backend.repositories.images import find_images_by_polygon
 
     images, total = await find_images_by_polygon(
-        db, req.coordinates, req.collections,
-        date_from=req.date_from, date_to=req.date_to,
-        max_cloud=req.max_cloud, sort_by=req.sort_by,
-        sort_order=req.sort_order, limit=100, offset=0
+        db,
+        req.coordinates,
+        req.collections,
+        date_from=req.date_from,
+        date_to=req.date_to,
+        max_cloud=req.max_cloud,
+        sort_by=req.sort_by,
+        sort_order=req.sort_order,
+        limit=100,
+        offset=0,
     )
     timeline = []
     for img in images:
-        timeline.append({
-            "id": img["id"],
-            "date": img["acquired_at"],
-            "cloud_cover": img["cloud_cover"],
-            "thumbnail_url": img["thumbnail_url"],
-        })
+        timeline.append(
+            {
+                "id": img["id"],
+                "date": img["acquired_at"],
+                "cloud_cover": img["cloud_cover"],
+                "thumbnail_url": img["thumbnail_url"],
+            }
+        )
     return {"timeline": timeline, "total": total}

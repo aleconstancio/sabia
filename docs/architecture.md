@@ -137,12 +137,18 @@ apps/spaceeye-web/src/
 │   │   ├── history.svelte.ts     # Analysis history
 │   │   └── monitors.svelte.ts    # Region monitoring
 │   ├── ui/                       # Design system
-│   │   ├── components/           # Button, Card, Badge, Dialog, etc.
-│   │   └── styles/               # Global CSS, tokens, utilities
+│   │   └── components/           # Button, Card, Badge, Dialog, etc.
+│   ├── helpers/                  # Shared utilities
+│   │   ├── download.ts           # downloadBlob(), downloadBlobPost()
+│   │   ├── pollTask.ts           # pollTaskStatus() for Celery tasks
+│   │   ├── localStorage.ts       # createLocalStorageStore() for persisted stores
+│   │   ├── useFetch.svelte.ts    # Reactive fetch composable
+│   │   ├── leaflet.ts            # Shared Leaflet map initialization
+│   │   └── map-helpers.ts        # Leaflet helper functions
+│   ├── actions/                  # Svelte actions
+│   │   └── clickOutside.ts       # Click-outside detection
 │   └── utils/                    # Shared utilities
-│       ├── download.ts           # downloadBlob(), downloadBlobPost()
-│       ├── pollTask.ts           # pollTaskStatus() for Celery tasks
-│       └── map-helpers.ts        # Leaflet helper functions
+│       └── logger.ts             # Structured logging
 └── routes/                       # SvelteKit pages
     ├── +layout.svelte            # Root layout
     ├── dashboard/                # ESG dashboard (primary landing page)
@@ -175,7 +181,8 @@ pipeline/                         # Data ingestion scripts
 ├── ingest.py                     # STAC → PostGIS
 └── cleanup.py                    # TTL-based cache cleanup
 scripts/                          # Helper scripts
-└── migrate.sh                    # Run Alembic migrations
+├── run-backend.sh                # Start FastAPI dev server
+└── run-worker.sh                 # Start Celery worker
 ```
 
 ## Key Abstractions
@@ -277,12 +284,11 @@ region_profiles ──< alert_rules (1:N, FK profile_id, CASCADE DELETE)
 - **HTTP exceptions** — returned as `{"detail": "message"}` with appropriate status codes
 - **Global exception handler** — catches unhandled exceptions, logs them, returns generic 500
 - **Health check** — returns HTTP 503 when database is disconnected
-- **ESG stubs** — endpoints not yet fully implemented return HTTP 501
 
 ### Frontend
 
 - **Toast notifications** — for user-facing errors (using `svelte-sonner`)
-- **Console warnings** — for non-critical failures (background data loading)
+- **Logger** — structured logging via `$lib/utils/logger.ts` for non-critical failures
 - **Error boundaries** — for component-level error isolation
 
 ## Performance Considerations

@@ -6,6 +6,7 @@ import { searchImages as apiSearchImages, processImage as apiProcessImage, expor
 import { API_URL } from '$lib/config';
 import { downloadBlob, downloadBlobPost, triggerDownload } from '$lib/helpers/download';
 import { pollTaskStatus } from '$lib/helpers/pollTask';
+import { logger } from '$lib/utils/logger';
 import type { Map as LeafletMap } from 'leaflet';
 
 interface ProcessResult {
@@ -94,14 +95,14 @@ export async function processImage(imageId: string) {
       mapState.processingPhase = 'Erro: ' + (result.error || 'Falha no processamento');
     }
   } catch (e: unknown) {
-    console.error('processImage error:', e);
+    logger.error('processImage error:', e);
     mapState.isLoading = false;
     mapState.processingPhase = 'Erro ao iniciar processamento';
     toast.error('Falha ao iniciar processamento');
   }
 }
 
-export function showOverlayResult(result: ProcessResult) {
+function showOverlayResult(result: ProcessResult) {
   if (!result || !mapState.map) return;
   const bounds = result.bounds;
   const map = mapState.map as LeafletMap;
@@ -132,7 +133,7 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
   try {
     await downloadBlobPost(`${API_URL}/export/pdf`, body, `spaceeye-${imageId.slice(0, 20)}.pdf`);
   } catch (e: unknown) {
-    console.error('exportPdf error:', e);
+    logger.error('exportPdf error:', e);
     toast.error('Falha ao exportar PDF');
   }
 }
@@ -141,17 +142,8 @@ export async function downloadGeotiff(taskId: string) {
   try {
     await downloadBlob(`${API_URL}/download/${taskId}/geotiff`, `spaceeye-${taskId.slice(0, 8)}.tif`);
   } catch (e: unknown) {
-    console.error('downloadGeotiff error:', e);
+    logger.error('downloadGeotiff error:', e);
     toast.error('Falha ao baixar GeoTIFF');
-  }
-}
-
-export async function downloadBatch(taskIds: string[]) {
-  try {
-    await downloadBlobPost(`${API_URL}/download/batch`, { task_ids: taskIds }, 'spaceeye-batch.zip');
-  } catch (e: unknown) {
-    console.error('downloadBatch error:', e);
-    toast.error('Falha ao baixar lote');
   }
 }
 
@@ -160,16 +152,7 @@ export async function exportEsgCsv(module: string, coordinates: number[][][]) {
     const blob = await apiExportEsgCsv({ region: module, coordinates, module });
     triggerDownload(blob, `spaceeye-${module}-export.csv`);
   } catch (e: unknown) {
-    console.error('exportEsgCsv error:', e);
+    logger.error('exportEsgCsv error:', e);
     toast.error('Failed to export CSV');
-  }
-}
-
-export async function exportEsgJson(region: string, coordinates: number[][][]) {
-  try {
-    await downloadBlobPost(`${API_URL}/export/esg-json`, { region, coordinates }, `spaceeye-esg-export.json`);
-  } catch (e: unknown) {
-    console.error('exportEsgJson error:', e);
-    toast.error('Failed to export JSON');
   }
 }

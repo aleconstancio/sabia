@@ -1,27 +1,9 @@
 import type { Bookmark, Monitor } from '$lib/api/types';
 import { searchImages } from '$lib/api/client';
+import { createLocalStorageStore } from '$lib/helpers/localStorage.svelte';
+import { logger } from '$lib/utils/logger';
 
-let _monitors = $state<Monitor[]>([]);
-
-function load() {
-  try {
-    const raw = localStorage.getItem('spaceeye_monitors');
-    const parsed = raw ? JSON.parse(raw) : [];
-    _monitors = Array.isArray(parsed) ? parsed : [];
-  } catch (e) { console.warn('Monitors load failed:', e); _monitors = []; }
-}
-
-function persist() {
-  try {
-    localStorage.setItem('spaceeye_monitors', JSON.stringify(_monitors));
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      console.warn('Monitors localStorage quota exceeded');
-    } else {
-      console.warn('Monitors persist failed:', e);
-    }
-  }
-}
+const store = createLocalStorageStore<Monitor>('spaceeye_monitors', []);
 
 function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover: number = 30): Monitor {
   const m: Monitor = {
@@ -35,18 +17,16 @@ function addMonitor(bookmark: Bookmark, product: string = 'NDVI', minCloudCover:
     lastChecked: null,
     lastResult: null,
   };
-  _monitors = [..._monitors, m];
-  persist();
+  store.data = [...store.data, m];
   return m;
 }
 
 function removeMonitor(id: string) {
-  _monitors = _monitors.filter(m => m.id !== id);
-  persist();
+  store.data = store.data.filter(m => m.id !== id);
 }
 
 function getMonitors(): Monitor[] {
-  return _monitors;
+  return store.data;
 }
 
 async function checkMonitor(m: Monitor): Promise<string> {
@@ -54,21 +34,18 @@ async function checkMonitor(m: Monitor): Promise<string> {
     const data = await searchImages(m.polygonCoords, undefined);
     const newImages = data.images || [];
     const result = newImages.length > 0 ? `Nova imagem: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'Sem novidades';
-    _monitors = _monitors.map(monitor =>
+    store.data = store.data.map(monitor =>
       monitor.id === m.id
         ? { ...monitor, lastChecked: new Date().toISOString(), lastResult: result }
         : monitor
     );
-    persist();
     return result;
-  } catch (e) { console.warn('Monitor check failed:', e); }
+  } catch (e) { logger.warn('Monitor check failed:', e); }
   return 'Falha na verificação';
 }
 
-load();
-
 export const monitorsStore = {
-  get all() { return _monitors; },
+  get all() { return store.data; },
   add: addMonitor,
   remove: removeMonitor,
   getAll: getMonitors,

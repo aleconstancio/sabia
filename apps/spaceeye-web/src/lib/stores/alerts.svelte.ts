@@ -1,32 +1,11 @@
 import type { Alert } from '$lib/api/types';
+import { createLocalStorageStore } from '$lib/helpers/localStorage.svelte';
 
-let _alerts = $state<Alert[]>([]);
-
-function load() {
-  try {
-    const raw = localStorage.getItem('spaceeye_alerts');
-    const parsed = raw ? JSON.parse(raw) : [];
-    _alerts = Array.isArray(parsed) ? parsed : [];
-  } catch (e) { console.warn('Alerts load failed:', e); _alerts = []; }
-}
-
-function persist() {
-  try {
-    localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts));
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      console.warn('Alerts localStorage quota exceeded, trimming old entries');
-      _alerts = _alerts.slice(0, 25);
-      try { localStorage.setItem('spaceeye_alerts', JSON.stringify(_alerts)); } catch (e: unknown) { console.warn('Alerts give-up persist:', e); }
-    } else {
-      console.warn('Alerts persist failed:', e);
-    }
-  }
-}
+const store = createLocalStorageStore<Alert>('spaceeye_alerts', []);
 
 export const alertStore = {
-  get alerts() { return _alerts; },
-  get unreadCount() { return _alerts.filter(a => !a.read).length; },
+  get alerts() { return store.data; },
+  get unreadCount() { return store.data.filter(a => !a.read).length; },
   add(alert: Omit<Alert, 'id' | 'timestamp' | 'read'>) {
     const newAlert: Alert = {
       ...alert,
@@ -34,21 +13,15 @@ export const alertStore = {
       timestamp: new Date().toISOString(),
       read: false,
     };
-    _alerts = [newAlert, ..._alerts].slice(0, 50);
-    persist();
+    store.data = [newAlert, ...store.data].slice(0, 50);
   },
   markRead(id: string) {
-    _alerts = _alerts.map(a => a.id === id ? { ...a, read: true } : a);
-    persist();
+    store.data = store.data.map(a => a.id === id ? { ...a, read: true } : a);
   },
   markAllRead() {
-    _alerts = _alerts.map(a => ({ ...a, read: true }));
-    persist();
+    store.data = store.data.map(a => ({ ...a, read: true }));
   },
   clear() {
-    _alerts = [];
-    persist();
+    store.data = [];
   },
 };
-
-load();

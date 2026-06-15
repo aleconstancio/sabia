@@ -2,8 +2,10 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import type { ImageResult } from '$lib/api/types';
-  import { processImage as apiProcessImage } from '$lib/api/client';
+  import { processImage as apiProcessImage, api } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
+  import { API_URL } from '$lib/config';
+  import { logger } from '$lib/utils/logger';
 
   let {
     imageA = null as ImageResult | null,
@@ -27,8 +29,6 @@
   let taskIdB = $state('');
   let computingDiff = $state(false);
   let diffOverlay: L.ImageOverlay | null = $state(null);
-  import { API_URL } from '$lib/config';
-
   let diffError = $state('');
   let mounted = $state(true);
 
@@ -98,15 +98,10 @@
     if (!taskIdA || !taskIdB) return;
     computingDiff = true;
     try {
-      const resp = await fetch(`${API_URL}/difference`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task_id_a: taskIdA,
-          task_id_b: taskIdB,
-        }),
+      const data = await api.post('/difference', {
+        task_id_a: taskIdA,
+        task_id_b: taskIdB,
       });
-      const data = await resp.json();
       const result = await pollTaskStatus(data.task_id, { intervalMs: 2000 });
       if (result.status === 'done') {
         const bounds = result.result?.bounds as [[number, number], [number, number]];
@@ -120,7 +115,7 @@
       }
       computingDiff = false;
     } catch (e: unknown) {
-      console.warn('RegionComparison computeDifference error:', e);
+      logger.warn('RegionComparison computeDifference error:', e);
       computingDiff = false;
       diffError = 'Falha ao iniciar diferença';
     }

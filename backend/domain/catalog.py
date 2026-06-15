@@ -4,27 +4,30 @@ from abc import ABC, abstractmethod
 class Collection(ABC):
     @property
     @abstractmethod
-    def id(self) -> str:
-        ...
+    def id(self) -> str: ...
 
     @property
     @abstractmethod
-    def stac_url(self) -> str:
-        ...
+    def stac_url(self) -> str: ...
 
     @property
     @abstractmethod
-    def available_bands(self) -> list[str]:
-        ...
+    def available_bands(self) -> list[str]: ...
 
     @property
     @abstractmethod
-    def available_products(self) -> list[str]:
-        ...
+    def available_products(self) -> list[str]: ...
 
+    @property
     @abstractmethod
+    def _band_mapping(self) -> dict[str, str]: ...
+
     def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        ...
+        """Look up a band in item_assets using the collection's band mapping."""
+        key = self._band_mapping.get(band)
+        if key and key in item_assets:
+            return item_assets[key]["href"]
+        return None
 
 
 class Cbers4ACollection(Collection):
@@ -32,13 +35,7 @@ class Cbers4ACollection(Collection):
     stac_url = "http://www.dgi.inpe.br/lgi-stac/collections/CBERS4A_WPM_L4_DN/items"
     available_bands = ["pan", "red", "green", "blue", "nir"]
     available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        mapping = {"pan": "pan", "red": "red", "green": "green", "blue": "blue", "nir": "nir"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
+    _band_mapping = {"pan": "pan", "red": "red", "green": "green", "blue": "blue", "nir": "nir"}
 
 
 class Amazonia1Collection(Collection):
@@ -46,13 +43,7 @@ class Amazonia1Collection(Collection):
     stac_url = "https://queimadas.dgi.inpe.br/queimadas/catalogo/items"
     available_bands = ["red", "green", "blue", "nir"]
     available_products = ["TCI", "NDVI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        mapping = {"red": "red", "green": "green", "blue": "blue", "nir": "nir"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
+    _band_mapping = {"red": "red", "green": "green", "blue": "blue", "nir": "nir"}
 
 
 class Sentinel2Collection(Collection):
@@ -60,25 +51,33 @@ class Sentinel2Collection(Collection):
     stac_url = "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items"
     available_bands = ["red", "green", "blue", "nir", "scl"]
     available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        mapping = {"red": "B04", "green": "B03", "blue": "B02", "nir": "B08", "scl": "SCL"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
+    _band_mapping = {"red": "B04", "green": "B03", "blue": "B02", "nir": "B08", "scl": "SCL"}
 
 
 class LandsatCollection(Collection):
     available_bands = ["pan", "red", "green", "blue", "nir", "swir1", "swir2"]
-    available_products = ["NDVI", "TCI", "NDWI", "SAVI", "EVI", "MSAVI2", "VARI", "MNDWI", "CIR", "NBR", "NDMI"]
-
-    def get_asset_url(self, item_assets: dict, band: str) -> str | None:
-        mapping = {"red": "B4", "green": "B3", "blue": "B2", "nir": "B5", "pan": "B8", "swir1": "B6", "swir2": "B7"}
-        key = mapping.get(band)
-        if key and key in item_assets:
-            return item_assets[key]["href"]
-        return None
+    available_products = [
+        "NDVI",
+        "TCI",
+        "NDWI",
+        "SAVI",
+        "EVI",
+        "MSAVI2",
+        "VARI",
+        "MNDWI",
+        "CIR",
+        "NBR",
+        "NDMI",
+    ]
+    _band_mapping = {
+        "red": "B4",
+        "green": "B3",
+        "blue": "B2",
+        "nir": "B5",
+        "pan": "B8",
+        "swir1": "B6",
+        "swir2": "B7",
+    }
 
 
 class Landsat8Collection(LandsatCollection):

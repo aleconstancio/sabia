@@ -36,12 +36,6 @@ export interface WeatherData {
   description?: string;
 }
 
-export interface LandCoverData {
-  class_id: number;
-  class_name: string;
-  area_pct: number;
-}
-
 export interface Bookmark {
   id: string;
   name: string;
@@ -139,9 +133,9 @@ export interface RegionProfile {
 
 export interface LandCoverStats {
   source: string;
-  classes: { code: number; name: string; area_pct: number }[];
-  total_area_km2: number;
-  centroid: { lat: number; lon: number };
+  resolution: string;
+  classes: { id: number; name: string; color: string; pixels: number; percentage: number }[];
+  total_pixels: number;
 }
 
 export interface CarbonStock {
@@ -149,15 +143,32 @@ export interface CarbonStock {
   soil_organic_carbon: number;
   biomass_estimate: number;
   ndvi_avg: number;
+  weather_summary: {
+    temperature: number | null;
+    humidity: number | null;
+    precipitation: number | null;
+  };
+  soil_summary: {
+    organic_carbon_gkg: number;
+    nitrogen: number;
+  };
 }
 
 export interface FireRisk {
-  risk_level: 'low' | 'medium' | 'high' | 'critical';
-  risk_score: number;
-  nbr_trend: number;
-  temperature_factor: number;
-  humidity_factor: number;
-  precipitation_factor: number;
+  fire_risk_score: number;
+  risk_level: 'low' | 'moderate' | 'high' | 'extreme';
+  factors: {
+    temperature_score: number;
+    humidity_score: number;
+    precipitation_score: number;
+    vegetation_score: number;
+    drought_days: number;
+  };
+  weather_summary: {
+    temperature: number;
+    humidity: number;
+    precipitation_7d: number;
+  };
 }
 
 export interface Alert {

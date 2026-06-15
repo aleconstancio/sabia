@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { getUfs, getCities } from '$lib/api/client';
-  import { API_URL } from '$lib/config';
+  import { getUfs, getCities, geocode } from '$lib/api/client';
+  import { clickOutside } from '$lib/actions/clickOutside';
+  import { logger } from '$lib/utils/logger';
 
   let {
     navigateToCity = (lat: number, lng: number) => {}
@@ -18,25 +19,17 @@
 
   let apiError = $state('');
 
-  function handleClickOutside(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.uf-container') && !target.closest('.city-container')) {
-      showUfDropdown = false;
-      showCityDropdown = false;
-    }
-  }
+  let ufContainer: HTMLDivElement;
+  let cityContainer: HTMLDivElement;
 
   onMount(async () => {
-    document.addEventListener('click', handleClickOutside);
     try {
       ufs = await getUfs();
     } catch {
-      console.warn('SearchMenu failed to load UFs');
+      logger.warn('SearchMenu failed to load UFs');
       apiError = 'Falha ao carregar estados';
     }
   });
-
-  onDestroy(() => document.removeEventListener('click', handleClickOutside));
 
   async function onUfSelect(uf: string) {
     selectedUf = uf;
@@ -45,7 +38,7 @@
     try {
       cities = await getCities(uf);
     } catch {
-      console.warn('SearchMenu failed to load cities for UF:', uf);
+      logger.warn('SearchMenu failed to load cities for UF:', uf);
       cities = [];
       apiError = 'Falha ao carregar cidades';
     }
@@ -57,14 +50,12 @@
     showCityDropdown = false;
 
     try {
-      // TODO: Add a typed geocode() function to $lib/api/client.ts
-      const resp = await fetch(`${API_URL}/geocode?q=${city}-${selectedUf}`);
-      const data = await resp.json();
-      if (data.length > 0) {
-        navigateToCity(parseFloat(data[0].lat), parseFloat(data[0].lon));
+      const results = await geocode(`${city}-${selectedUf}`);
+      if (results.length > 0) {
+        navigateToCity(parseFloat(results[0].lat), parseFloat(results[0].lon));
       }
     } catch {
-      console.warn('SearchMenu geocode failed for city:', city);
+      logger.warn('SearchMenu geocode failed for city:', city);
       apiError = 'Falha na busca do local';
     }
   }
@@ -74,7 +65,7 @@
 </script>
 
 <div class="flex items-center gap-2">
-  <div class="relative uf-container">
+  <div class="relative uf-container" bind:this={ufContainer}>
     <input
       bind:value={ufFilter}
       placeholder="UF"
@@ -83,14 +74,17 @@
       aria-label="Buscar estado"
     />
     {#if showUfDropdown && filteredUfs.length > 0}
-      <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-20">
+      <div
+        use:clickOutside={{ handler: () => showUfDropdown = false, enabled: showUfDropdown, exclude: [ufContainer] }}
+        class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-20"
+      >
         {#each filteredUfs as uf}
           <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted cursor-pointer bg-transparent border-none" onclick={() => onUfSelect(uf)}>{uf}</button>
         {/each}
       </div>
     {/if}
   </div>
-  <div class="relative city-container">
+  <div class="relative city-container" bind:this={cityContainer}>
     <input
       bind:value={cityFilter}
       placeholder="Cidade"
@@ -100,7 +94,10 @@
       aria-label="Buscar cidade"
     />
     {#if showCityDropdown && filteredCities.length > 0}
-      <div class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-48">
+      <div
+        use:clickOutside={{ handler: () => showCityDropdown = false, enabled: showCityDropdown, exclude: [cityContainer] }}
+        class="absolute top-full left-0 z-50 mt-1 max-h-48 overflow-auto rounded border bg-card shadow-lg w-48"
+      >
         {#each filteredCities as city}
           <button class="w-full px-2 py-1 text-left text-sm hover:bg-muted cursor-pointer bg-transparent border-none" onclick={() => onCitySelect(city)}>{city}</button>
         {/each}

@@ -4,6 +4,7 @@
   import type { ImageResult } from '$lib/api/types';
   import { processImage as apiProcessImage } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
+  import { logger } from '$lib/utils/logger';
 
   let {
     images = [] as ImageResult[],
@@ -33,7 +34,7 @@
       }
       return false;
     } catch {
-      console.warn('TimelapsePlayer ensureProcessed error for image:', imageId);
+      logger.warn('TimelapsePlayer ensureProcessed error for image:', imageId);
       processError = 'Falha ao processar frame';
     }
     return false;

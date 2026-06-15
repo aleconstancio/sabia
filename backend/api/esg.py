@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter
 from fastapi.responses import Response
+from pydantic import BaseModel
 
 from backend.exceptions import ExternalAPIError
 from backend.models.schemas import PolygonRequest
@@ -11,6 +12,11 @@ from backend.services.fire_risk import calculate_fire_risk
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+class ESGExportRequest(BaseModel):
+    region: str = "unknown"
+    coordinates: list[list[list[float]]]
 
 
 @router.post("/carbon-stock")
@@ -49,12 +55,10 @@ async def export_esg_csv(req: PolygonRequest):
 
 
 @router.post("/export/esg-json")
-async def export_esg_json(data: dict):
+async def export_esg_json(data: ESGExportRequest):
     """Export full ESG data package as JSON."""
     try:
-        coordinates = data.get("coordinates", [])
-        region = data.get("region", "unknown")
-        return await export_esg_json_data(region, coordinates)
+        return await export_esg_json_data(data.region, data.coordinates)
     except Exception as e:
         logger.warning("ESG JSON export failed: %s", e)
         raise ExternalAPIError(f"ESG JSON export failed: {e}") from e

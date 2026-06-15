@@ -35,8 +35,10 @@ class TestCollectionRegistry:
 
     def test_cbers4a_asset_url(self):
         c = get_collection("cbers4a")
-        assets = {"red": {"href": "http://example.com/red.tif"},
-                  "nir": {"href": "http://example.com/nir.tif"}}
+        assets = {
+            "red": {"href": "http://example.com/red.tif"},
+            "nir": {"href": "http://example.com/nir.tif"},
+        }
         assert c.get_asset_url(assets, "red") == "http://example.com/red.tif"
         assert c.get_asset_url(assets, "pan") is None
 
@@ -48,7 +50,10 @@ class TestCollectionRegistry:
 
     def test_amazonia1_asset_url_resolution(self):
         c = get_collection("amazonia1")
-        assets = {"red": {"href": "https://example.com/red.tif"}, "nir": {"href": "https://example.com/nir.tif"}}
+        assets = {
+            "red": {"href": "https://example.com/red.tif"},
+            "nir": {"href": "https://example.com/nir.tif"},
+        }
         assert c.get_asset_url(assets, "red") == "https://example.com/red.tif"
         assert c.get_asset_url(assets, "nir") == "https://example.com/nir.tif"
         assert c.get_asset_url(assets, "swir1") is None

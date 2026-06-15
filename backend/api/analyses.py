@@ -2,10 +2,15 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db, verify_api_key
+from backend.api.auth import verify_api_key
+from backend.api.deps import get_db
+from backend.repositories.analyses import (
+    create_analysis,
+    delete_analysis,
+    list_analyses,
+)
 
 router = APIRouter()
 
@@ -22,101 +27,52 @@ class CreateAnalysisRequest(BaseModel):
 
 
 @router.post("")
-async def create_analysis(data: CreateAnalysisRequest, db: AsyncSession = Depends(get_db)):
+async def create_analysis_endpoint(data: CreateAnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Save a completed analysis record."""
-    result = await db.execute(
-        text("""
-            INSERT INTO analyses (image_id, collection, product, polygon, statistics, overlay_path, weather, centroid)
-            VALUES (:image_id, :collection, :product, :polygon, :statistics, :overlay_path, :weather, :centroid)
-            ON CONFLICT (image_id, product, (polygon::text)) DO NOTHING
-            RETURNING id
-        """),
-        {
-            "image_id": data.image_id,
-            "collection": data.collection,
-            "product": data.product,
-            "polygon": data.polygon,
-            "statistics": json.dumps(data.statistics)
-            if isinstance(data.statistics, dict)
-            else data.statistics,
-            "overlay_path": data.overlay_path,
-            "weather": json.dumps(data.weather)
-            if isinstance(data.weather, dict)
-            else data.weather,
-            "centroid": data.centroid,
-        },
+    statistics = (
+        json.dumps(data.statistics) if isinstance(data.statistics, dict) else data.statistics
     )
-    await db.commit()
-    row = result.fetchone()
-    return {"id": str(row[0])}
+    weather = json.dumps(data.weather) if isinstance(data.weather, dict) else data.weather
+
+    analysis_id = await create_analysis(
+        db,
+        image_id=data.image_id,
+        collection=data.collection,
+        product=data.product,
+        polygon=data.polygon,
+        statistics=statistics,
+        overlay_path=data.overlay_path,
+        weather=weather,
+        centroid=data.centroid,
+    )
+    if not analysis_id:
+        raise HTTPException(409, "Analysis already exists")
+    return {"id": analysis_id}
 
 
 @router.get("")
-async def list_analyses(
-    product: str = None,
-    collection: str = None,
+async def list_analyses_endpoint(
+    product: str | None = None,
+    collection: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
     """List saved analyses with optional filters."""
-    conditions = []
-    params = {"limit": limit, "offset": offset}
-    if product:
-        conditions.append("product = :product")
-        params["product"] = product
-    if collection:
-        conditions.append("collection = :collection")
-        params["collection"] = collection
-
-    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
-
-    # SECURITY NOTE: The `where` clause is built from fixed column names
-    # (product, collection) validated above — not user-supplied free text.
-    # All dynamic values use named parameters (:product, :collection) via
-    # the `params` dict, so there is no SQL injection vector here.
-    result = await db.execute(
-        text(
-            f"SELECT * FROM analyses {where} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
-        ),
-        params,
+    analyses, total = await list_analyses(
+        db, product=product, collection=collection, limit=limit, offset=offset
     )
-    rows = result.mappings().all()
-    analyses = []
-    for r in rows:
-        analyses.append(
-            {
-                "id": str(r["id"]),
-                "image_id": r["image_id"],
-                "collection": r["collection"],
-                "product": r["product"],
-                "polygon": r["polygon"],
-                "centroid": r.get("centroid"),
-                "statistics": r["statistics"],
-                "acquired_at": r["acquired_at"].isoformat() if r.get("acquired_at") else None,
-                "cloud_cover": r.get("cloud_cover"),
-                "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
-            }
-        )
-
-    count_result = await db.execute(text(f"SELECT COUNT(*) FROM analyses {where}"), params)
-    total = count_result.scalar() or 0
-
     return {"analyses": analyses, "total": total}
 
 
 @router.delete("/{analysis_id}")
-async def delete_analysis(
+async def delete_analysis_endpoint(
     analysis_id: str,
     db: AsyncSession = Depends(get_db),
     _auth: None = Depends(verify_api_key),
 ):
     """Delete a saved analysis."""
-    result = await db.execute(
-        text("DELETE FROM analyses WHERE id = :id RETURNING id"),
-        {"id": analysis_id},
-    )
-    await db.commit()
-    if not result.fetchone():
+    deleted = await delete_analysis(db, analysis_id)
+    if not deleted:
         raise HTTPException(404, "Analysis not found")
     return {"deleted": True}

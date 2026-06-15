@@ -12,7 +12,8 @@ def compute_centroid(coords: list[list[list[float]]]) -> tuple[float, float]:
     return sum(all_lats) / len(all_lats), sum(all_lons) / len(all_lons)
 
 
-def _summarize_weather(data: dict) -> dict | None:
+def summarize_weather(data: dict) -> dict | None:
+    """Summarize weather data from Open-Meteo response."""
     if not data:
         return None
     current = data.get("current", {})
@@ -24,7 +25,8 @@ def _summarize_weather(data: dict) -> dict | None:
     }
 
 
-def _summarize_soil(data: dict) -> dict | None:
+def summarize_soil(data: dict) -> dict | None:
+    """Summarize soil data from ISRIC SoilGrids response."""
     if not data:
         return None
     layers = data.get("properties", {}).get("layers", [])

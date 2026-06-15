@@ -35,6 +35,7 @@ router.include_router(tasks_api_router, prefix="/tasks", tags=["tasks"])
 @router.get("/health")
 async def health(db: AsyncSession = Depends(get_db)):
     from backend.api.health import check_database
+
     db_status = await check_database(db)
     if db_status.get("database") == "disconnected":
         return JSONResponse(status_code=503, content={"status": "error", **db_status})

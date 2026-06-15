@@ -8,7 +8,7 @@ from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, Response
 
-from backend.api.deps import verify_api_key
+from backend.api.auth import verify_api_key
 from backend.config import get_settings
 from backend.models.schemas import DownloadBatchRequest
 from backend.tasks.celery_app import celery_app
@@ -34,6 +34,18 @@ def _get_task_result(task_id: str) -> dict:
     return result.result
 
 
+def _download_file(task_id: str, path_key: str, extension: str, media_type: str) -> FileResponse:
+    """Shared helper for file download endpoints."""
+    result = _get_task_result(task_id)
+    path = result.get(path_key) or result.get("path", "")
+    if not path or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found or expired.")
+    cache_dir = os.path.join(get_settings().temp_dir, "cache")
+    _validate_path_in_cache(path, cache_dir)
+    filename = f"spaceeye_{task_id[:8]}.{extension}"
+    return FileResponse(path, filename=filename, media_type=media_type)
+
+
 @router.get("/overlay/{filename}")
 async def serve_overlay(filename: str):
     """Serve a processed overlay image."""
@@ -51,27 +63,13 @@ async def serve_overlay(filename: str):
 @router.get("/download/{task_id}")
 async def download_raster(task_id: str):
     """Download the processed PNG for a completed task."""
-    result = _get_task_result(task_id)
-    path = result.get("path", "")
-    if not path or not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File not found or expired.")
-    cache_dir = os.path.join(get_settings().temp_dir, "cache")
-    _validate_path_in_cache(path, cache_dir)
-    filename = f"spaceeye_{task_id[:8]}.png"
-    return FileResponse(path, filename=filename, media_type="image/png")
+    return _download_file(task_id, "path", "png", "image/png")
 
 
 @router.get("/download/{task_id}/geotiff")
 async def download_geotiff(task_id: str):
     """Download the processed GeoTIFF (full resolution, with CRS)."""
-    result = _get_task_result(task_id)
-    path = result.get("geotiff_path") or result.get("path", "")
-    if not path or not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File not found or expired.")
-    cache_dir = os.path.join(get_settings().temp_dir, "cache")
-    _validate_path_in_cache(path, cache_dir)
-    filename = f"spaceeye_{task_id[:8]}.tif"
-    return FileResponse(path, filename=filename, media_type="image/tiff")
+    return _download_file(task_id, "geotiff_path", "tif", "image/tiff")
 
 
 @router.post("/download/batch")

@@ -9,9 +9,13 @@ Run via cron/systemd timer daily.
 """
 
 import argparse
+import logging
 import os
 import time
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def cleanup_directory(cache_dir: str, ttl_days: int):
@@ -41,12 +45,12 @@ def main():
     args = parser.parse_args()
     
     if not os.path.exists(args.cache_dir):
-        print(f"Cache directory {args.cache_dir} does not exist. Nothing to clean.")
+        logger.info("Cache directory %s does not exist. Nothing to clean.", args.cache_dir)
         return
     
     removed, size_freed = cleanup_directory(args.cache_dir, args.ttl)
     
-    print(f"Removed {removed} files ({size_freed / 1024 / 1024:.2f} MB freed)")
+    logger.info("Removed %d files (%.2f MB freed)", removed, size_freed / 1024 / 1024)
 
 
 if __name__ == "__main__":

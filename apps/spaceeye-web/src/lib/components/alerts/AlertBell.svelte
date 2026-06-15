@@ -1,22 +1,15 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
   import { alertStore } from '$lib/stores/alerts.svelte';
+  import { clickOutside } from '$lib/actions/clickOutside';
 
   let showPanel = $state(false);
   let panelRef: HTMLDivElement;
-
-  function handleClickOutside(e: MouseEvent) {
-    if (panelRef && !panelRef.contains(e.target as Node)) {
-      showPanel = false;
-    }
-  }
-
-  onMount(() => document.addEventListener('mousedown', handleClickOutside));
-  onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
+  let buttonRef: HTMLButtonElement;
 </script>
 
 <div class="relative" bind:this={panelRef}>
   <button
+    bind:this={buttonRef}
     onclick={() => showPanel = !showPanel}
     class="relative inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
     aria-label="Notifications"
@@ -33,8 +26,10 @@
   </button>
 
   {#if showPanel}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="absolute top-full right-0 mt-1 w-80 rounded-lg border border-border bg-card shadow-lg z-[1000] max-h-96 overflow-y-auto">
+    <div
+      use:clickOutside={{ handler: () => showPanel = false, enabled: showPanel, exclude: [buttonRef] }}
+      class="absolute top-full right-0 mt-1 w-80 rounded-lg border border-border bg-card shadow-lg z-[1000] max-h-96 overflow-y-auto"
+    >
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <h4 class="text-xs font-semibold text-muted-foreground uppercase">Alerts</h4>
         {#if alertStore.unreadCount > 0}

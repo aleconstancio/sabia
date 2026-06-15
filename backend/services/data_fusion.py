@@ -1,65 +1,27 @@
+"""Multi-source data fusion for ESG monitoring.
+
+Combines weather, soil, and landcover data into unified region snapshots.
+"""
+
 import asyncio
 import logging
 
 from shapely.geometry import shape
 
-from backend.api.deps import get_http_client
-from backend.api.landcover_utils import WORLDCOVER_CLASSES, build_worldcover_tile_url
+from backend.services.external_apis import fetch_soil, fetch_weather
+from backend.services.worldcover import WORLDCOVER_CLASSES, build_worldcover_tile_url
 
 logger = logging.getLogger(__name__)
 
 
 async def fetch_weather_snapshot(lat: float, lon: float) -> dict:
     """Fetch current weather from Open-Meteo."""
-    try:
-        client = await get_http_client()
-        resp = await client.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "current": [
-                    "temperature_2m",
-                    "relative_humidity_2m",
-                    "apparent_temperature",
-                    "precipitation",
-                    "weather_code",
-                    "soil_moisture_0_to_7cm",
-                ],
-                "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
-                "timezone": "America/Sao_Paulo",
-                "forecast_days": 7,
-            },
-            timeout=10.0,
-        )
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        logger.warning("Failed to fetch weather snapshot for (%s, %s): %s", lat, lon, e)
-        return {"error": str(e)}
+    return await fetch_weather(lat, lon)
 
 
 async def fetch_soil_snapshot(lat: float, lon: float) -> dict:
     """Fetch soil properties from ISRIC SoilGrids."""
-    try:
-        client = await get_http_client()
-        resp = await client.get(
-            "https://rest.isric.org/soilgrids/v2.0/properties/query",
-            params={
-                "lat": lat,
-                "lon": lon,
-                "property": ["phh2o", "oc", "nitrogen", "sand", "silt", "clay"],
-                "depth": "0-5cm",
-                "value": "mean",
-            },
-            timeout=10.0,
-        )
-        if resp.status_code == 200:
-            return resp.json()
-        return {"error": f"Non-200 status: {resp.status_code}"}
-    except Exception as e:
-        logger.warning("Failed to fetch soil snapshot for (%s, %s): %s", lat, lon, e)
-        return {"error": str(e)}
+    return await fetch_soil(lat, lon)
 
 
 async def fetch_landcover_snapshot(lat: float, lon: float) -> dict:

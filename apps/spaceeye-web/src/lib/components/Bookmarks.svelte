@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
   import { bookmarksStore } from '$lib/stores/bookmarks.svelte';
+  import { clickOutside } from '$lib/actions/clickOutside';
   import type { Bookmark } from '$lib/api/types';
 
   let {
@@ -18,15 +18,6 @@
   let panelRef: HTMLDivElement;
   let deleteTarget = $state<Bookmark | null>(null);
   let showDeleteDialog = $state(false);
-
-  function handleClickOutside(e: MouseEvent) {
-    if (panelRef && !panelRef.contains(e.target as Node)) {
-      showPanel = false;
-    }
-  }
-
-  onMount(() => document.addEventListener('mousedown', handleClickOutside));
-  onDestroy(() => document.removeEventListener('mousedown', handleClickOutside));
 
   function loadBookmarks() {
     bookmarks = bookmarksStore.refresh();
@@ -66,7 +57,10 @@
   </Button>
 
   {#if showPanel}
-    <div class="absolute top-full right-0 mt-1 w-64 rounded-lg border border-border bg-card shadow-lg p-2 z-[1000] max-h-64 overflow-y-auto">
+    <div
+      use:clickOutside={{ handler: () => showPanel = false, enabled: showPanel }}
+      class="absolute top-full right-0 mt-1 w-64 rounded-lg border border-border bg-card shadow-lg p-2 z-[1000] max-h-64 overflow-y-auto"
+    >
       <div class="flex items-center justify-between mb-2 px-1">
         <h4 class="text-xs font-semibold text-muted-foreground uppercase">Locais Salvos</h4>
         <button class="text-xs text-primary bg-transparent border-none cursor-pointer" onclick={loadBookmarks}>Atualizar</button>

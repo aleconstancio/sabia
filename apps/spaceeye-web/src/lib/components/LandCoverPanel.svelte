@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { API_URL } from '$lib/config';
+  import { api } from '$lib/api/client';
 
   let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
   let landcover: Record<string, unknown> | null = $state(null);
@@ -20,10 +20,11 @@
   async function fetchLandcover(signal?: AbortSignal) {
     loading = true;
     try {
-      const url = polygonCoords ? `${API_URL}/landcover/zonal` : `${API_URL}/landcover/${lat}/${lon}`;
-      const body = polygonCoords ? JSON.stringify({ coordinates: polygonCoords }) : undefined;
-      const resp = await fetch(url, { method: polygonCoords ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body, signal });
-      if (resp.ok) landcover = await resp.json();
+      if (polygonCoords) {
+        landcover = await api.post('/landcover/zonal', { coordinates: polygonCoords });
+      } else {
+        landcover = await api.get(`/landcover/${lat}/${lon}`);
+      }
     } catch { fetchError = 'Falha ao carregar cobertura do solo'; } finally { loading = false; }
   }
 

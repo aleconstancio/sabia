@@ -8,12 +8,6 @@
  *   - uiState: showLegend, showPolygonModal, showImageGallery, showProcessingViewer, showComparison, sidebarOpen, lastWeatherData
  *   - comparisonState: comparisonFirst, comparisonSecond, selectedIds
  */
-export { mapInstance as map } from './mapInstance.svelte';
-export { searchState as search } from './searchState.svelte';
-export { processingState as processing } from './processingState.svelte';
-export { uiState as ui } from './uiState.svelte';
-export { comparisonState as comparison } from './comparisonState.svelte';
-
 import { mapInstance } from './mapInstance.svelte';
 import { searchState } from './searchState.svelte';
 import { processingState } from './processingState.svelte';

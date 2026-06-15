@@ -9,24 +9,29 @@ Run via cron/systemd timer daily.
 """
 
 import argparse
+import json
+import logging
 import os
 import sys
-import json
 import time
 from datetime import datetime
-from typing import Optional
 
+import psycopg2
 import requests
 from dotenv import load_dotenv
-import psycopg2
 from psycopg2.extras import execute_values
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 STAC_URLS = {
     "cbers4a": "http://www.dgi.inpe.br/lgi-stac/collections/CBERS4A_WPM_L4_DN/items",
+    "amazonia1": "https://queimadas.dgi.inpe.br/queimadas/catalogo/items",
     "sentinel2": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items",
     "landsat8": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
+    "landsat9": "https://landsatlook.usgs.gov/stac-server/collections/landsat-c2l2-sr/items",
 }
 
 
@@ -47,7 +52,7 @@ def insert_param(link: str) -> str:
     return link
 
 
-def parse_item(item: dict, collection: str) -> Optional[dict]:
+def parse_item(item: dict, collection: str) -> dict | None:
     try:
         assets = item.get("assets", {})
         
@@ -89,7 +94,7 @@ def parse_item(item: dict, collection: str) -> Optional[dict]:
             "thumbnail_url": assets.get("thumbnail", {}).get("href", ""),
         }
     except (KeyError, IndexError, TypeError) as e:
-        print(f"  Skipping item {item.get('id', 'unknown')}: {e}")
+        logger.warning("  Skipping item %s: %s", item.get("id", "unknown"), e)
         return None
 
 
@@ -106,7 +111,7 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
         next_url = stac_url
         
         for page in range(1, max_pages + 1):
-            print(f"Fetching {collection_id} page {page}...")
+            logger.info("Fetching %s page %d...", collection_id, page)
             for attempt in range(3):
                 try:
                     resp = requests.get(next_url, timeout=60)
@@ -116,13 +121,13 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
                     break
                 except requests.RequestException:
                     if attempt == 2:
-                        print(f"  Error on page {page} after 3 attempts")
+                        logger.error("  Error on page %d after 3 attempts", page)
                         conn.rollback()
                         return
                     time.sleep(5)
             
             if not features:
-                print("  No more features. Done.")
+                logger.info("  No more features. Done.")
                 break
             
             links = data.get("links", [])
@@ -175,13 +180,13 @@ def ingest_collection(collection_id: str, max_pages: int = 600):
                 total_inserted += len(records)
             
             total_skipped += len(features) - len(records)
-            print(f"  Inserted {len(records)}, skipped {len(features) - len(records)}")
+            logger.info("  Inserted %d, skipped %d", len(records), len(features) - len(records))
             
             if not next_url:
                 break
         
         cursor.close()
-        print(f"\nDone. Total inserted: {total_inserted}, skipped: {total_skipped}")
+        logger.info("Done. Total inserted: %d, skipped: %d", total_inserted, total_skipped)
     finally:
         conn.close()
 
@@ -195,9 +200,9 @@ def main():
     args = parser.parse_args()
     
     for collection in args.collections:
-        print(f"\n{'='*60}")
-        print(f"Ingesting {collection}...")
-        print(f"{'='*60}")
+        logger.info("=" * 60)
+        logger.info("Ingesting %s...", collection)
+        logger.info("=" * 60)
         ingest_collection(collection)
 
 

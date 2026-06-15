@@ -1,4 +1,5 @@
 import type { Map as LeafletMap, Layer } from 'leaflet';
+import { logger } from '$lib/utils/logger';
 
 let _previousPolygon: Layer | null = null;
 
@@ -20,6 +21,6 @@ export async function restorePolygonOnMap(coords: number[][][]) {
     mapState.polygonCentroid = { lat: center.lat, lon: center.lng };
     return center;
   } catch (e) {
-    console.warn('Failed to restore polygon on map:', e);
+    logger.warn('Failed to restore polygon on map:', e);
   }
 }

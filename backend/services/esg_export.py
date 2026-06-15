@@ -24,14 +24,15 @@ async def export_esg_csv_data(module: str, coordinates: list[list[list[float]]])
         ("vegetation", "biomass_estimate", carbon["biomass_estimate"], "t/ha"),
         ("vegetation", "soil_organic_carbon", carbon["soil_organic_carbon"], "t/ha"),
         ("vegetation", "ndvi_avg", carbon["ndvi_avg"], "index"),
-        ("fire", "risk_score", fire["risk_score"], "/100"),
+        ("fire", "fire_risk_score", fire["fire_risk_score"], "/100"),
         ("fire", "risk_level", fire["risk_level"], "level"),
-        ("fire", "nbr_trend", fire["nbr_trend"], "index"),
         ("fire", "drought_days", fire["factors"]["drought_days"], "days"),
     ]
 
     for mod, metric, value, unit in metrics:
-        writer.writerow({"module": mod, "metric": metric, "value": value, "unit": unit, "timestamp": now})
+        writer.writerow(
+            {"module": mod, "metric": metric, "value": value, "unit": unit, "timestamp": now}
+        )
 
     return output.getvalue()
 

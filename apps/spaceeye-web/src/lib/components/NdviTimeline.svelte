@@ -3,7 +3,8 @@
   import type { ImageResult } from '$lib/api/types';
   import { processBatch } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
-  import { downloadBlob } from '$lib/helpers/download';
+  import { downloadBlob, triggerDownload } from '$lib/helpers/download';
+  import { logger } from '$lib/utils/logger';
 
   let {
     images = [] as ImageResult[],
@@ -37,7 +38,7 @@
           const { task, result } = settled.value;
           if (result.status === 'done') {
             const img = images.find((i) => i.id === task.image_id);
-            const rawValue = (result.result as Record<string, any>)?.statistics?.mean;
+            const rawValue = (result.result as { statistics?: { mean?: number } })?.statistics?.mean;
             const value = rawValue !== undefined && rawValue !== null ? rawValue : 0.5;
             if (img) {
               results.push({ date: img.acquired_at, value });
@@ -48,7 +49,7 @@
       results.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       timelineData = results;
     } catch (e: unknown) {
-      console.warn('NdviTimeline fetchTimeline error:', e);
+      logger.warn('NdviTimeline fetchTimeline error:', e);
       error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
@@ -108,17 +109,7 @@
     const rows = barData.map(d => `${d.date},${d.value.toFixed(4)}`).join('\n');
     const csv = headers + rows;
     const blob = new Blob([csv], { type: 'text/csv' });
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    try {
-      a.href = blobUrl;
-      a.download = 'ndvi_timeline.csv';
-      document.body.appendChild(a);
-      a.click();
-    } finally {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    }
+    triggerDownload(blob, 'ndvi_timeline.csv');
   }
 
   $effect(() => {

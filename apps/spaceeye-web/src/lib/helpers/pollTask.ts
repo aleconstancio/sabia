@@ -1,8 +1,10 @@
-import { API_URL } from '$lib/config';
+import { api } from '$lib/api/client';
+import { logger } from '$lib/utils/logger';
 
 interface PollOptions {
   maxAttempts?: number;
-  intervalMs?: number;
+  initialIntervalMs?: number;
+  maxIntervalMs?: number;
   onProgress?: (progress: number, phase: string) => void;
   signal?: AbortSignal;
 }
@@ -15,32 +17,35 @@ interface PollResult {
 
 /**
  * Poll a Celery task until completion or timeout.
+ * Uses exponential backoff starting at initialIntervalMs, increasing to maxIntervalMs.
  */
 export async function pollTaskStatus(
   taskId: string,
   options: PollOptions = {}
 ): Promise<PollResult> {
-  const { maxAttempts = 120, intervalMs = 2000, onProgress, signal } = options;
+  const {
+    maxAttempts = 120,
+    initialIntervalMs = 500,
+    maxIntervalMs = 3000,
+    onProgress,
+    signal,
+  } = options;
+
+  let currentInterval = initialIntervalMs;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     if (signal?.aborted) {
       return { status: 'error', error: 'Aborted' };
     }
 
-    await new Promise(r => setTimeout(r, intervalMs));
+    await new Promise(r => setTimeout(r, currentInterval));
 
     if (signal?.aborted) {
       return { status: 'error', error: 'Aborted' };
     }
 
     try {
-      const resp = await fetch(`${API_URL}/tasks/${taskId}`, { signal });
-      if (!resp.ok) {
-        console.warn(`pollTaskStatus: HTTP ${resp.status} for task ${taskId}`);
-        continue;
-      }
-
-      const status = await resp.json();
+      const status = await api.get(`/tasks/${taskId}`);
       onProgress?.(status.progress || 0, status.phase || '');
 
       if (status.status === 'done') {
@@ -53,8 +58,11 @@ export async function pollTaskStatus(
       if (signal?.aborted) {
         return { status: 'error', error: 'Aborted' };
       }
-      console.debug('Poll network error:', e);
+      logger.debug('Poll network error:', e);
     }
+
+    // Exponential backoff with cap
+    currentInterval = Math.min(currentInterval * 1.5, maxIntervalMs);
   }
 
   return { status: 'error', error: 'Timeout: task did not complete in time' };

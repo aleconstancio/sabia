@@ -24,8 +24,7 @@ def _sanitize_metadata(metadata: dict) -> dict:
     assets = sanitized.get("assets")
     if isinstance(assets, dict):
         sanitized["assets"] = {
-            k: _sanitize_url(v) if isinstance(v, str) else v
-            for k, v in assets.items()
+            k: _sanitize_url(v) if isinstance(v, str) else v for k, v in assets.items()
         }
     return sanitized
 
@@ -47,9 +46,7 @@ async def find_images_by_polygon(
     conditions = []
     params: dict = {}
 
-    conditions.append(
-        "ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON(:geom), 4326))"
-    )
+    conditions.append("ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON(:geom), 4326))")
     params["geom"] = geojson_str
 
     if collections:
@@ -97,20 +94,22 @@ async def find_images_by_polygon(
                 fp = json.loads(fp)
             except (json.JSONDecodeError, TypeError):
                 fp = None
-        elif hasattr(fp, '__str__'):
+        elif hasattr(fp, "__str__"):
             try:
                 fp = json.loads(str(fp))
             except (json.JSONDecodeError, TypeError):
                 fp = None
 
-        images.append({
-            "id": row.id,
-            "collection": row.collection,
-            "footprint": fp,
-            "cloud_cover": row.cloud_cover,
-            "acquired_at": row.acquired_at.isoformat() if row.acquired_at else None,
-            "thumbnail_url": row.thumbnail_url,
-        })
+        images.append(
+            {
+                "id": row.id,
+                "collection": row.collection,
+                "footprint": fp,
+                "cloud_cover": row.cloud_cover,
+                "acquired_at": row.acquired_at.isoformat() if row.acquired_at else None,
+                "thumbnail_url": row.thumbnail_url,
+            }
+        )
 
     return images, total
 
@@ -127,7 +126,7 @@ async def get_images_by_ids(db: AsyncSession, image_ids: list[str]) -> dict[str,
             'assets', metadata->'assets'
         ) as metadata
         FROM images
-        WHERE id IN ({','.join(placeholders)})
+        WHERE id IN ({",".join(placeholders)})
     """)
     result = await db.execute(query, params)
     return {row[0]: _sanitize_metadata(row[1]) for row in result.fetchall()}
@@ -150,7 +149,7 @@ async def get_image_by_id(db: AsyncSession, image_id: str) -> dict | None:
         except (json.JSONDecodeError, TypeError):
             fp = None
 
-    metadata = row.metadata if hasattr(row, 'metadata') else {}
+    metadata = row.metadata if hasattr(row, "metadata") else {}
     return {
         "id": row.id,
         "collection": row.collection,

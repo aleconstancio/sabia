@@ -2,8 +2,8 @@ import asyncio
 import logging
 
 from backend.config import get_settings
-from backend.domain.processing import process_image
 from backend.exceptions import DownloadError
+from backend.services.processing import process_image
 from backend.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -65,6 +65,7 @@ def compute_difference_task(self, task_id_a: str, task_id_b: str):
         import tempfile
 
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
@@ -73,10 +74,11 @@ def compute_difference_task(self, task_id_a: str, task_id_b: str):
 
         try:
             vmax = max(abs(np.nanmin(diff)), abs(np.nanmax(diff)), 0.1)
-            plt.imsave(out_path, diff, cmap='RdBu_r', vmin=-vmax, vmax=vmax)
+            plt.imsave(out_path, diff, cmap="RdBu_r", vmin=-vmax, vmax=vmax)
 
             bounds = src_b.bounds
             import pyproj
+
             transformer = pyproj.Transformer.from_crs(src_b.crs, "EPSG:4326", always_xy=True)
             left, bottom = transformer.transform(bounds.left, bounds.bottom)
             right, top = transformer.transform(bounds.right, bounds.top)

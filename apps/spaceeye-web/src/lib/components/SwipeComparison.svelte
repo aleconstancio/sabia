@@ -4,6 +4,7 @@
   import type { ImageResult } from '$lib/api/types';
   import { processImage as apiProcessImage } from '$lib/api/client';
   import { pollTaskStatus } from '$lib/helpers/pollTask';
+  import { logger } from '$lib/utils/logger';
 
   let {
     imageA = null as ImageResult | null,
@@ -71,7 +72,7 @@
       if (e instanceof Error && e.name === 'AbortError') return;
       pendingCount--;
       if (pendingCount === 0) loading = false;
-      console.warn('SwipeComparison processImage error:', e);
+      logger.warn('SwipeComparison processImage error:', e);
       swipeError = 'Falha ao iniciar processamento';
     }
   }

@@ -4,6 +4,7 @@
   import { dashboardState } from '$lib/stores/dashboard.svelte';
   import { alertStore } from '$lib/stores/alerts.svelte';
   import { Button } from '$lib/components/ui/button';
+  import { logger } from '$lib/utils/logger';
   import Scorecard from './Scorecard.svelte';
   import PortfolioGrid from './PortfolioGrid.svelte';
 
@@ -19,7 +20,7 @@
   let alertCount = $derived.by(() => {
     try {
       return alertStore.alerts.length;
-    } catch (e: unknown) { console.warn('alertCount error:', e); return 0; }
+    } catch (e: unknown) { logger.warn('alertCount error:', e); return 0; }
   });
 
   let avgTemp = $derived.by(() => {

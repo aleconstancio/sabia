@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
+  import { logger } from '$lib/utils/logger';
 
   let { module = 'vegetation' }: { module: string } = $props();
   let thresholds = $state({
@@ -18,7 +19,7 @@
     try {
       const raw = localStorage.getItem(`spaceeye_thresholds_${module}`);
       if (raw) thresholds = { ...thresholds, ...JSON.parse(raw) };
-    } catch (e: unknown) { console.warn('Failed to load thresholds:', e); }
+    } catch (e: unknown) { logger.warn('Failed to load thresholds:', e); }
   });
 </script>
 

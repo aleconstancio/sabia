@@ -116,7 +116,7 @@ For detailed architecture, see [docs/architecture.md](./docs/architecture.md).
 |-----------|-----------|----------|-------------------|
 | CBERS-4A (WPM) | 8m PAN / 4m MS | Brazil | NDVI, TCI, SAVI, EVI, MSAVI2, VARI |
 | Amazonia-1 (WFC) | 64m | Brazil | TCI, NDVI |
-| Sentinel-2 (L2A) | 10m | Global | All 11 products |
+| Sentinel-2 (L2A) | 10m | Global | NDVI, TCI, NDWI, SAVI, EVI, MSAVI2, VARI, MNDWI, CIR |
 | Landsat 8 (C2 L2) | 30m (15m PAN) | Global | All 11 products |
 | Landsat 9 (C2 L2) | 30m (15m PAN) | Global | All 11 products |
 

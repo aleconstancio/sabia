@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { WeatherData } from '$lib/api/types';
+  import { api } from '$lib/api/client';
+  import { logger } from '$lib/utils/logger';
 
   interface WeatherApiResponse {
     current?: {
@@ -19,43 +21,50 @@
     lon = 0,
     onWeatherData = (_data: WeatherData) => {},
   }: { lat: number; lon: number; onWeatherData?: (data: WeatherData) => void } = $props();
-  import { API_URL } from '$lib/config';
 
-  let weather: WeatherApiResponse | null = $state(null);
+  let data: WeatherApiResponse | null = $state(null);
   let loading = $state(false);
   let error = $state('');
 
+  let controller: AbortController | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
   $effect(() => {
     if (lat && lon) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => {
-        fetchWeather(controller.signal);
+      if (controller) controller.abort();
+      if (timeoutId) clearTimeout(timeoutId);
+
+      timeoutId = setTimeout(async () => {
+        controller = new AbortController();
+        loading = true;
+        error = '';
+        try {
+          data = await api.get(`/weather/${lat}/${lon}`);
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name === 'AbortError') return;
+          error = e instanceof Error ? e.message : String(e);
+        } finally {
+          loading = false;
+        }
       }, 300);
-      return () => { clearTimeout(timer); controller.abort(); };
+
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        controller?.abort();
+      };
     }
   });
 
-
-  async function fetchWeather(signal?: AbortSignal) {
-    loading = true; error = '';
-    try {
-      const resp = await fetch(`${API_URL}/weather/${lat}/${lon}`, { signal });
-      if (!resp.ok) throw new Error('Weather fetch failed');
-      weather = await resp.json();
-      if (weather?.current) {
-        onWeatherData({
-          temperature: weather.current.temperature_2m ?? 0,
-          precipitation: weather.current.precipitation ?? 0,
-          wind_speed: 0,
-          humidity: weather.current.relative_humidity_2m ?? 0,
-        });
-      }
-    } catch (e: unknown) {
-      error = e instanceof Error ? e.message : String(e);
-    } finally {
-      loading = false;
+  $effect(() => {
+    if (data?.current) {
+      onWeatherData({
+        temperature: data.current.temperature_2m ?? 0,
+        precipitation: data.current.precipitation ?? 0,
+        wind_speed: 0,
+        humidity: data.current.relative_humidity_2m ?? 0,
+      });
     }
-  }
+  });
 </script>
 
 <div class="rounded-lg border border-border bg-card p-4">
@@ -67,31 +76,31 @@
     </div>
   {:else if error}
     <p class="text-sm text-destructive">{error}</p>
-  {:else if weather}
+  {:else if data}
     <div class="grid grid-cols-2 gap-3">
       <div>
         <p class="text-xs text-muted-foreground">Temperatura</p>
-        <p class="text-lg font-bold">{weather.current?.temperature_2m ?? '—'}°C</p>
+        <p class="text-lg font-bold">{data.current?.temperature_2m ?? '—'}°C</p>
       </div>
       <div>
         <p class="text-xs text-muted-foreground">Sensação</p>
-        <p class="text-lg font-bold">{weather.current?.apparent_temperature ?? '—'}°C</p>
+        <p class="text-lg font-bold">{data.current?.apparent_temperature ?? '—'}°C</p>
       </div>
       <div>
         <p class="text-xs text-muted-foreground">Umidade</p>
-        <p class="text-lg font-bold">{weather.current?.relative_humidity_2m ?? '—'}%</p>
+        <p class="text-lg font-bold">{data.current?.relative_humidity_2m ?? '—'}%</p>
       </div>
       <div>
         <p class="text-xs text-muted-foreground">Precipitação</p>
-        <p class="text-lg font-bold">{weather.current?.precipitation ?? '—'} mm</p>
+        <p class="text-lg font-bold">{data.current?.precipitation ?? '—'} mm</p>
       </div>
       <div>
         <p class="text-xs text-muted-foreground">Solo (7cm)</p>
-        <p class="text-lg font-bold">{weather.current?.soil_moisture_0_to_7cm?.toFixed(2) ?? '—'} m³/m³</p>
+        <p class="text-lg font-bold">{data.current?.soil_moisture_0_to_7cm?.toFixed(2) ?? '—'} m³/m³</p>
       </div>
       <div>
         <p class="text-xs text-muted-foreground">Previsão 7d</p>
-        <p class="text-lg font-bold">{weather.daily?.precipitation_sum?.[0] ?? '—'} mm</p>
+        <p class="text-lg font-bold">{data.daily?.precipitation_sum?.[0] ?? '—'} mm</p>
       </div>
     </div>
   {/if}

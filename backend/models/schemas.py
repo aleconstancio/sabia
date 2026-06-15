@@ -69,7 +69,6 @@ class ProcessBatchRequest(BaseModel):
 class ComputeDifferenceRequest(BaseModel):
     task_id_a: str
     task_id_b: str
-    coordinates: list[list[list[float]]]
 
 
 class DownloadBatchRequest(BaseModel):

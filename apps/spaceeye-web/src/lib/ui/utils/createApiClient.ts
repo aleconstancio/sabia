@@ -1,16 +1,17 @@
 /**
- * Creates a typed API client with Bearer token auth, JSON parsing, and error handling.
+ * Creates a typed API client with API key auth, JSON parsing, and error handling.
  *
  * Usage:
  * <script lang="ts">
- *   import { createApiClient } from '@thoth/ui';
+ *   import { createApiClient } from '$lib/ui/utils/createApiClient';
  *
- *   const api = createApiClient('/api/v1', {
- *     getToken: () => localStorage.getItem('token'),
+ *   const api = createApiClient({
+ *     baseUrl: API_URL,
+ *     getToken: () => localStorage.getItem('spaceeye_api_key'),
  *   });
  *
- *   const items = await api.get<Item[]>('/items', { state: 'pending' });
- *   await api.post('/items/123/transition', { state: 'approved' });
+ *   const items = await api.get<Item[]>('/items');
+ *   await api.post('/items/123', { name: 'test' });
  * </script>
  */
 
@@ -28,8 +29,8 @@ export function createApiClient<TBase extends Record<string, (...args: unknown[]
 
   async function request<T>(path: string, method: string = 'GET', body?: unknown): Promise<T> {
     const headers = new Headers();
-    const token = getToken?.();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+    const apiKey = getToken?.();
+    if (apiKey) headers.set('X-API-Key', apiKey);
     if (body && !(body instanceof FormData)) {
       headers.set('Content-Type', 'application/json');
     }
@@ -76,6 +77,33 @@ export function createApiClient<TBase extends Record<string, (...args: unknown[]
         Object.entries(extraData).forEach(([k, v]) => formData.append(k, v));
       }
       return request<T>(path, 'POST', formData);
+    },
+    /**
+     * POST request that returns a Blob instead of JSON (for file downloads).
+     */
+    async postBlob(path: string, body?: unknown): Promise<Blob> {
+      const headers = new Headers();
+      const token = getToken?.();
+      if (token) headers.set('Authorization', `Bearer ${token}`);
+      if (body && !(body instanceof FormData)) {
+        headers.set('Content-Type', 'application/json');
+      }
+
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers,
+        credentials: 'same-origin',
+        body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        const error = new Error(errorData.message || errorData.code || `HTTP ${response.status}`);
+        onError?.(error, path);
+        throw error;
+      }
+
+      return response.blob();
     },
   };
 

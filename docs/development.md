@@ -14,7 +14,7 @@
 
 ```bash
 # 1. Clone and bootstrap
-git clone https://github.com/your-org/spaceeye && cd spaceeye
+git clone https://github.com/spaceeye/spaceeye && cd spaceeye
 cp .env.example .env
 just setup
 

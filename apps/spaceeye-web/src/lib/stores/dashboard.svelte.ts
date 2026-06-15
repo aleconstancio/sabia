@@ -1,5 +1,6 @@
 import type { RegionProfile } from '$lib/api/types';
 import { listProfiles, deleteProfile as apiDeleteProfile } from '$lib/api/client';
+import { logger } from '$lib/utils/logger';
 
 let _profiles = $state<RegionProfile[]>([]);
 let _total = $state(0);
@@ -18,7 +19,7 @@ export const dashboardState = {
       const data = await listProfiles({ limit: 100 });
       _profiles = data.profiles || [];
       _total = data.total || 0;
-    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to load profiles'; console.error('Dashboard load failed:', e); }
+    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to load profiles'; logger.error('Dashboard load failed:', e); }
     _isLoading = false;
   },
   async deleteProfile(id: string) {
@@ -26,6 +27,6 @@ export const dashboardState = {
       await apiDeleteProfile(id);
       _profiles = _profiles.filter(p => p.id !== id);
       _total = Math.max(0, _total - 1);
-    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to delete profile'; console.error('Profile delete failed:', e); }
+    } catch (e: unknown) { _error = e instanceof Error ? e.message : String(e) || 'Failed to delete profile'; logger.error('Profile delete failed:', e); }
   },
 };

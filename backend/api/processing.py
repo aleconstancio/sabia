@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.deps import get_db, verify_api_key
+from backend.api.auth import verify_api_key
+from backend.api.deps import get_db
 from backend.models.schemas import (
     ComputeDifferenceRequest,
     ProcessBatchRequest,

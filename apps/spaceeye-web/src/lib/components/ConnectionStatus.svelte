@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { Badge } from '$lib/components/ui/badge';
-  import { API_URL } from '$lib/config';
+  import { api } from '$lib/api/client';
+  import { logger } from '$lib/utils/logger';
 
   let status = $state<'checking' | 'connected' | 'empty' | 'disconnected'>('checking');
   let catalogCount = $state(0);
@@ -9,9 +10,7 @@
 
   async function checkHealth() {
     try {
-      const res = await fetch(`${API_URL}/health`);
-      if (!res.ok) throw new Error('not ok');
-      const data = await res.json();
+      const data = await api.get('/health');
       if (data.catalog_count === 0) {
         status = 'empty';
       } else {
@@ -19,7 +18,7 @@
         catalogCount = data.catalog_count;
       }
     } catch {
-      console.warn('ConnectionStatus health check failed');
+      logger.warn('ConnectionStatus health check failed');
       status = 'disconnected';
     }
   }

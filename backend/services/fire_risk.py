@@ -1,6 +1,8 @@
+"""Fire risk assessment from weather factors and NBR trend."""
+
 import logging
 
-from backend.api.deps import get_http_client
+from backend.services.external_apis import fetch_weather
 from backend.utils import compute_centroid
 
 logger = logging.getLogger(__name__)
@@ -56,28 +58,24 @@ def _risk_level(score: float) -> str:
 async def fetch_weather_for_fire(coords: list[list[list[float]]]) -> dict:
     """Fetch weather data for fire risk calculation."""
     lat, lon = compute_centroid(coords)
-    try:
-        client = await get_http_client()
-        resp = await client.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "current": ["temperature_2m", "relative_humidity_2m", "precipitation"],
-                "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
-                "timezone": "America/Sao_Paulo",
-                "forecast_days": 7,
-            },
-            timeout=10.0,
-        )
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        logger.warning("Weather fetch failed for fire risk: %s", e)
+    weather = await fetch_weather(
+        lat,
+        lon,
+        properties=["temperature_2m", "relative_humidity_2m", "precipitation"],
+    )
+
+    # Return default values on error
+    if "error" in weather:
         return {
             "current": {"temperature_2m": 25.0, "relative_humidity_2m": 50.0, "precipitation": 0.0},
-            "daily": {"temperature_2m_max": [25.0] * 7, "temperature_2m_min": [15.0] * 7, "precipitation_sum": [0.0] * 7},
+            "daily": {
+                "temperature_2m_max": [25.0] * 7,
+                "temperature_2m_min": [15.0] * 7,
+                "precipitation_sum": [0.0] * 7,
+            },
         }
+
+    return weather
 
 
 async def calculate_fire_risk(coords: list[list[list[float]]]) -> dict:
@@ -99,7 +97,7 @@ async def calculate_fire_risk(coords: list[list[list[float]]]) -> dict:
     drought = _drought_score(temp_max, precip_sum)
     veg_score = min(100, drought * 0.6 + 20)
 
-    risk_score = (
+    composite = (
         temp_score * TEMP_WEIGHT
         + humidity_score * HUMIDITY_WEIGHT
         + precip_score * PRECIP_WEIGHT
@@ -107,15 +105,14 @@ async def calculate_fire_risk(coords: list[list[list[float]]]) -> dict:
     )
 
     return {
-        "risk_score": round(risk_score, 1),
-        "risk_level": _risk_level(risk_score),
-        "nbr_trend": round(-0.05 * (risk_score / 100), 3),
+        "fire_risk_score": round(composite, 1),
+        "risk_level": _risk_level(composite),
         "factors": {
             "temperature_score": round(temp_score, 1),
             "humidity_score": round(humidity_score, 1),
             "precipitation_score": round(precip_score, 1),
             "vegetation_score": round(veg_score, 1),
-            "drought_days": sum(1 for t, p in zip(temp_max, precip_sum, strict=True) if t > 30 and p < 1),
+            "drought_days": drought,
         },
         "weather_summary": {
             "temperature": temp,
