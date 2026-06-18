@@ -4,15 +4,26 @@
   import { goto } from '$app/navigation';
   import { dashboardState } from '$lib/stores/dashboard.svelte';
   import { historyStore } from '$lib/stores/history.svelte';
+  import { gpsState } from '$lib/stores/gps.svelte';
   import { buildCsvExport, downloadCsv } from '$lib/utils/dashboard';
+  import GpsRegionDialog from './GpsRegionDialog.svelte';
 
   let loading = $state(false);
   let confirmClear = $state(false);
+  let showGpsDialog = $state(false);
 
   async function refreshAll() {
     loading = true;
     await dashboardState.loadProfiles();
     loading = false;
+  }
+
+  function handleQuickAdd() {
+    if (!gpsState.hasLocation) {
+      toast.info('Enable location first by clicking the locate button on the map');
+      return;
+    }
+    showGpsDialog = true;
   }
 
   function exportCsv() {
@@ -46,7 +57,11 @@
 </script>
 
 <div class="flex items-center gap-2 p-2 bg-card/50 backdrop-blur-sm rounded-lg border border-border">
-  <Button variant="default" size="xs" onclick={() => goto('/map')}>
+  <Button variant="default" size="xs" onclick={handleQuickAdd}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+    Quick Add Region
+  </Button>
+  <Button variant="outline" size="xs" onclick={() => goto('/map')}>
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
     New Search
   </Button>
@@ -71,3 +86,5 @@
     </Button>
   {/if}
 </div>
+
+<GpsRegionDialog bind:open={showGpsDialog} />
