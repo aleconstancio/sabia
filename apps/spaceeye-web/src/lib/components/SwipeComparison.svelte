@@ -53,7 +53,7 @@
     loading = true;
     try {
       const data = await apiProcessImage(image.id, polygonCoords, product);
-      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000, signal: _processAbort.signal });
+      const result = await pollTaskStatus(data.task_id, { initialIntervalMs: 1000, signal: _processAbort.signal });
       pendingCount--;
       if (pendingCount === 0) loading = false;
       if (result.status === 'done') {
@@ -73,7 +73,7 @@
       pendingCount--;
       if (pendingCount === 0) loading = false;
       logger.warn('SwipeComparison processImage error:', e);
-      swipeError = 'Falha ao iniciar processamento';
+      swipeError = 'Failed to start processing';
     }
   }
 
@@ -121,7 +121,7 @@
   bind:this={container}
   class="relative w-full h-[400px] rounded-lg overflow-hidden border border-border"
   role="application"
-  aria-label="Comparação de imagens"
+  aria-label="Image comparison"
   onmousedown={handleStart}
   onmousemove={handleMove}
   onmouseup={handleEnd}
@@ -131,8 +131,8 @@
   ontouchend={handleEnd}
 >
   {#if loading}
-    <div class="absolute inset-0 bg-black/40 flex items-center justify-center z-[1002]">
-      <span class="text-white text-sm">Processando...</span>
+    <div class="absolute inset-0 bg-black/40 flex items-center justify-center z-[1002]" aria-live="polite">
+      <span class="text-white text-sm">Processing...</span>
     </div>
   {/if}
   {#if swipeError}
@@ -144,7 +144,7 @@
       style="left: {swipePos}%; transform: translateX(-50%)"
       tabindex="0"
       role="slider"
-      aria-label="Divisor de comparação"
+      aria-label="Comparison divider"
       aria-valuenow={swipePos}
       aria-valuemin={0}
       aria-valuemax={100}
@@ -153,10 +153,10 @@
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center text-sm font-bold text-gray-600">↔</div>
     </div>
     <div class="absolute top-2 left-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at ?? Date.now()).toLocaleDateString('pt-BR')}
+      {imageA?.id?.slice(0, 20)}... {new Date(imageA?.acquired_at ?? Date.now()).toLocaleDateString()}
     </div>
     <div class="absolute top-2 right-2 z-[1001] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at ?? Date.now()).toLocaleDateString('pt-BR')}
+      {imageB?.id?.slice(0, 20)}... {new Date(imageB?.acquired_at ?? Date.now()).toLocaleDateString()}
     </div>
   {/if}
 </div>

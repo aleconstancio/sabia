@@ -1,4 +1,13 @@
 <script lang="ts">
-  import ModuleMapPage from '$lib/components/modules/ModuleMapPage.svelte';
+  let ModuleMapPage = $state<any>(null);
+
+  $effect(() => {
+    import('$lib/components/modules/ModuleMapPage.svelte').then(mod => {
+      ModuleMapPage = mod.default;
+    });
+  });
 </script>
-<ModuleMapPage module="vegetation" product="NDVI" />
+
+{#if ModuleMapPage}
+  <ModuleMapPage module="vegetation" product="NDVI" />
+{/if}

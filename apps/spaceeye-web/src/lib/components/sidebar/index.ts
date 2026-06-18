@@ -1,3 +1,4 @@
+export { default as SidebarSection } from './SidebarSection.svelte';
 export { default as SearchPanel } from './SearchPanel.svelte';
 export { default as ResultsPanel } from './ResultsPanel.svelte';
 export { default as AnalyticsPanel } from './AnalyticsPanel.svelte';

@@ -76,3 +76,46 @@ describe('EVI formula structure', () => {
     expect(eviHighHaze).toBeGreaterThan(0);
   });
 });
+
+describe('NBR computation', () => {
+  function computeNbr(nir: number, swir: number): number {
+    const denominator = nir + swir;
+    if (denominator === 0) return 0;
+    return (nir - swir) / denominator;
+  }
+
+  it('computes NBR correctly', () => {
+    const nbr = computeNbr(0.7, 0.2);
+    expect(nbr).toBeCloseTo(0.5556, 3);
+  });
+
+  it('returns positive for healthy vegetation', () => {
+    const nbr = computeNbr(0.8, 0.1);
+    expect(nbr).toBeGreaterThan(0);
+  });
+
+  it('returns negative for bare/burned areas', () => {
+    const nbr = computeNbr(0.1, 0.8);
+    expect(nbr).toBeLessThan(0);
+  });
+
+  it('returns 0 for equal bands', () => {
+    const nbr = computeNbr(0.5, 0.5);
+    expect(nbr).toBe(0);
+  });
+
+  it('handles division by zero', () => {
+    const nbr = computeNbr(0, 0);
+    expect(nbr).toBe(0);
+  });
+});
+
+describe('NDVI bounds', () => {
+  it('NDVI bounds are -1 to 1', () => {
+    const ndvi1 = (0 - 1) / (0 + 1);
+    expect(ndvi1).toBe(-1);
+
+    const ndvi2 = (1 - 0) / (1 + 0);
+    expect(ndvi2).toBe(1);
+  });
+});

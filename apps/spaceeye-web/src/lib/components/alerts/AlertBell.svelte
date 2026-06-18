@@ -5,6 +5,13 @@
   let showPanel = $state(false);
   let panelRef: HTMLDivElement;
   let buttonRef: HTMLButtonElement;
+
+  function handlePanelKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      showPanel = false;
+      buttonRef.focus();
+    }
+  }
 </script>
 
 <div class="relative" bind:this={panelRef}>
@@ -29,6 +36,10 @@
     <div
       use:clickOutside={{ handler: () => showPanel = false, enabled: showPanel, exclude: [buttonRef] }}
       class="absolute top-full right-0 mt-1 w-80 rounded-lg border border-border bg-card shadow-lg z-[1000] max-h-96 overflow-y-auto"
+      role="dialog"
+      aria-label="Notifications"
+      tabindex="-1"
+      onkeydown={handlePanelKeydown}
     >
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <h4 class="text-xs font-semibold text-muted-foreground uppercase">Alerts</h4>
@@ -51,7 +62,7 @@
               <div class="w-2 h-2 rounded-full mt-1.5 shrink-0" class:bg-destructive={!alert.read} class:bg-muted-foreground={alert.read}></div>
               <div class="min-w-0">
                 <p class="text-xs font-medium truncate">{alert.message}</p>
-                <p class="text-[10px] text-muted-foreground">{alert.region} · {new Date(alert.timestamp).toLocaleString('pt-BR')}</p>
+                <p class="text-[10px] text-muted-foreground">{alert.region} · {new Date(alert.timestamp).toLocaleString()}</p>
               </div>
             </div>
           </button>

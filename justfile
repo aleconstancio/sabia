@@ -35,7 +35,7 @@ dev:
 
 # Start Postgres + Redis via Docker
 dev-db:
-    docker-compose up -d postgres redis
+    docker compose up -d postgres redis
 
 # Start FastAPI dev server with hot reload
 dev-backend:
@@ -100,25 +100,25 @@ migrate:
 
 # Seed the database
 seed:
-    docker-compose exec backend python pipeline/ingest.py --collection cbers4a
+    docker compose exec backend python pipeline/ingest.py --collection cbers4a
 
 # Docker
 
 # Build Docker images
 docker-build:
-    docker-compose build
+    docker compose build
 
 # Start Docker services
 docker-up:
-    docker-compose up -d
+    docker compose up -d
 
 # Stop Docker services
 docker-down:
-    docker-compose down
+    docker compose down
 
 # View Docker logs
 docker-logs:
-    docker-compose logs -f
+    docker compose logs -f
 
 # Cleanup
 

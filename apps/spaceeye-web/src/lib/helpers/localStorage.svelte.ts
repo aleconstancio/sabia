@@ -39,22 +39,27 @@ export function createLocalStorageStore<T>(
     }
   }
 
+  let _persistTimeout: ReturnType<typeof setTimeout> | undefined;
+
   function persist() {
-    try {
-      localStorage.setItem(key, JSON.stringify(_data));
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        logger.warn(`${prefix} localStorage quota exceeded, trimming old entries`);
-        _data = _data.slice(0, trimTo);
-        try {
-          localStorage.setItem(key, JSON.stringify(_data));
-        } catch (e: unknown) {
-          logger.warn(`${prefix} give-up persist:`, e);
+    if (_persistTimeout) clearTimeout(_persistTimeout);
+    _persistTimeout = setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify(_data));
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+          logger.warn(`${prefix} localStorage quota exceeded, trimming old entries`);
+          _data = _data.slice(0, trimTo);
+          try {
+            localStorage.setItem(key, JSON.stringify(_data));
+          } catch (e: unknown) {
+            logger.warn(`${prefix} give-up persist:`, e);
+          }
+        } else {
+          logger.warn(`${prefix} persist failed:`, e);
         }
-      } else {
-        logger.warn(`${prefix} persist failed:`, e);
       }
-    }
+    }, 100);
   }
 
   // Auto-load on creation

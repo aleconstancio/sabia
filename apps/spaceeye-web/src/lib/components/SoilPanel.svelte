@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SoilData, SoilZonalResponse } from '$lib/api/types';
   import { api } from '$lib/api/client';
+  import { Spinner } from '$lib/components/ui/spinner';
 
   let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
 
@@ -59,11 +60,11 @@
 </script>
 
 <div class="rounded-lg border border-border bg-card p-4">
-  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Solo</h3>
+  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Soil</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-      <span>Carregando...</span>
+      <Spinner size="xs" />
+      <span>Loading...</span>
     </div>
   {:else if error}
     <p class="text-sm text-destructive">{error}</p>
@@ -76,23 +77,23 @@
           <p class="text-lg font-bold">{(data as SoilZonalResponse).ph?.toFixed(1) ?? '—'}</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Carbono Org.</p>
+          <p class="text-xs text-muted-foreground">Org. Carbon</p>
           <p class="text-lg font-bold">{(data as SoilZonalResponse).organic_carbon_gkg?.toFixed(1) ?? '—'} g/kg</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Areia</p>
+          <p class="text-xs text-muted-foreground">Sand</p>
           <p class="text-lg font-bold">{(data as SoilZonalResponse).sand_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Silte</p>
+          <p class="text-xs text-muted-foreground">Silt</p>
           <p class="text-lg font-bold">{(data as SoilZonalResponse).silt_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Argila</p>
+          <p class="text-xs text-muted-foreground">Clay</p>
           <p class="text-lg font-bold">{(data as SoilZonalResponse).clay_pct?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Pontos amostrados</p>
+          <p class="text-xs text-muted-foreground">Sampled points</p>
           <p class="text-lg font-bold">{(data as SoilZonalResponse).points_sampled ?? '—'}</p>
         </div>
       </div>
@@ -105,15 +106,15 @@
           <p class="text-xs text-muted-foreground">pH</p>
           <p class="text-lg font-bold">{ph?.toFixed(1) ?? '—'}</p>
           <p class="text-xs" class:text-emerald-400={ph && ph >= 5.5 && ph <= 7.5} class:text-amber-400={ph && (ph < 5.5 || ph > 7.5)}>
-            {ph ? (ph >= 5.5 && ph <= 7.5 ? 'Ideal' : ph < 5.5 ? 'Ácido' : 'Alcalino') : ''}
+            {ph ? (ph >= 5.5 && ph <= 7.5 ? 'Ideal' : ph < 5.5 ? 'Acidic' : 'Alkaline') : ''}
           </p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Carbono Org.</p>
+          <p class="text-xs text-muted-foreground">Org. Carbon</p>
           <p class="text-lg font-bold">{oc?.toFixed(1) ?? '—'} g/kg</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Nitrogênio</p>
+          <p class="text-xs text-muted-foreground">Nitrogen</p>
           <p class="text-lg font-bold">{nitrogen ? (nitrogen / 100).toFixed(2) : '—'}%</p>
         </div>
         <div>
@@ -121,11 +122,11 @@
           <p class="text-lg font-bold">{cec?.toFixed(1) ?? '—'} cmolc/kg</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Areia</p>
+          <p class="text-xs text-muted-foreground">Sand</p>
           <p class="text-lg font-bold">{sand?.toFixed(0) ?? '—'}%</p>
         </div>
         <div>
-          <p class="text-xs text-muted-foreground">Argila</p>
+          <p class="text-xs text-muted-foreground">Clay</p>
           <p class="text-lg font-bold">{clay?.toFixed(0) ?? '—'}%</p>
         </div>
       </div>

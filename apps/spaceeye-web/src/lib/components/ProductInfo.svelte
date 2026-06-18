@@ -2,17 +2,17 @@
   import { Badge } from '$lib/components/ui/badge';
 
   const products: Record<string, { label: string; description: string; category: string }> = {
-    NDVI: { label: 'NDVI', description: 'Índice de Vegetação - diferencia solo nuo de vegetação densa', category: 'Vegetação' },
-    TCI: { label: 'TCI', description: 'Imagem Verdadeira Cor - visual como o olho humano vê', category: 'Visual' },
-    NDWI: { label: 'NDWI', description: 'Índice de Água - detecta corpos d\'água e umidade', category: 'Água' },
-    SAVI: { label: 'SAVI', description: 'Vegetação Ajustada ao Solo - reduz efeito do solo nu', category: 'Vegetação' },
-    EVI: { label: 'EVI', description: 'Vegetação Melhorada - mais sensível em áreas densas', category: 'Vegetação' },
-    MSAVI2: { label: 'MSAVI2', description: 'SAVI Modificado - auto-ajusta para solo nu', category: 'Vegetação' },
-    VARI: { label: 'VARI', description: 'Vegetação Apropriada - usa apenas bandas visíveis', category: 'Vegetação' },
-    MNDWI: { label: 'MNDWI', description: 'Água Modificada - melhor para áreas urbanas', category: 'Água' },
-    CIR: { label: 'CIR', description: 'Cor Infravermelha - realça vegetação saudável em vermelho', category: 'Visual' },
-    NBR: { label: 'NBR', description: 'Razão de Queimadas - detecta áreas queimadas', category: 'Solo' },
-    NDMI: { label: 'NDMI', description: 'Umidade - monitora estresse hídrico da vegetação', category: 'Vegetação' },
+    NDVI: { label: 'NDVI', description: 'Vegetation Index - differentiates bare soil from dense vegetation', category: 'Vegetation' },
+    TCI: { label: 'TCI', description: 'True Color Image - visual as the human eye sees', category: 'Visual' },
+    NDWI: { label: 'NDWI', description: 'Water Index - detects water bodies and moisture', category: 'Water' },
+    SAVI: { label: 'SAVI', description: 'Soil Adjusted Vegetation - reduces bare soil effect', category: 'Vegetation' },
+    EVI: { label: 'EVI', description: 'Enhanced Vegetation - more sensitive in dense areas', category: 'Vegetation' },
+    MSAVI2: { label: 'MSAVI2', description: 'Modified SAVI - self-adjusts for bare soil', category: 'Vegetation' },
+    VARI: { label: 'VARI', description: 'Visible Atmospherically Resistant - uses only visible bands', category: 'Vegetation' },
+    MNDWI: { label: 'MNDWI', description: 'Modified Water Index - better for urban areas', category: 'Water' },
+    CIR: { label: 'CIR', description: 'Color Infrared - highlights healthy vegetation in red', category: 'Visual' },
+    NBR: { label: 'NBR', description: 'Burn Ratio - detects burned areas', category: 'Soil' },
+    NDMI: { label: 'NDMI', description: 'Moisture Index - monitors vegetation water stress', category: 'Vegetation' },
   };
 
   let { product, compact = false }: { product: string; compact?: boolean } = $props();

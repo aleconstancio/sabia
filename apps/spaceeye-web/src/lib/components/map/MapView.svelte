@@ -21,6 +21,7 @@
 
   let mapContainer: HTMLDivElement;
   let leafletMap: ReturnType<typeof createLeafletMap> | null = null;
+  let _rafId = 0;
 
   onMount(async () => {
     if (!browser || !mapContainer) return;
@@ -51,12 +52,12 @@
               Array.isArray(coord) && coord.length >= 2 && coord.every((v: unknown) => typeof v === 'number')
             )
           )) {
-            toast.error('Coordenadas inválidas no link compartilhado');
+            toast.error('Invalid coordinates in shared link');
             return;
           }
           const allowedProducts = SPECTRAL_PRODUCTS.map(p => p.value);
           if (!allowedProducts.includes(product)) {
-            toast.error('Produto inválido no link compartilhado');
+            toast.error('Invalid product in shared link');
             return;
           }
           mapState.polygonCoords = parsed;
@@ -75,15 +76,19 @@
       }
     }
 
-    // Handle mouse move for measurement
+    // Handle mouse move for measurement (throttled via rAF)
     leafletMap?.map?.on('mousemove', (e: L.LeafletMouseEvent) => {
-      if (measureMode) {
-        onMeasure({ lat: parseFloat(e.latlng.lat.toFixed(4)), lng: parseFloat(e.latlng.lng.toFixed(4)) });
-      }
+      cancelAnimationFrame(_rafId);
+      _rafId = requestAnimationFrame(() => {
+        if (measureMode) {
+          onMeasure({ lat: parseFloat(e.latlng.lat.toFixed(4)), lng: parseFloat(e.latlng.lng.toFixed(4)) });
+        }
+      });
     });
   });
 
   onDestroy(() => {
+    cancelAnimationFrame(_rafId);
     leafletMap?.destroy();
   });
 
@@ -96,4 +101,4 @@
   }
 </script>
 
-<div bind:this={mapContainer} id="map" class="flex-1 min-h-0" role="application" aria-label="Mapa interativo SpaceEye"></div>
+<div bind:this={mapContainer} id="map" class="flex-1 min-h-0" role="application" aria-label="SpaceEye Interactive Map"></div>

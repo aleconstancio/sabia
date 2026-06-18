@@ -56,6 +56,7 @@ export function createLeafletMap(
 
   let map: L.Map | null = null;
   let drawnItems: L.FeatureGroup | null = null;
+  let _rafId = 0;
 
   const init = async () => {
     if (!browser || !container) return;
@@ -113,10 +114,13 @@ export function createLeafletMap(
       }
     }) as unknown as L.LeafletEventHandlerFn);
 
-    // Enable mouse move tracking
+    // Enable mouse move tracking (throttled via rAF)
     if (enableMouseMove) {
       map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        mapState.polygonCentroid = { lat: e.latlng.lat, lon: e.latlng.lng };
+        cancelAnimationFrame(_rafId);
+        _rafId = requestAnimationFrame(() => {
+          mapState.polygonCentroid = { lat: e.latlng.lat, lon: e.latlng.lng };
+        });
       });
     }
   };

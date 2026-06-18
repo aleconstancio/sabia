@@ -98,7 +98,7 @@
       ctx.fillStyle = '#888';
       ctx.font = '8px monospace';
       ctx.textAlign = 'center';
-      const label = new Date(d.date).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' });
+      const label = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       ctx.fillText(label, x, pad.top + chartH + 14);
     });
   }
@@ -119,18 +119,18 @@
 
 <div class="rounded-lg border border-border bg-card p-3">
   <div class="flex items-center justify-between mb-2">
-    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isFallback ? 'Cloud Cover Proxy' : 'Série Temporal'}</h4>
+    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isFallback ? 'Cloud Cover Proxy' : 'Time Series'}</h4>
     {#if loading}
-      <span class="text-xs text-muted-foreground">Processando...</span>
+      <span class="text-xs text-muted-foreground">Processing...</span>
     {/if}
   </div>
   {#if barData.length > 0}
-    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]" aria-label="Grafico de serie temporal NDVI"></canvas>
+    <canvas bind:this={canvas} width={280} height={140} class="w-full h-[140px]" aria-label="NDVI time series chart"></canvas>
     <button
       class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none mt-1"
       onclick={exportCsv}
     >
-      Baixar CSV
+      Download CSV
     </button>
   {:else if loading}
     <div class="h-[140px] flex items-center justify-center">
@@ -143,10 +143,10 @@
           class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none"
           onclick={fetchTimeline}
         >
-          Construir Série Temporal
+          Build Time Series
         </button>
       {:else}
-        Processe imagens para ver a série temporal
+        Process images to see the time series
       {/if}
     </div>
   {/if}

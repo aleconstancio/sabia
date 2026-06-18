@@ -34,11 +34,11 @@
 </script>
 
 {#if status === 'checking'}
-  <Badge variant="outline">Verificando...</Badge>
+  <Badge variant="outline">Checking...</Badge>
 {:else if status === 'connected'}
-  <Badge variant="success">{catalogCount.toLocaleString('pt-BR')} imagens</Badge>
+  <Badge variant="success">{catalogCount.toLocaleString()} images</Badge>
 {:else if status === 'empty'}
-  <Badge variant="warning">Banco vazio</Badge>
+  <Badge variant="warning">Empty database</Badge>
 {:else}
   <Badge variant="destructive">Backend offline</Badge>
 {/if}

@@ -38,6 +38,17 @@
       <span class="text-muted-foreground">Carbon Decline</span>
       <input type="number" bind:value={thresholds.carbon_decline_pct} class="w-16 bg-muted border border-border rounded px-2 py-0.5 text-xs text-right" min="1" max="100" />%
     </label>
+    {#if module === 'fire'}
+      <label class="flex items-center justify-between text-xs">
+        <span class="text-muted-foreground">Fire Risk Level</span>
+        <select bind:value={thresholds.fire_risk_level} class="w-24 bg-muted border border-border rounded px-2 py-0.5 text-xs">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </label>
+    {/if}
     <label class="flex items-center justify-between text-xs">
       <span class="text-muted-foreground">Weather Alerts</span>
       <input type="checkbox" bind:checked={thresholds.weather_alerts} class="accent-primary" />

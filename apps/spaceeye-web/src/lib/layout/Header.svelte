@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { toggleMode } from 'mode-watcher';
   import { toast } from 'svelte-sonner';
   import { browser } from '$app/environment';
+  import { page } from '$app/state';
   import SearchMenu from '$lib/components/SearchMenu.svelte';
+
+  let path = $derived(page.url.pathname);
   import HistoryPanel from '$lib/components/HistoryPanel.svelte';
   import MonitoringPanel from '$lib/components/MonitoringPanel.svelte';
   import Bookmarks from '$lib/components/Bookmarks.svelte';
@@ -38,8 +40,38 @@
     showTimelapse?: boolean;
   } = $props();
 
+  const navLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/modules/vegetation', label: 'Vegetation' },
+    { href: '/modules/water', label: 'Water' },
+    { href: '/modules/fire', label: 'Fire' },
+    { href: '/modules/soil', label: 'Soil' },
+    { href: '/modules/climate', label: 'Climate' },
+  ];
+
   function handleBookmarkSelect(coords: number[][][], _name: string) {
     mapState.polygonCoords = coords;
+  }
+
+  let exportingPdf = $state(false);
+  let exportingGeotiff = $state(false);
+
+  async function handleExportPdf(e: MouseEvent) {
+    exportingPdf = true;
+    try {
+      onExportPdf(e);
+    } finally {
+      exportingPdf = false;
+    }
+  }
+
+  async function handleExportGeotiff() {
+    exportingGeotiff = true;
+    try {
+      await downloadGeotiff(mapState.taskId);
+    } finally {
+      exportingGeotiff = false;
+    }
   }
 
   function copyShareLink() {
@@ -49,8 +81,8 @@
     if (mapState.taskId) params.set('image', mapState.taskId);
     params.set('product', mapState.selectedProduct);
     navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?${params.toString()}`)
-      .then(() => toast.success('Link copiado!'))
-      .catch(() => toast.error('Falha ao copiar link'));
+      .then(() => toast.success('Link copied!'))
+      .catch(() => toast.error('Failed to copy link'));
   }
 
   async function handleRestore(r: AnalysisRecord) {
@@ -69,7 +101,7 @@
       <button
         onclick={() => mapState.sidebarOpen = !mapState.sidebarOpen}
         class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
-        aria-label="Abrir menu lateral"
+        aria-label="Open sidebar"
         aria-expanded={mapState.sidebarOpen}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,48 +116,62 @@
 
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <ConnectionStatus />
-      <a href="/dashboard" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/dashboard" class="text-xs {path === '/dashboard' ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Dashboard
       </a>
-      <a href="/modules/vegetation" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/modules/vegetation" class="text-xs {path.startsWith('/modules/vegetation') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Vegetation
       </a>
-      <a href="/modules/water" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/modules/water" class="text-xs {path.startsWith('/modules/water') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Water
       </a>
-      <a href="/modules/fire" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/modules/fire" class="text-xs {path.startsWith('/modules/fire') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Fire
       </a>
-      <a href="/modules/soil" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/modules/soil" class="text-xs {path.startsWith('/modules/soil') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Soil
       </a>
-      <a href="/modules/climate" class="text-xs text-muted-foreground hover:text-foreground transition-colors no-underline">
+      <a href="/modules/climate" class="text-xs {path.startsWith('/modules/climate') ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} transition-colors no-underline">
         Climate
       </a>
       {#if mapState.results.length > 0}
         <Button variant={showCompare ? 'default' : 'ghost'} size="sm" onclick={onToggleCompare}>
-          {showCompare ? 'Sair' : 'Comparar'}
+          {showCompare ? 'Exit' : 'Compare'}
         </Button>
         <Button variant={showTimelapse ? 'default' : 'ghost'} size="sm" onclick={onToggleTimelapse}>
-          {showTimelapse ? 'Sair' : 'Timelapse'}
+          {showTimelapse ? 'Exit' : 'Timelapse'}
         </Button>
       {/if}
       {#if mapState.rasterOverlay}
-        <Button variant="ghost" size="sm" onclick={onClearOverlay}>Limpar</Button>
+        <Button variant="ghost" size="sm" onclick={onClearOverlay}>Clear</Button>
       {/if}
       {#if mapState.hasOverlay}
         <Button variant="ghost" size="sm" onclick={copyShareLink}>Link</Button>
-        <Button variant="ghost" size="sm" onclick={() => downloadGeotiff(mapState.taskId)}>GeoTIFF</Button>
-        <Button variant="ghost" size="sm" onclick={onExportPdf}>PDF</Button>
+        <Button variant="ghost" size="sm" onclick={handleExportGeotiff} disabled={exportingGeotiff}>
+          {#if exportingGeotiff}
+            <span class="w-3 h-3 border-[2px] border-current border-t-transparent rounded-full animate-spin mr-1"></span>
+            Exporting...
+          {:else}
+            GeoTIFF
+          {/if}
+        </Button>
+        <Button variant="ghost" size="sm" onclick={handleExportPdf} disabled={exportingPdf}>
+          {#if exportingPdf}
+            <span class="w-3 h-3 border-[2px] border-current border-t-transparent rounded-full animate-spin mr-1"></span>
+            Exporting...
+          {:else}
+            PDF
+          {/if}
+        </Button>
       {/if}
       {#if mapState.polygonCoords}
         <Button variant="outline" size="sm" onclick={onSaveProfile} disabled={isSavingProfile}>
-          {isSavingProfile ? 'Salvando...' : 'Salvar Perfil'}
+          {isSavingProfile ? 'Saving...' : 'Save Profile'}
         </Button>
       {/if}
       <Select.Root type="single" bind:value={mapState.selectedCollection}>
         <Select.Trigger class="!w-28 !text-xs">
-          Coleção...
+          Collection...
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="cbers4a">CBERS-4A</Select.Item>
@@ -139,14 +185,10 @@
       <Bookmarks currentCoords={mapState.polygonCoords} onSelect={handleBookmarkSelect} />
       <AlertBell />
       <button
-        onclick={toggleMode}
-        class="inline-flex items-center justify-center rounded-[--radius] p-2 transition-colors cursor-pointer bg-transparent border-none text-muted-foreground"
-        aria-label="Alternar tema"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
+        onclick={() => { localStorage.removeItem('spaceeye_onboarded'); window.location.reload(); }}
+        class="inline-flex items-center justify-center rounded-[--radius] w-7 h-7 text-xs font-medium transition-colors cursor-pointer bg-transparent border border-border text-muted-foreground hover:text-foreground"
+        aria-label="Replay onboarding tutorial"
+      >?</button>
     </div>
   </div>
 </header>

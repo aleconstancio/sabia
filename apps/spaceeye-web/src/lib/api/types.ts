@@ -1,3 +1,6 @@
+// Fields matching backend API use snake_case.
+// Frontend-only fields use camelCase.
+
 export interface ImageResult {
   id: string;
   collection: string;
@@ -26,6 +29,54 @@ export interface SoilZonalResponse {
   points_sampled?: number;
   note?: string;
   [key: string]: unknown;
+}
+
+export interface WeatherApiResponse {
+  current?: {
+    temperature_2m?: number;
+    apparent_temperature?: number;
+    relative_humidity_2m?: number;
+    precipitation?: number;
+    weather_code?: number;
+    soil_moisture_0_to_7cm?: number;
+  };
+  daily?: {
+    precipitation_sum?: number[];
+    temperature_2m_max?: number[];
+    temperature_2m_min?: number[];
+  };
+}
+
+export interface SoilApiResponse {
+  properties?: Array<{
+    name: string;
+    depths: Array<{
+      label: string;
+      values?: Record<string, number>;
+    }>;
+  }>;
+}
+
+export interface LandCoverData {
+  source: string;
+  resolution: number;
+  classes?: Record<string, number>;
+  tile_url?: string;
+  polygon_area_m2?: number;
+  sampled_points?: number;
+  class_percentages?: Record<string, number>;
+}
+
+export interface ProcessingStats {
+  mean?: number;
+  std?: number;
+  min?: number;
+  max?: number;
+  p10?: number;
+  p90?: number;
+  median?: number;
+  nodata_pct?: number;
+  pixel_count?: number;
 }
 
 export interface WeatherData {
@@ -64,7 +115,7 @@ export interface AnalysisRecord {
   cloudCover: number | null;
   polygonCoords: number[][][];
   centroid: { lat: number; lon: number } | null;
-  stats?: Record<string, unknown>;
+  stats?: ProcessingStats;
 }
 
 export interface TaskStatus {
@@ -76,11 +127,7 @@ export interface TaskStatus {
   error?: string;
 }
 
-export interface StatsData {
-  mean?: number;
-  std?: number;
-  min?: number;
-  max?: number;
+export interface StatsData extends ProcessingStats {
   histogram?: {
     deciles?: number[];
     p10?: number;
@@ -126,7 +173,7 @@ export interface RegionProfile {
   } | null;
   satellite_data: {
     product: string;
-    stats: Record<string, unknown>;
+    stats: ProcessingStats;
   } | null;
   created_at: string | null;
 }

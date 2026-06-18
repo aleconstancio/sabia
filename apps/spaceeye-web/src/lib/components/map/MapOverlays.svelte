@@ -1,7 +1,5 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import RegionComparison from '$lib/components/RegionComparison.svelte';
-  import SwipeComparison from '$lib/components/SwipeComparison.svelte';
   import TimeSlider from '$lib/components/TimeSlider.svelte';
   import NdviTimeline from '$lib/components/NdviTimeline.svelte';
   import TimelapsePlayer from '$lib/components/TimelapsePlayer.svelte';
@@ -30,20 +28,24 @@
 {#if mapState.showComparison && mapState.comparisonFirst && mapState.comparisonSecond}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
     <div class="flex justify-end mb-1">
-      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe} aria-label="Alternar modo de comparacao">
-        {useSwipe ? 'Lado a lado' : 'Deslizar'}
+      <Button variant="ghost" size="sm" onclick={() => useSwipe = !useSwipe} aria-label="Toggle comparison mode">
+        {useSwipe ? 'Side by side' : 'Swipe'}
       </Button>
     </div>
     {#if useSwipe}
-      <SwipeComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+      {#await import('$lib/components/SwipeComparison.svelte') then { default: SwipeComparison }}
+        <SwipeComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+      {/await}
     {:else}
-      <RegionComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+      {#await import('$lib/components/RegionComparison.svelte') then { default: RegionComparison }}
+        <RegionComparison imageA={mapState.comparisonFirst} imageB={mapState.comparisonSecond} polygonCoords={mapState.polygonCoords} polygonCentroid={mapState.polygonCentroid} product={mapState.selectedProduct} />
+      {/await}
     {/if}
   </div>
 {:else if mapState.showComparison}
   <div class="absolute left-4 right-4 bottom-20 z-[999]">
     <div class="rounded-lg border border-border bg-card p-4 text-center">
-      <p class="text-sm text-muted-foreground">Selecione duas imagens na galeria para comparar</p>
+      <p class="text-sm text-muted-foreground">Select two images in the gallery to compare</p>
     </div>
   </div>
 {/if}

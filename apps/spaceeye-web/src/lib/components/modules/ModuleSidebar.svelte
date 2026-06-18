@@ -3,8 +3,11 @@
   import AlertThresholds from './AlertThresholds.svelte';
   import { AreaChart } from '$lib/charts';
   import { mapState } from '$lib/stores/map.svelte';
-  import { getCarbonStock, getFireRisk, getWeather, getSoil } from '$lib/api/client';
+  import { getCarbonStock, getFireRisk, getWeather, getSoil, listAnalyses } from '$lib/api/client';
   import type { CarbonStock, FireRisk } from '$lib/api/types';
+  import { logger } from '$lib/utils/logger';
+  import { Spinner } from '$lib/components/ui/spinner';
+  import { Skeleton } from '$lib/components/ui/skeleton';
 
   let { module = 'vegetation' }: { module: string } = $props();
 
@@ -14,6 +17,8 @@
   let weatherData = $state<Record<string, unknown> | null>(null);
   let soilData = $state<Record<string, unknown> | null>(null);
   let timelineData = $state<{ date: string; value: number }[]>([]);
+  let timelineLoading = $state(false);
+  let kpiLoading = $state(true);
 
   function computeCentroid(coords: number[][][]): { lat: number; lon: number } | null {
     if (!coords || coords.length === 0) return null;
@@ -33,27 +38,53 @@
     const centroid = computeCentroid(mapState.polygonCoords);
     if (!centroid) return;
 
+    kpiLoading = true;
+
+    const spectralProducts: Record<string, string> = {
+      vegetation: 'NDVI',
+      water: 'NDWI',
+      fire: 'NBR',
+    };
+
     if (module === 'vegetation') {
-      getCarbonStock(mapState.polygonCoords).then(d => carbonStock = d).catch(() => {});
+      getCarbonStock(mapState.polygonCoords).then(d => { carbonStock = d; kpiLoading = false; }).catch(e => { logger.warn('Failed to fetch carbon stock:', e); kpiLoading = false; });
     }
     if (module === 'fire') {
-      getFireRisk(mapState.polygonCoords).then(d => fireRisk = d).catch(() => {});
+      getFireRisk(mapState.polygonCoords).then(d => { fireRisk = d; kpiLoading = false; }).catch(e => { logger.warn('Failed to fetch fire risk:', e); kpiLoading = false; });
     }
     if (module === 'water' || module === 'climate') {
-      getWeather(centroid.lat, centroid.lon).then(d => weatherData = d).catch(() => {});
+      getWeather(centroid.lat, centroid.lon).then(d => { weatherData = d; kpiLoading = false; }).catch(e => { logger.warn('Failed to fetch weather:', e); kpiLoading = false; });
     }
     if (module === 'soil') {
-      getSoil(centroid.lat, centroid.lon).then(d => soilData = d).catch(() => {});
+      getSoil(centroid.lat, centroid.lon).then(d => { soilData = d; kpiLoading = false; }).catch(e => { logger.warn('Failed to fetch soil:', e); kpiLoading = false; });
     }
-  });
 
-  $effect(() => {
-    if (mapState.results.length > 0) {
-      timelineData = mapState.results.slice(0, 20).map(img => ({
-        date: img.acquired_at,
-        value: 0.0,
-      }));
+    const spectralProduct = spectralProducts[module];
+    if (!spectralProduct) {
+      timelineData = [];
+      return;
     }
+
+    timelineLoading = true;
+    listAnalyses({ product: spectralProduct, limit: 50 })
+      .then(({ analyses }) => {
+        const sorted = [...analyses].sort((a, b) => {
+          const da = a.created_at || '';
+          const db = b.created_at || '';
+          return da.localeCompare(db);
+        });
+        timelineData = sorted.map(a => ({
+          date: a.created_at || '',
+          value: typeof a.statistics?.mean === 'number' ? a.statistics.mean : 0,
+        }));
+      })
+      .catch(e => {
+        logger.warn('Failed to fetch analysis history:', e);
+        timelineData = [];
+      })
+      .finally(() => {
+        timelineLoading = false;
+      });
   });
 
   const moduleConfig: Record<string, { title: string; product: string }> = {
@@ -119,8 +150,12 @@
   </div>
 
   <!-- KPI Cards -->
-  <div class="space-y-2">
-    {#if module === 'vegetation'}
+  <div class="space-y-2" aria-live="polite">
+    {#if kpiLoading}
+      {#each Array(3) as _}
+        <Skeleton variant="card" class="h-16" />
+      {/each}
+    {:else if module === 'vegetation'}
       <ModuleKPI label="NDVI Avg" value={carbonStock?.ndvi_avg?.toFixed(3) || '—'} trendData={[0.4, 0.42, 0.45, 0.48, 0.52]} />
       <ModuleKPI label="Carbon Stock" value={carbonStock?.carbon_stock_t_ha?.toFixed(1) || '—'} unit="t/ha" color="#10b981" />
       <ModuleKPI label="Biomass" value={carbonStock?.biomass_estimate?.toFixed(1) || '—'} unit="t/ha" color="#3b82f6" />
@@ -130,8 +165,8 @@
       <ModuleKPI label="Temperature" value={getWeatherTemp()} unit="°C" color="#f97316" />
     {:else if module === 'fire'}
       <ModuleKPI label="Risk Level" value={fireRisk?.risk_level || '—'} color={fireRisk?.risk_level === 'high' ? '#ef4444' : '#10b981'} />
-      <ModuleKPI label="Risk Score" value={fireRisk?.risk_score?.toFixed(0) || '—'} unit="/100" />
-      <ModuleKPI label="NBR Trend" value={fireRisk?.nbr_trend?.toFixed(2) || '—'} />
+      <ModuleKPI label="Risk Score" value={fireRisk?.fire_risk_score?.toFixed(0) || '—'} unit="/100" />
+      <ModuleKPI label="Drought Days" value={fireRisk?.factors?.drought_days?.toString() || '—'} />
     {:else if module === 'soil'}
       <ModuleKPI label="pH Level" value={getSoilPh()} />
       <ModuleKPI label="Organic Carbon" value={getSoilCarbon()} unit="g/kg" />
@@ -144,7 +179,15 @@
   </div>
 
   <!-- Domain Chart -->
-  {#if timelineData.length > 0}
+  {#if timelineLoading}
+    <div class="rounded-lg border border-border bg-card p-3">
+      <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Time Series</h4>
+      <div class="flex items-center justify-center h-[150px] text-xs text-muted-foreground">
+        <Spinner size="sm" class="mr-2" />
+        Loading time series…
+      </div>
+    </div>
+  {:else if timelineData.length > 0}
     <div class="rounded-lg border border-border bg-card p-3">
       <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Time Series</h4>
       <AreaChart data={timelineData} height={150} />

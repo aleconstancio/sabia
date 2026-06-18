@@ -1,7 +1,7 @@
 /**
  * UI state — modal visibility, sidebar, comparison mode.
  */
-import type { ImageResult, WeatherData } from '$lib/api/types';
+import type { WeatherData } from '$lib/api/types';
 
 let _showLegend = $state(false);
 let _showPolygonModal = $state(false);

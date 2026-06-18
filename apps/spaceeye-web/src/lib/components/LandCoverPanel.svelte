@@ -1,5 +1,7 @@
 <script lang="ts">
   import { api } from '$lib/api/client';
+  import { Spinner } from '$lib/components/ui/spinner';
+  import { logger } from '$lib/utils/logger';
 
   let { lat = 0, lon = 0, polygonCoords = null as number[][][] | null }: { lat: number; lon: number; polygonCoords?: number[][][] | null } = $props();
   let landcover: Record<string, unknown> | null = $state(null);
@@ -10,14 +12,14 @@
     if (lat && lon) {
       const controller = new AbortController();
       const timer = setTimeout(() => {
-        fetchLandcover(controller.signal);
+        fetchLandcover();
       }, 300);
       return () => { clearTimeout(timer); controller.abort(); };
     }
   });
 
 
-  async function fetchLandcover(signal?: AbortSignal) {
+  async function fetchLandcover() {
     loading = true;
     try {
       if (polygonCoords) {
@@ -25,7 +27,7 @@
       } else {
         landcover = await api.get(`/landcover/${lat}/${lon}`);
       }
-    } catch { fetchError = 'Falha ao carregar cobertura do solo'; } finally { loading = false; }
+    } catch (e) { logger.warn('Failed to load land cover data:', e); fetchError = 'Failed to load land cover data'; } finally { loading = false; }
   }
 
   const classColors: Record<number, string> = {
@@ -37,11 +39,11 @@
 </script>
 
 <div class="rounded-lg border border-border bg-card p-4">
-  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Cobertura do Solo</h3>
+  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Land Cover</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-      <span>Carregando...</span>
+      <Spinner size="xs" />
+      <span>Loading...</span>
     </div>
   {:else if landcover}
     {#if polygonCoords}
@@ -64,7 +66,7 @@
       </div>
     {/if}
   {:else}
-    <p class="text-sm text-muted-foreground">Dados de cobertura do solo indisponíveis para esta região.</p>
+    <p class="text-sm text-muted-foreground">Land cover data unavailable for this region.</p>
   {/if}
   {#if fetchError}
     <p class="text-sm text-destructive mt-2">{fetchError}</p>

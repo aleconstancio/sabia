@@ -1,4 +1,5 @@
 <script lang="ts">
+  import L from 'leaflet';
   import { Button } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
   import { Progress } from '$lib/components/ui/progress';
@@ -11,6 +12,7 @@
   import { searchImages, processImage } from '$lib/api/processing';
   import { handleToggleSelect } from '$lib/helpers/comparison';
   import { SPECTRAL_PRODUCTS } from '$lib/constants';
+  import { Spinner } from '$lib/components/ui/spinner';
 
   let {
     drawnItems,
@@ -25,13 +27,13 @@
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
     <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
-      <Dialog.Title>Buscar imagens deste local?</Dialog.Title>
+      <Dialog.Title>Search images from this location?</Dialog.Title>
       <div class="space-y-4">
         <div>
-          <label for="product-select" class="text-sm font-medium">Produto</label>
+          <label for="product-select" class="text-sm font-medium">Product</label>
           <Select.Root type="single" bind:value={mapState.selectedProduct}>
             <Select.Trigger class="w-full">
-              Produto...
+              Product...
             </Select.Trigger>
             <Select.Content>
               {#each SPECTRAL_PRODUCTS as option}
@@ -47,29 +49,27 @@
             const layers = drawnItems.getLayers();
             if (layers.length < 2) return;
             const bounds = drawnItems.getBounds();
-            const L = window.L;
-            if (!L) return;
             const polygon = L.rectangle(bounds);
             drawnItems.clearLayers();
             drawnItems.addLayer(polygon);
             const geoJSON = polygon.toGeoJSON();
             mapState.polygonCoords = geoJSON.geometry.coordinates as number[][][];
             mapState.polygonCentroid = { lat: polygon.getCenter().lat, lon: polygon.getCenter().lng };
-          }}>Unir áreas</Button>
+          }}>Merge areas</Button>
         {/if}
         {#if mapState.searchError}
           <div class="flex items-center gap-2 mt-2">
             <p class="text-destructive text-sm flex-1">{mapState.searchError}</p>
-            <Button size="sm" variant="outline" onclick={searchImages}>Tentar novamente</Button>
+            <Button size="sm" variant="outline" onclick={searchImages}>Try again</Button>
           </div>
         {/if}
       </div>
       <Dialog.Footer>
-        <Button variant="ghost" onclick={() => mapState.showPolygonModal = false}>Cancelar</Button>
-        <Button variant="ghost" onclick={onSaveLocal}>Salvar local</Button>
+        <Button variant="ghost" onclick={() => mapState.showPolygonModal = false}>Cancel</Button>
+        <Button variant="ghost" onclick={onSaveLocal}>Save location</Button>
         <Button onclick={searchImages}>
-          {#if mapState.isLoading}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
-          Buscar imagens
+          {#if mapState.isLoading}<Spinner size="sm" />{/if}
+          Search images
         </Button>
       </Dialog.Footer>
     </Dialog.Content>
@@ -80,11 +80,11 @@
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
     <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
-      <Dialog.Title>Imagens relacionadas</Dialog.Title>
+      <Dialog.Title>Related Images</Dialog.Title>
       {#if mapState.results.length === 0}
         <div class="flex flex-col items-center justify-center py-16 text-center">
-          <h3 class="text-lg font-semibold text-foreground mb-1">Nenhuma imagem</h3>
-          <p class="text-sm text-muted-foreground max-w-sm">Não encontramos imagens para esta localidade.</p>
+          <h3 class="text-lg font-semibold text-foreground mb-1">No images</h3>
+          <p class="text-sm text-muted-foreground max-w-sm">We couldn't find images for this location.</p>
         </div>
       {:else}
         <div class="space-y-2">
@@ -96,7 +96,7 @@
             bind:sortOrder={mapState.filterSortOrder}
           />
           {#if mapState.showComparison}
-            <p class="text-xs text-muted-foreground px-2">Selecione duas imagens para comparar</p>
+            <p class="text-xs text-muted-foreground px-2">Select two images to compare</p>
           {/if}
           <ImageGallery
             images={mapState.results}
@@ -115,17 +115,23 @@
 <Dialog.Root bind:open={mapState.showProcessingViewer}>
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-    <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
-      <Dialog.Title>Processando imagem</Dialog.Title>
+    <Dialog.Content
+      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg"
+      onkeydown={(e) => { if (e.key === 'Escape') mapState.showProcessingViewer = false; }}
+    >
+      <Dialog.Title>Processing image</Dialog.Title>
       <div class="space-y-4 text-center py-8">
-        <span class="animate-spin h-10 w-10 border-[3px] border-primary border-t-transparent rounded-full inline-block"></span>
-        <p class="text-muted-foreground" aria-live="polite">{mapState.processingPhase || 'Iniciando...'}</p>
+        <Spinner size="lg" />
+        <p class="text-muted-foreground" aria-live="polite">{mapState.processingPhase || 'Starting...'}</p>
         <Progress value={mapState.processingProgress} />
         <p class="text-sm text-muted-foreground">{mapState.processingProgress}%</p>
         {#if mapState.lastStats}
           <HistogramPanel stats={mapState.lastStats} product={mapState.selectedProduct} />
         {/if}
       </div>
+      <Dialog.Footer>
+        <Button variant="outline" onclick={() => mapState.showProcessingViewer = false} autofocus>Close</Button>
+      </Dialog.Footer>
     </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>

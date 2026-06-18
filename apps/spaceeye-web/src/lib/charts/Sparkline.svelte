@@ -17,9 +17,17 @@
       .range([2, width - 2])
   );
 
+  let yDomain = $derived.by(() => {
+    if (data.length <= 1) return [0, 1];
+    const dataMin = Math.min(...data);
+    const dataMax = Math.max(...data);
+    const padding = (dataMax - dataMin) * 0.1 || 0.1;
+    return [Math.max(0, dataMin - padding), dataMax + padding];
+  });
+
   let yScale = $derived(
     scaleLinear()
-      .domain([0, 1])
+      .domain(yDomain)
       .range([height - 2, 2])
   );
 

@@ -37,8 +37,8 @@ export async function searchImages() {
     mapState.showPolygonModal = false;
     mapState.showImageGallery = true;
   } catch (e: unknown) {
-    mapState.searchError = e instanceof Error ? e.message : String(e) || 'Erro ao buscar imagens';
-    toast.error('Falha ao buscar imagens', { description: e instanceof Error ? e.message : String(e) });
+    mapState.searchError = e instanceof Error ? e.message : String(e) || 'Error searching images';
+    toast.error('Failed to search images', { description: e instanceof Error ? e.message : String(e) });
   } finally {
     mapState.isLoading = false;
   }
@@ -61,7 +61,7 @@ export async function processImage(imageId: string) {
     mapState.taskId = data.task_id;
 
     const result = await pollTaskStatus(data.task_id, {
-      intervalMs: 1000,
+      initialIntervalMs: 1000,
       signal,
       onProgress: (progress, phase) => {
         if (!mapState.showProcessingViewer) return;
@@ -92,13 +92,13 @@ export async function processImage(imageId: string) {
       });
     } else {
       mapState.isLoading = false;
-      mapState.processingPhase = 'Erro: ' + (result.error || 'Falha no processamento');
+      mapState.processingPhase = 'Error: ' + (result.error || 'Processing failed');
     }
   } catch (e: unknown) {
     logger.error('processImage error:', e);
     mapState.isLoading = false;
-    mapState.processingPhase = 'Erro ao iniciar processamento';
-    toast.error('Falha ao iniciar processamento');
+    mapState.processingPhase = 'Error starting processing';
+    toast.error('Failed to start processing');
   }
 }
 
@@ -132,18 +132,20 @@ export async function exportPdf(imageId: string, cloudCover: number | null) {
   };
   try {
     await downloadBlobPost(`${API_URL}/export/pdf`, body, `spaceeye-${imageId.slice(0, 20)}.pdf`);
+    toast.success('PDF exported');
   } catch (e: unknown) {
     logger.error('exportPdf error:', e);
-    toast.error('Falha ao exportar PDF');
+    toast.error('Failed to export PDF');
   }
 }
 
 export async function downloadGeotiff(taskId: string) {
   try {
     await downloadBlob(`${API_URL}/download/${taskId}/geotiff`, `spaceeye-${taskId.slice(0, 8)}.tif`);
+    toast.success('GeoTIFF downloaded');
   } catch (e: unknown) {
     logger.error('downloadGeotiff error:', e);
-    toast.error('Falha ao baixar GeoTIFF');
+    toast.error('Failed to download GeoTIFF');
   }
 }
 

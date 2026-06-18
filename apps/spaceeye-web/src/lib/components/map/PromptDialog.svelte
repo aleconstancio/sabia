@@ -46,7 +46,7 @@
         class="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
       />
       <div class="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onclick={handleCancel}>Cancelar</Button>
+        <Button type="button" variant="ghost" onclick={handleCancel}>Cancel</Button>
         <Button type="submit">OK</Button>
       </div>
     </form>

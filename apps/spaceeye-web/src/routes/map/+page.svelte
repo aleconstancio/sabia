@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { goto } from '$app/navigation';
   import SpaceEyeShell from '$lib/layout/SpaceEyeShell.svelte';
   import Header from '$lib/layout/Header.svelte';
   import { SearchPanel, ResultsPanel, AnalyticsPanel, HistorySidebar } from '$lib/components/sidebar';
@@ -14,6 +15,8 @@
   import { toast } from 'svelte-sonner';
   import { logger } from '$lib/utils/logger';
   import { MapView, MapDialogs, MapOverlays, PromptDialog } from '$lib/components/map';
+  import { page } from '$app/state';
+  import L from 'leaflet';
 
   let mapView: MapView;
   let measureMode = $state(false);
@@ -23,6 +26,8 @@
   let showTimelapse = $state(false);
   let showOnboarding = $state(false);
   let isSavingProfile = $state(false);
+
+  let hasProfileParam = $derived(page.url.searchParams.has('profile'));
 
   const tileLayers: Record<string, string> = {
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -102,7 +107,7 @@
 
   async function saveAsProfile() {
     if (!mapState.polygonCoords || isSavingProfile) return;
-    promptLabel = 'Nome para este perfil:';
+    promptLabel = 'Profile name:';
     promptValue = '';
     showPromptDialog = true;
     onPromptSubmit = async (name: string) => {
@@ -117,10 +122,10 @@
             stats: mapState.lastStats,
           } : undefined,
         });
-        toast.success('Perfil salvo com sucesso!');
+        toast.success('Profile saved successfully!');
       } catch (e: unknown) {
         logger.error('saveAsProfile error:', e);
-        toast.error('Falha ao salvar perfil');
+        toast.error('Failed to save profile');
       } finally {
         isSavingProfile = false;
       }
@@ -140,8 +145,6 @@
       if (drawnItems) {
         drawnItems.clearLayers();
       }
-      const L = window.L;
-      if (!L) return;
       const polygon = L.polygon(mapState.polygonCoords[0].map((c: number[]) => [c[1], c[0]]));
       map.addLayer(polygon);
       drawnItems?.addLayer(polygon);
@@ -154,7 +157,7 @@
 
   function saveCurrentPolygon() {
     if (!mapState.polygonCoords) return;
-    promptLabel = 'Nome para este local:';
+    promptLabel = 'Location name:';
     promptValue = '';
     showPromptDialog = true;
     onPromptSubmit = (name: string) => {
@@ -201,13 +204,13 @@
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-[100]">
       <div class="text-center space-y-3 bg-background/80 backdrop-blur-sm rounded-xl p-8 border border-border">
         <div class="text-4xl">🌍</div>
-        <h2 class="text-lg font-semibold">Desenhe uma área no mapa</h2>
+        <h2 class="text-lg font-semibold">Draw an area on the map</h2>
         <p class="text-sm text-muted-foreground max-w-xs">
-          Use a ferramenta de polígono ou retângulo no canto superior esquerdo do mapa para selecionar uma região.
+          Use the polygon or rectangle tool in the top-left corner of the map to select a region.
         </p>
         <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <kbd class="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px]">Draw Polygon</kbd>
-          <span>ou</span>
+          <span>or</span>
           <kbd class="px-1.5 py-0.5 rounded border border-border bg-muted text-[10px]">Draw Rectangle</kbd>
         </div>
       </div>
@@ -228,6 +231,16 @@
   opacity={layerOpacity}
   onOpacityChange={setOpacity}
 />
+
+{#if hasProfileParam}
+  <a
+    href="/dashboard"
+    onclick={(e) => { e.preventDefault(); goto('/dashboard'); }}
+    class="absolute left-2 sm:left-4 bottom-4 z-[999] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-background/80 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-background/95 transition-colors"
+  >
+    <span aria-hidden="true">&larr;</span> Back to Dashboard
+  </a>
+{/if}
 
 <MapDialogs
   drawnItems={mapView?.getDrawnItems() ?? null}

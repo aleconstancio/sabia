@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { ModeWatcher } from 'mode-watcher';
   import { Toaster } from 'svelte-sonner';
 
   let {
@@ -15,7 +14,6 @@
   } = $props();
 </script>
 
-<ModeWatcher />
 <Toaster
   richColors
   closeButton

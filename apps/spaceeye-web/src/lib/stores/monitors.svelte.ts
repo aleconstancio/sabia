@@ -33,7 +33,7 @@ async function checkMonitor(m: Monitor): Promise<string> {
   try {
     const data = await searchImages(m.polygonCoords, undefined);
     const newImages = data.images || [];
-    const result = newImages.length > 0 ? `Nova imagem: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'Sem novidades';
+    const result = newImages.length > 0 ? `New image: ${newImages[0].id.slice(0, 20)}... (${newImages[0].acquired_at})` : 'No updates';
     store.data = store.data.map(monitor =>
       monitor.id === m.id
         ? { ...monitor, lastChecked: new Date().toISOString(), lastResult: result }
@@ -41,7 +41,7 @@ async function checkMonitor(m: Monitor): Promise<string> {
     );
     return result;
   } catch (e) { logger.warn('Monitor check failed:', e); }
-  return 'Falha na verificação';
+  return 'Check failed';
 }
 
 export const monitorsStore = {

@@ -40,12 +40,12 @@
 
 {#if stats}
   <div class="rounded-lg border border-border bg-card p-3 mt-2">
-    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Estatísticas</h4>
+    <h4 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Statistics</h4>
     <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mb-2">
-      <span class="text-muted-foreground">Média</span><span class="text-right font-mono">{stats.mean?.toFixed(3) ?? '—'}</span>
-      <span class="text-muted-foreground">Desv. Pad.</span><span class="text-right font-mono">{stats.std?.toFixed(3) ?? '—'}</span>
-      <span class="text-muted-foreground">Mínimo</span><span class="text-right font-mono">{stats.min?.toFixed(3) ?? '—'}</span>
-      <span class="text-muted-foreground">Máximo</span><span class="text-right font-mono">{stats.max?.toFixed(3) ?? '—'}</span>
+      <span class="text-muted-foreground">Mean</span><span class="text-right font-mono">{stats.mean?.toFixed(3) ?? '—'}</span>
+      <span class="text-muted-foreground">Std Dev</span><span class="text-right font-mono">{stats.std?.toFixed(3) ?? '—'}</span>
+      <span class="text-muted-foreground">Min</span><span class="text-right font-mono">{stats.min?.toFixed(3) ?? '—'}</span>
+      <span class="text-muted-foreground">Max</span><span class="text-right font-mono">{stats.max?.toFixed(3) ?? '—'}</span>
       <span class="text-muted-foreground">P10</span><span class="text-right font-mono">{stats.histogram?.p10?.toFixed(3) ?? '—'}</span>
       <span class="text-muted-foreground">P90</span><span class="text-right font-mono">{stats.histogram?.p90?.toFixed(3) ?? '—'}</span>
     </div>

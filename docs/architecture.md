@@ -114,7 +114,12 @@ apps/spaceeye-web/src/
 │   ├── components/               # Feature components
 │   │   ├── alerts/               # Alert notification system
 │   │   │   └── AlertBell.svelte  # Notification bell with unread count
-│   │   ├── dashboard/            # Dashboard cards & grid
+│   │   ├── dashboard/            # Command center components
+│   │   │   ├── StatusBar.svelte  # Global status bar
+│   │   │   ├── OverviewMap.svelte # Mini Leaflet map with region pins
+│   │   │   ├── KpiStrip.svelte   # Compact 6-metric KPI strip
+│   │   │   ├── ActivityFeed.svelte # Real-time event feed
+│   │   │   ├── QuickActions.svelte # Action button bar
 │   │   │   ├── Scorecard.svelte  # ESG metric card with sparkline
 │   │   │   └── PortfolioGrid.svelte  # Region card grid
 │   │   ├── modules/              # ESG module components
@@ -137,7 +142,9 @@ apps/spaceeye-web/src/
 │   │   ├── history.svelte.ts     # Analysis history
 │   │   └── monitors.svelte.ts    # Region monitoring
 │   ├── ui/                       # Design system
-│   │   └── components/           # Button, Card, Badge, Dialog, etc.
+│   │   ├── components/           # Button, Card, Badge, Dialog, etc.
+│   │   ├── skeleton/             # Skeleton loading component
+│   │   └── spinner/              # Spinner component
 │   ├── helpers/                  # Shared utilities
 │   │   ├── download.ts           # downloadBlob(), downloadBlobPost()
 │   │   ├── pollTask.ts           # pollTaskStatus() for Celery tasks
@@ -147,8 +154,11 @@ apps/spaceeye-web/src/
 │   │   └── map-helpers.ts        # Leaflet helper functions
 │   ├── actions/                  # Svelte actions
 │   │   └── clickOutside.ts       # Click-outside detection
-│   └── utils/                    # Shared utilities
-│       └── logger.ts             # Structured logging
+│   ├── utils/                    # Shared utilities
+│   │   ├── logger.ts             # Structured logging
+│   │   └── dashboard.ts          # Shared dashboard utilities (getNdviColor, formatTimeAgo, CSV export)
+│   └── sidebar/                  # Reusable sidebar components
+│       └── SidebarSection.svelte # Reusable sidebar section
 └── routes/                       # SvelteKit pages
     ├── +layout.svelte            # Root layout
     ├── dashboard/                # ESG dashboard (primary landing page)
@@ -222,6 +232,16 @@ Each ESG domain (Vegetation, Water, Fire, Soil, Climate) follows the same patter
 2. **Module sidebar** — displays KPIs, charts, and alert thresholds
 3. **Module map page** — shared Leaflet map with domain-specific overlay
 4. **Alert rules** — configurable thresholds per region
+
+### Command Center Layout
+
+The dashboard uses a CSS Grid layout (`command-grid`) with four zones:
+- **Map area** (left): Mini overview map with region pins
+- **KPI area** (top-right): 6-metric horizontal strip + quick actions
+- **Feed area** (middle-right): Scrollable activity feed
+- **Stations area** (bottom): Paginated grid of region station cards
+
+Auto-refreshes every 30 seconds via `dashboardState.startAutoRefresh()`.
 
 ### Shared Utilities
 

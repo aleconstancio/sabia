@@ -13,7 +13,7 @@ async function persistToBackend(rec: AnalysisRecord) {
       product: rec.product,
       polygon: { type: 'Polygon', coordinates: rec.polygonCoords },
       centroid: rec.centroid ?? undefined,
-      statistics: rec.stats,
+      statistics: rec.stats as Record<string, unknown>,
     });
   } catch (e) { logger.warn('History persist failed:', e); }
 }

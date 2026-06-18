@@ -7,8 +7,8 @@
 
   let {
     t = undefined as TFunction | undefined,
-    fallbackTitle = t?.('error.ErrorBoundary.title') ?? 'Algo deu errado',
-    fallbackDescription = t?.('error.ErrorBoundary.description') ?? 'Ocorreu um erro inesperado. Tente recarregar a página.',
+    fallbackTitle = t?.('error.ErrorBoundary.title') ?? 'Something went wrong',
+    fallbackDescription = t?.('error.ErrorBoundary.description') ?? 'An unexpected error occurred. Try reloading the page.',
     showRetry = true,
     showHome = false,
     homeUrl = '/',
@@ -67,10 +67,10 @@
     <p class="text-sm mt-2 max-w-md text-muted-foreground">{fallbackDescription}</p>
     <div class="flex gap-3 mt-6">
       {#if showRetry}
-        <Button onclick={retry}>{t?.('common.reload') ?? 'Recarregar'}</Button>
+        <Button onclick={retry}>{t?.('common.reload') ?? 'Reload'}</Button>
       {/if}
       {#if showHome}
-        <Button variant="secondary" href={homeUrl}>{t?.('error.ErrorBoundary.home') ?? 'Página Inicial'}</Button>
+        <Button variant="secondary" href={homeUrl}>{t?.('error.ErrorBoundary.home') ?? 'Home'}</Button>
       {/if}
     </div>
   </div>

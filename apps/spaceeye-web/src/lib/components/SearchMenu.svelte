@@ -27,7 +27,7 @@
       ufs = await getUfs();
     } catch {
       logger.warn('SearchMenu failed to load UFs');
-      apiError = 'Falha ao carregar estados';
+      apiError = 'Failed to load states';
     }
   });
 
@@ -40,7 +40,7 @@
     } catch {
       logger.warn('SearchMenu failed to load cities for UF:', uf);
       cities = [];
-      apiError = 'Falha ao carregar cidades';
+      apiError = 'Failed to load cities';
     }
   }
 
@@ -56,7 +56,7 @@
       }
     } catch {
       logger.warn('SearchMenu geocode failed for city:', city);
-      apiError = 'Falha na busca do local';
+      apiError = 'Failed to search location';
     }
   }
 
@@ -71,7 +71,7 @@
       placeholder="UF"
       class="!w-20 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
       onfocus={() => showUfDropdown = true}
-      aria-label="Buscar estado"
+      aria-label="Search state"
     />
     {#if showUfDropdown && filteredUfs.length > 0}
       <div
@@ -87,11 +87,11 @@
   <div class="relative city-container" bind:this={cityContainer}>
     <input
       bind:value={cityFilter}
-      placeholder="Cidade"
+      placeholder="City"
       class="!w-48 rounded-[--radius,0.625rem] border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
       onfocus={() => showCityDropdown = true}
       disabled={!selectedUf}
-      aria-label="Buscar cidade"
+      aria-label="Search city"
     />
     {#if showCityDropdown && filteredCities.length > 0}
       <div

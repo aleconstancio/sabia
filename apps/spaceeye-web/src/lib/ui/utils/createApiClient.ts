@@ -84,7 +84,7 @@ export function createApiClient<TBase extends Record<string, (...args: unknown[]
     async postBlob(path: string, body?: unknown): Promise<Blob> {
       const headers = new Headers();
       const token = getToken?.();
-      if (token) headers.set('Authorization', `Bearer ${token}`);
+      if (token) headers.set('X-API-Key', token);
       if (body && !(body instanceof FormData)) {
         headers.set('Content-Type', 'application/json');
       }

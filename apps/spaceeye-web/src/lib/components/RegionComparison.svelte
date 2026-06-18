@@ -71,7 +71,7 @@
 
     try {
       const data = await apiProcessImage(image.id, polygonCoords, product);
-      const result = await pollTaskStatus(data.task_id, { intervalMs: 1000 });
+      const result = await pollTaskStatus(data.task_id, { initialIntervalMs: 1000 });
       if (result.status === 'done') {
         const bounds = result.result?.bounds as [[number, number], [number, number]];
         const map = side === 'A' ? mapA : mapB;
@@ -102,7 +102,7 @@
         task_id_a: taskIdA,
         task_id_b: taskIdB,
       });
-      const result = await pollTaskStatus(data.task_id, { intervalMs: 2000 });
+      const result = await pollTaskStatus(data.task_id, { initialIntervalMs: 2000 });
       if (result.status === 'done') {
         const bounds = result.result?.bounds as [[number, number], [number, number]];
         const overlay = L.imageOverlay(`${API_URL}/overlay/${(result.result?.path as string).split('/').pop()}`, bounds, { opacity: 0.7 });
@@ -117,7 +117,7 @@
     } catch (e: unknown) {
       logger.warn('RegionComparison computeDifference error:', e);
       computingDiff = false;
-      diffError = 'Falha ao iniciar diferença';
+        diffError = 'Failed to start difference';
     }
   }
 
@@ -131,12 +131,12 @@
 <div class="grid grid-cols-2 gap-2 h-[400px]">
   <div class="relative rounded-lg overflow-hidden border border-border">
     <div class="absolute top-2 left-2 z-[1000] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageA?.id?.slice(0, 30) || 'Imagem A'}...
-      <span class="ml-1 text-muted-foreground">{imageA?.acquired_at ? new Date(imageA.acquired_at).toLocaleDateString('pt-BR') : ''}</span>
+      {imageA?.id?.slice(0, 30) || 'Image A'}...
+      <span class="ml-1 text-muted-foreground">{imageA?.acquired_at ? new Date(imageA.acquired_at).toLocaleDateString() : ''}</span>
     </div>
     <div bind:this={mapAContainer} class="h-full w-full"></div>
     {#if loadingA}
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><span class="text-white text-sm">Processando...</span></div>
+      <div class="absolute inset-0 bg-black/40 flex items-center justify-center" aria-live="assertive"><span class="text-white text-sm">Processing...</span></div>
     {/if}
     {#if errorA}
       <div class="absolute bottom-2 left-2 bg-destructive/90 text-white text-xs px-2 py-1 rounded">{errorA}</div>
@@ -144,12 +144,12 @@
   </div>
   <div class="relative rounded-lg overflow-hidden border border-border">
     <div class="absolute top-2 left-2 z-[1000] bg-black/60 text-white text-xs px-2 py-1 rounded">
-      {imageB?.id?.slice(0, 30) || 'Imagem B'}...
-      <span class="ml-1">{imageB?.acquired_at ? new Date(imageB.acquired_at).toLocaleDateString('pt-BR') : ''}</span>
+      {imageB?.id?.slice(0, 30) || 'Image B'}...
+      <span class="ml-1">{imageB?.acquired_at ? new Date(imageB.acquired_at).toLocaleDateString() : ''}</span>
     </div>
     <div bind:this={mapBContainer} class="h-full w-full"></div>
     {#if loadingB}
-      <div class="absolute inset-0 bg-black/40 flex items-center justify-center"><span class="text-white text-sm">Processando...</span></div>
+      <div class="absolute inset-0 bg-black/40 flex items-center justify-center" aria-live="assertive"><span class="text-white text-sm">Processing...</span></div>
     {/if}
     {#if errorB}
       <div class="absolute bottom-2 left-2 bg-destructive/90 text-white text-xs px-2 py-1 rounded">{errorB}</div>
@@ -162,7 +162,7 @@
       class="bg-primary text-primary-foreground text-xs font-medium h-8 px-3 rounded-md cursor-pointer hover:opacity-90"
       onclick={computeDifference}
     >
-      Calcular diferença NDVI
+      Calculate NDVI difference
     </button>
   </div>
 {/if}
@@ -171,6 +171,6 @@
 {/if}
 {#if computingDiff}
   <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-black/60 text-white text-xs px-2 py-1 rounded">
-    Calculando diferença...
+    Calculating difference...
   </div>
 {/if}

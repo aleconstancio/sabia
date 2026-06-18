@@ -5,41 +5,34 @@
   import { searchImages } from '$lib/api/processing';
   import ProductInfo from '$lib/components/ProductInfo.svelte';
   import { SPECTRAL_PRODUCTS } from '$lib/constants';
-
-  let expanded = $state(true);
+  import { Spinner } from '$lib/components/ui/spinner';
+  import SidebarSection from './SidebarSection.svelte';
 </script>
 
-<div class="mb-4 sidebar-section">
-  <button onclick={() => expanded = !expanded} class="flex items-center w-full p-2 rounded-[--radius] cursor-pointer transition-colors bg-transparent border-none text-inherit hover:bg-muted sidebar-section-header" aria-expanded={expanded} aria-label="Busca">
-    <span class="text-lg mr-2">🔍</span>
-    <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Busca</span>
-    <svg class="ml-auto w-3 h-3 transition-transform" class:rotate-180={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-  </button>
-  {#if expanded}
-    <div class="space-y-3 mt-2">
-      <div class="text-xs text-muted-foreground">
-        Desenhe um polígono no mapa para buscar imagens
-      </div>
-      <Select.Root type="single" bind:value={mapState.selectedProduct}>
-        <Select.Trigger class="w-full">
-          Produto...
-        </Select.Trigger>
-        <Select.Content>
-          {#each SPECTRAL_PRODUCTS as option}
-            <Select.Item value={option.value}>{option.label}</Select.Item>
-          {/each}
-        </Select.Content>
-      </Select.Root>
-      <ProductInfo product={mapState.selectedProduct} />
-      {#if mapState.polygonCoords}
-        <Button onclick={searchImages} class="!w-full">
-          {#if mapState.isLoading}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
-          Buscar imagens
-        </Button>
-      {/if}
-      {#if mapState.searchError}
-        <p class="text-xs text-destructive">{mapState.searchError}</p>
-      {/if}
+<SidebarSection title="Search" icon="🔍">
+  <div class="space-y-3">
+    <div class="text-xs text-muted-foreground">
+      Draw a polygon on the map to search for images
     </div>
-  {/if}
-</div>
+    <Select.Root type="single" bind:value={mapState.selectedProduct}>
+      <Select.Trigger class="w-full">
+        Product...
+      </Select.Trigger>
+      <Select.Content>
+        {#each SPECTRAL_PRODUCTS as option}
+          <Select.Item value={option.value}>{option.label}</Select.Item>
+        {/each}
+      </Select.Content>
+    </Select.Root>
+    <ProductInfo product={mapState.selectedProduct} />
+    {#if mapState.polygonCoords}
+        <Button onclick={searchImages} class="!w-full">
+          {#if mapState.isLoading}<Spinner size="sm" />{/if}
+          Search images
+        </Button>
+    {/if}
+    {#if mapState.searchError}
+      <p class="text-xs text-destructive">{mapState.searchError}</p>
+    {/if}
+  </div>
+</SidebarSection>

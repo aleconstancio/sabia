@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
   optimizeDeps: {
-    exclude: ['bits-ui', 'mode-watcher', 'svelte-sonner', 'layercake'],
+    exclude: ['bits-ui', 'mode-watcher', 'svelte-sonner', 'layercake', '@lucide/svelte'],
   },
   ssr: {
     noExternal: ['bits-ui', 'mode-watcher', 'svelte-sonner'],

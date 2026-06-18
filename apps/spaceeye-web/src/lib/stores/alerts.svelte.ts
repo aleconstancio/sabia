@@ -3,9 +3,21 @@ import { createLocalStorageStore } from '$lib/helpers/localStorage.svelte';
 
 const store = createLocalStorageStore<Alert>('spaceeye_alerts', []);
 
+let _unreadCache = 0;
+let _lastSeenLength = -1;
+let _lastSeenReadVersion = '';
+
 export const alertStore = {
   get alerts() { return store.data; },
-  get unreadCount() { return store.data.filter(a => !a.read).length; },
+  get unreadCount() {
+    const data = store.data;
+    const readVersion = data.length + ':' + data.filter(a => a.read).length;
+    if (readVersion !== _lastSeenReadVersion) {
+      _unreadCache = data.filter(a => !a.read).length;
+      _lastSeenReadVersion = readVersion;
+    }
+    return _unreadCache;
+  },
   add(alert: Omit<Alert, 'id' | 'timestamp' | 'read'>) {
     const newAlert: Alert = {
       ...alert,

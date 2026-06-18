@@ -22,12 +22,13 @@
 
 ### ESG Monitoring
 
-- **Dashboard-first**: ESG scorecard, portfolio overview, and alert management as primary landing page
+- **Command center dashboard**: Dense, full-width layout with mini-map overview, 6-metric KPI strip, real-time activity feed, and paginated station cards
 - **5 domain modules**: Vegetation, Water, Fire, Soil, Climate — each with dedicated KPIs, charts, and alert thresholds
 - **Multi-source data fusion**: Satellite imagery + weather (Open-Meteo) + soil (ISRIC SoilGrids) + land cover (ESA WorldCover)
 - **Carbon stock estimation**: Soil organic carbon + NDVI-derived biomass proxy
 - **Fire risk scoring**: NBR trend + weather factors (temperature, humidity, precipitation)
 - **Alert system**: Configurable thresholds for vegetation loss, water body change, carbon decline, weather extremes
+- **Real-time updates**: Auto-refresh every 30 seconds, live status indicators, toast notifications
 
 ### Analysis Tools
 
@@ -126,14 +127,15 @@ For detailed architecture, see [docs/architecture.md](./docs/architecture.md).
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | SvelteKit 2, Svelte 5 (runes), Tailwind CSS v4, Leaflet, LayerCake |
+| **Frontend** | SvelteKit 2, Svelte 5 (runes), Tailwind CSS v4, Leaflet, D3 |
 | **Backend** | Python 3.12+, FastAPI, SQLAlchemy (async), Pydantic v2 |
 | **Task Queue** | Celery + Redis |
 | **Database** | PostgreSQL 16 + PostGIS 3.4 |
 | **Processing** | Rasterio, NumPy, scikit-image, aiohttp |
 | **External Data** | Open-Meteo (weather), ISRIC SoilGrids (soil), ESA WorldCover (land cover) |
+| **Testing** | Vitest (frontend), Pytest (backend), 50+ tests |
 | **Infrastructure** | Docker, docker compose, NGINX, Alembic (migrations) |
-| **Package Mgmt** | uv (Python), bun (Node.js) |
+| **Package Mgmt** | uv (Python), npm (Node.js) |
 
 ---
 
@@ -145,16 +147,17 @@ spaceeye/
 │   └── src/
 │       ├── lib/
 │       │   ├── api/             # API client & processing logic
-│       │   ├── charts/          # LayerCake chart components
+│       │   ├── charts/          # D3-powered chart components
 │       │   ├── components/      # Feature components
 │       │   │   ├── alerts/      # Alert notification system
-│       │   │   ├── dashboard/   # Dashboard cards & grid
+│       │   │   ├── dashboard/   # Command center components
+│       │   │   ├── map/         # Map components
 │       │   │   ├── modules/     # ESG module components
 │       │   │   ├── sidebar/     # Map sidebar panels
 │       │   │   └── ui/          # shadcn-svelte components
 │       │   ├── helpers/         # Download, polling, map helpers
 │       │   ├── stores/          # Svelte 5 rune stores
-│       │   └── utils/           # Logger, utilities
+│       │   └── utils/           # Logger, dashboard utilities
 │       └── routes/              # SvelteKit pages
 │           ├── dashboard/       # ESG dashboard (primary)
 │           ├── map/             # Map analysis view

@@ -5,6 +5,7 @@
   import { Button } from '$lib/components/ui/button';
   import * as Dialog from '$lib/components/ui/dialog';
   import type { Monitor, Bookmark } from '$lib/api/types';
+  import { Spinner } from '$lib/components/ui/spinner';
 
   let show = $state(false);
   let monitors = $state<Monitor[]>([]);
@@ -32,18 +33,18 @@
 
   async function runAllChecks() {
     checking = true;
-    statusMsg = `Verificando ${monitors.length} locais...`;
+    statusMsg = `Checking ${monitors.length} locations...`;
     for (const m of monitors) {
       if (m.active) await monitorsStore.check(m);
     }
     refresh();
-    statusMsg = 'Verificação concluída';
+    statusMsg = 'Check complete';
     checking = false;
   }
 
   function addFromBookmark() {
     const bookmarks = bookmarksStore.all;
-    if (bookmarks.length === 0) { statusMsg = 'Nenhum local salvo'; return; }
+    if (bookmarks.length === 0) { statusMsg = 'No saved locations'; return; }
     availableBookmarks = bookmarks;
     nameInputValue = bookmarks[0]?.name || '';
     showNameInput = true;
@@ -54,9 +55,9 @@
     if (bm) {
       monitorsStore.add(bm);
       refresh();
-      statusMsg = `Monitorando "${bm.name}"`;
+      statusMsg = `Monitoring "${bm.name}"`;
     } else {
-      statusMsg = 'Local não encontrado';
+      statusMsg = 'Location not found';
     }
     showNameInput = false;
   }
@@ -78,33 +79,33 @@
 
 <div class="relative" bind:this={panelRef}>
   <Button size="sm" variant="ghost" onclick={() => { show = !show; refresh(); }} class="!text-xs">
-    {monitors.length > 0 ? `${monitors.length} monitores` : 'Monitorar'}
+    {monitors.length > 0 ? `${monitors.length} monitors` : 'Monitor'}
   </Button>
   {#if show}
     <div class="absolute top-full right-0 mt-1 w-80 rounded-lg border border-border bg-card shadow-lg p-2 z-[1000] max-h-96 overflow-y-auto">
       <div class="flex items-center justify-between mb-2 px-1">
-        <h4 class="text-xs font-semibold text-muted-foreground uppercase">Monitoramento</h4>
-        <button class="text-xs text-primary bg-transparent border-none cursor-pointer hover:underline" onclick={addFromBookmark}>+ Adicionar</button>
+        <h4 class="text-xs font-semibold text-muted-foreground uppercase">Monitoring</h4>
+        <button class="text-xs text-primary bg-transparent border-none cursor-pointer hover:underline" onclick={addFromBookmark}>+ Add</button>
       </div>
       {#if monitors.length === 0}
-        <p class="text-xs text-muted-foreground p-2">Nenhum monitor ativo. Adicione um local salvo para monitorar novas imagens.</p>
+        <p class="text-xs text-muted-foreground p-2">No active monitors. Add a saved location to monitor new images.</p>
       {:else}
         {#each monitors as m}
           <div class="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted">
             <div class="flex-1 min-w-0">
               <p class="text-xs font-medium truncate">{m.bookmarkName}</p>
-              <p class="text-xs text-muted-foreground truncate">{m.lastResult || 'Aguardando verificação'}</p>
+              <p class="text-xs text-muted-foreground truncate">{m.lastResult || 'Awaiting check'}</p>
               {#if m.lastChecked}
-                <p class="text-xs text-muted-foreground">{new Date(m.lastChecked).toLocaleString('pt-BR')}</p>
+                <p class="text-xs text-muted-foreground">{new Date(m.lastChecked).toLocaleString()}</p>
               {/if}
             </div>
-            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remover monitor" onclick={() => confirmDeleteMonitor(m)}>✕</button>
+            <button class="text-xs text-destructive bg-transparent border-none cursor-pointer ml-2" aria-label="Remove monitor" onclick={() => confirmDeleteMonitor(m)}>✕</button>
           </div>
         {/each}
         <div class="mt-2 pt-2 border-t border-border">
           <Button size="sm" variant="outline" class="!w-full !text-xs" onclick={runAllChecks}>
-            {#if checking}<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>{/if}
-            {checking ? 'Verificando...' : 'Verificar todos agora'}
+            {#if checking}<Spinner size="sm" />{/if}
+            {checking ? 'Checking...' : 'Check all now'}
           </Button>
         </div>
       {/if}
@@ -116,7 +117,7 @@
   {#if showNameInput}
     <div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50">
       <form onsubmit={(e) => { e.preventDefault(); handleNameSubmit(); }} class="bg-card border border-border rounded-lg p-6 shadow-xl w-80 space-y-4">
-        <label class="text-sm font-medium" for="monitor-name-input">Qual local monitorar?</label>
+        <label class="text-sm font-medium" for="monitor-name-input">Which location to monitor?</label>
         <select
           id="monitor-name-input"
           bind:value={nameInputValue}
@@ -127,8 +128,8 @@
           {/each}
         </select>
         <div class="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onclick={() => { showNameInput = false; }}>Cancelar</Button>
-          <Button type="submit">Monitorar</Button>
+          <Button type="button" variant="ghost" onclick={() => { showNameInput = false; }}>Cancel</Button>
+          <Button type="submit">Monitor</Button>
         </div>
       </form>
     </div>
@@ -139,13 +140,13 @@
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
     <Dialog.Content class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card border border-border p-6 shadow-lg">
-      <Dialog.Title>Remover monitor?</Dialog.Title>
+      <Dialog.Title>Remove monitor?</Dialog.Title>
       <p class="text-sm text-muted-foreground">
-        Tem certeza que deseja remover o monitor de "{deleteTarget?.bookmarkName}"?
+        Are you sure you want to remove the monitor for "{deleteTarget?.bookmarkName}"?
       </p>
       <Dialog.Footer>
-        <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancelar</Button>
-        <Button variant="destructive" onclick={handleConfirmDeleteMonitor}>Remover</Button>
+        <Button variant="ghost" onclick={() => { showDeleteDialog = false; deleteTarget = null; }}>Cancel</Button>
+        <Button variant="destructive" onclick={handleConfirmDeleteMonitor}>Remove</Button>
       </Dialog.Footer>
     </Dialog.Content>
   </Dialog.Portal>

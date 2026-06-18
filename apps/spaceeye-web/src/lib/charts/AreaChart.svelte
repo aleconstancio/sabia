@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { LayerCake, Svg } from 'layercake';
   import { scaleLinear, scaleTime } from 'd3-scale';
   import { line, area, curveMonotoneX } from 'd3-shape';
 
@@ -20,9 +19,18 @@
       .range([0, containerWidth])
   );
 
+  let yDomain = $derived.by(() => {
+    if (data.length === 0) return [0, 1];
+    const values = data.map(d => d.value);
+    const dataMin = Math.min(...values);
+    const dataMax = Math.max(...values);
+    const padding = (dataMax - dataMin) * 0.1 || 0.1;
+    return [Math.max(0, dataMin - padding), dataMax + padding];
+  });
+
   let yScale = $derived(
     scaleLinear()
-      .domain([0, 1])
+      .domain(yDomain)
       .range([height - 30, 0])
   );
 
@@ -86,7 +94,7 @@
             text-anchor="middle"
             class="fill-muted-foreground text-[8px]"
           >
-            {new Date(d.date).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })}
+            {new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
           </text>
         {/each}
       {/if}
@@ -98,7 +106,7 @@
         style="left: {tooltipData.x}px; top: {tooltipData.y - 40}px; transform: translateX(-50%);"
       >
         <p class="font-mono font-bold">{tooltipData.value.toFixed(4)}</p>
-        <p class="text-muted-foreground">{new Date(tooltipData.date).toLocaleDateString('pt-BR')}</p>
+        <p class="text-muted-foreground">{new Date(tooltipData.date).toLocaleDateString()}</p>
       </div>
     {/if}
   {:else}

@@ -74,6 +74,20 @@ export async function deleteProfile(id: string): Promise<{ deleted: boolean }> {
   return api.delete(`/profiles/${id}`);
 }
 
+export async function listAnalyses(params?: {
+  product?: string;
+  collection?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ analyses: SavedAnalysis[]; total: number }> {
+  const query: Record<string, string> = {};
+  if (params?.product) query.product = params.product;
+  if (params?.collection) query.collection = params.collection;
+  if (params?.limit) query.limit = String(params.limit);
+  if (params?.offset) query.offset = String(params.offset);
+  return api.get('/analyses', query);
+}
+
 export async function getCarbonStock(coordinates: number[][][]): Promise<CarbonStock> {
   return api.post('/carbon-stock', { coordinates });
 }

@@ -2,6 +2,7 @@
   import type { WeatherData } from '$lib/api/types';
   import { api } from '$lib/api/client';
   import { logger } from '$lib/utils/logger';
+  import { Spinner } from '$lib/components/ui/spinner';
 
   interface WeatherApiResponse {
     current?: {
@@ -68,38 +69,38 @@
 </script>
 
 <div class="rounded-lg border border-border bg-card p-4">
-  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Clima</h3>
+  <h3 class="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Climate</h3>
   {#if loading}
     <div class="flex items-center gap-2 text-sm text-muted-foreground">
-      <span class="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-      <span>Carregando...</span>
+      <Spinner size="xs" />
+      <span>Loading...</span>
     </div>
   {:else if error}
     <p class="text-sm text-destructive">{error}</p>
   {:else if data}
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <p class="text-xs text-muted-foreground">Temperatura</p>
+        <p class="text-xs text-muted-foreground">Temperature</p>
         <p class="text-lg font-bold">{data.current?.temperature_2m ?? '—'}°C</p>
       </div>
       <div>
-        <p class="text-xs text-muted-foreground">Sensação</p>
+        <p class="text-xs text-muted-foreground">Feels Like</p>
         <p class="text-lg font-bold">{data.current?.apparent_temperature ?? '—'}°C</p>
       </div>
       <div>
-        <p class="text-xs text-muted-foreground">Umidade</p>
+        <p class="text-xs text-muted-foreground">Humidity</p>
         <p class="text-lg font-bold">{data.current?.relative_humidity_2m ?? '—'}%</p>
       </div>
       <div>
-        <p class="text-xs text-muted-foreground">Precipitação</p>
+        <p class="text-xs text-muted-foreground">Precipitation</p>
         <p class="text-lg font-bold">{data.current?.precipitation ?? '—'} mm</p>
       </div>
       <div>
-        <p class="text-xs text-muted-foreground">Solo (7cm)</p>
+        <p class="text-xs text-muted-foreground">Soil (7cm)</p>
         <p class="text-lg font-bold">{data.current?.soil_moisture_0_to_7cm?.toFixed(2) ?? '—'} m³/m³</p>
       </div>
       <div>
-        <p class="text-xs text-muted-foreground">Previsão 7d</p>
+        <p class="text-xs text-muted-foreground">7-day Forecast</p>
         <p class="text-lg font-bold">{data.daily?.precipitation_sum?.[0] ?? '—'} mm</p>
       </div>
     </div>
