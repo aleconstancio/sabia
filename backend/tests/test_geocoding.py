@@ -3,13 +3,16 @@ import pytest
 import respx
 from httpx import ASGITransport, AsyncClient
 
+from backend.api import geocoding
 from backend.main import app
 
 
 @pytest.fixture
 def client():
     transport = ASGITransport(app=app)
-    return AsyncClient(transport=transport, base_url="http://test")
+    c = AsyncClient(transport=transport, base_url="http://test")
+    geocoding._geocode_last_request = 0.0
+    return c
 
 
 @respx.mock
@@ -58,3 +61,20 @@ async def test_reverse_geocode_rate_limit(client):
     # Second immediate request hits rate limit
     resp = await client.get("/api/geocode/reverse?lat=0&lon=0")
     assert resp.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_reverse_geocode_missing_params(client):
+    resp = await client.get("/api/geocode/reverse")
+    assert resp.status_code == 422
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_reverse_geocode_upstream_error(client):
+    respx.get("https://nominatim.openstreetmap.org/reverse").mock(
+        return_value=httpx.Response(502, text="Bad Gateway")
+    )
+    resp = await client.get("/api/geocode/reverse?lat=-23.5505&lon=-46.6333")
+    assert resp.status_code == 502
+    assert resp.json()["detail"] == "Upstream geocoding service error"

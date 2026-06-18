@@ -14,6 +14,14 @@ router = APIRouter()
 
 _geocode_last_request: float = 0.0
 
+
+def _check_rate_limit():
+    global _geocode_last_request
+    now = _time.monotonic()
+    if now - _geocode_last_request < 1.0:
+        raise HTTPException(status_code=429, detail="Rate limit: 1 request per second")
+    _geocode_last_request = now
+
 _cidades_data: dict = {}
 _cidades_loaded = False
 
@@ -52,17 +60,13 @@ async def list_cidades(uf: str):
 @router.get("/geocode")
 async def geocode(q: str):
     """Proxy for Nominatim geocoding to avoid direct client requests."""
-    global _geocode_last_request
     if not q or not q.strip():
         raise HTTPException(status_code=400, detail="Query parameter 'q' must not be empty")
     if len(q) > 200:
         raise HTTPException(
             status_code=400, detail="Query parameter 'q' must not exceed 200 characters"
         )
-    now = _time.monotonic()
-    if now - _geocode_last_request < 1.0:
-        raise HTTPException(status_code=429, detail="Rate limit: 1 request per second")
-    _geocode_last_request = now
+    _check_rate_limit()
 
     client = await get_http_client()
     resp = await client.get(
@@ -76,16 +80,12 @@ async def geocode(q: str):
 @router.get("/geocode/reverse")
 async def reverse_geocode(lat: float, lon: float):
     """Reverse geocode coordinates to place name via Nominatim."""
-    global _geocode_last_request
     if not (-90 <= lat <= 90):
         raise HTTPException(status_code=400, detail="Latitude must be between -90 and 90")
     if not (-180 <= lon <= 180):
         raise HTTPException(status_code=400, detail="Longitude must be between -180 and 180")
 
-    now = _time.monotonic()
-    if now - _geocode_last_request < 1.0:
-        raise HTTPException(status_code=429, detail="Rate limit: 1 request per second")
-    _geocode_last_request = now
+    _check_rate_limit()
 
     client = await get_http_client()
     resp = await client.get(
@@ -93,6 +93,8 @@ async def reverse_geocode(lat: float, lon: float):
         params={"format": "json", "lat": lat, "lon": lon},
         headers={"User-Agent": "SpaceEye/0.2.0"},
     )
+    if resp.status_code != 200:
+        raise HTTPException(status_code=502, detail="Upstream geocoding service error")
     data = resp.json()
     return {
         "display_name": data.get("display_name", ""),
