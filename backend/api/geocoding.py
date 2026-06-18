@@ -71,3 +71,31 @@ async def geocode(q: str):
         headers={"User-Agent": "SpaceEye/0.2.0"},
     )
     return resp.json()
+
+
+@router.get("/geocode/reverse")
+async def reverse_geocode(lat: float, lon: float):
+    """Reverse geocode coordinates to place name via Nominatim."""
+    global _geocode_last_request
+    if not (-90 <= lat <= 90):
+        raise HTTPException(status_code=400, detail="Latitude must be between -90 and 90")
+    if not (-180 <= lon <= 180):
+        raise HTTPException(status_code=400, detail="Longitude must be between -180 and 180")
+
+    now = _time.monotonic()
+    if now - _geocode_last_request < 1.0:
+        raise HTTPException(status_code=429, detail="Rate limit: 1 request per second")
+    _geocode_last_request = now
+
+    client = await get_http_client()
+    resp = await client.get(
+        "https://nominatim.openstreetmap.org/reverse",
+        params={"format": "json", "lat": lat, "lon": lon},
+        headers={"User-Agent": "SpaceEye/0.2.0"},
+    )
+    data = resp.json()
+    return {
+        "display_name": data.get("display_name", ""),
+        "lat": str(lat),
+        "lon": str(lon),
+    }
