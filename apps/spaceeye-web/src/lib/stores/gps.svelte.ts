@@ -55,7 +55,11 @@ export const gpsState = {
           _longitude = lon;
           _isLoading = false;
           _error = null;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lon, timestamp: Date.now() }));
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lon, timestamp: Date.now() }));
+          } catch (e) {
+            logger.warn('Failed to save GPS cache:', e);
+          }
           resolve({ lat, lon });
         },
         (err) => {
@@ -79,6 +83,10 @@ export const gpsState = {
     _latitude = null;
     _longitude = null;
     _error = null;
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      logger.warn('Failed to clear GPS cache:', e);
+    }
   },
 };
