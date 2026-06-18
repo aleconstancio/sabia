@@ -39,7 +39,7 @@
     if (!gpsState.hasLocation) return;
     gpsWeatherLoading = true;
     try {
-      gpsWeather = await getWeather(gpsState.latitude!, gpsState.longitude!);
+      gpsWeather = await getWeather(gpsState.latitude!, gpsState.longitude!) as WeatherApiResponse;
     } catch {
       gpsWeather = null;
     } finally {

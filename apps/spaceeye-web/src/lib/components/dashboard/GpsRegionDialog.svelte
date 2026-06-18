@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { toast } from 'svelte-sonner';
   import { createProfile, geocode } from '$lib/api/client';
@@ -64,7 +63,7 @@
     }
   }
 
-  onMount(() => {
+  $effect(() => {
     if (open && gpsState.hasLocation) {
       reverseGeocode();
     }
@@ -101,6 +100,12 @@
         leafletMap = map;
       });
     }
+    return () => {
+      if (leafletMap) {
+        (leafletMap as { remove(): void }).remove();
+        leafletMap = null;
+      }
+    };
   });
 </script>
 
