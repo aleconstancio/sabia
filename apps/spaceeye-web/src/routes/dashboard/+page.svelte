@@ -10,6 +10,7 @@
   import OverviewMap from '$lib/components/dashboard/OverviewMap.svelte';
   import KpiStrip from '$lib/components/dashboard/KpiStrip.svelte';
   import ActivityFeed from '$lib/components/dashboard/ActivityFeed.svelte';
+  import LocalConditionsPanel from '$lib/components/dashboard/LocalConditionsPanel.svelte';
   import QuickActions from '$lib/components/dashboard/QuickActions.svelte';
   import PortfolioGrid from './PortfolioGrid.svelte';
   import * as Select from '$lib/components/ui/select';
@@ -173,6 +174,7 @@
 
       <div class="feed-area flex flex-col gap-2 min-h-0">
         <ActivityFeed />
+        <LocalConditionsPanel />
       </div>
 
       <div class="stations-area">
