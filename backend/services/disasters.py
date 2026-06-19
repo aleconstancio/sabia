@@ -1,25 +1,14 @@
 """Disaster alerts from NASA Earth Observatory Natural Event Tracker (EONET)."""
 
 import logging
-import math
 
 from backend.infra.http_client import get_http_client
+from backend.services.geo import haversine
 
 logger = logging.getLogger(__name__)
 
 EONET_URL = "https://eonet.gsfc.nasa.gov/api/v3/events"
 EONET_TIMEOUT = 15.0
-
-
-def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate distance in km between two points using Haversine formula."""
-    R = 6371.0
-    lat1_r, lon1_r = math.radians(lat1), math.radians(lon1)
-    lat2_r, lon2_r = math.radians(lat2), math.radians(lon2)
-    dlat = lat2_r - lat1_r
-    dlon = lon2_r - lon1_r
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 async def fetch_disaster_alerts(
@@ -56,7 +45,7 @@ async def fetch_disaster_alerts(
             if len(coords) < 2:
                 continue
             event_lon, event_lat = coords[0], coords[1]
-            dist = _haversine(lat, lon, event_lat, event_lon)
+            dist = haversine(lat, lon, event_lat, event_lon)
             if dist <= radius_km:
                 category = event.get("categories", [{}])[0]
                 nearby_events.append({

@@ -1,25 +1,14 @@
 """Deforestation alerts from INPE DETER (Daily Deforestation Detection in Real-Time)."""
 
 import logging
-import math
 
 from backend.infra.http_client import get_http_client
+from backend.services.geo import haversine
 
 logger = logging.getLogger(__name__)
 
 DETER_URL = "http://terrabrasilis.dpi.inpe.br/api/"
 DETER_TIMEOUT = 15.0
-
-
-def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculate distance in km between two points using Haversine formula."""
-    R = 6371.0
-    lat1_r, lon1_r = math.radians(lat1), math.radians(lon1)
-    lat2_r, lon2_r = math.radians(lat2), math.radians(lon2)
-    dlat = lat2_r - lat1_r
-    dlon = lon2_r - lon1_r
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 async def fetch_deforestation_alerts(
@@ -51,7 +40,7 @@ async def fetch_deforestation_alerts(
         for item in data.get("data", []):
             alert_lat = item.get("lat", 0)
             alert_lon = item.get("lon", 0)
-            dist = _haversine(lat, lon, alert_lat, alert_lon)
+            dist = haversine(lat, lon, alert_lat, alert_lon)
             if dist <= radius_km:
                 area_m2 = item.get("areameter", 0)
                 area_ha = area_m2 / 10000.0
