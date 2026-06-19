@@ -239,6 +239,67 @@ export interface AlertThreshold {
   created_at: string;
 }
 
+export interface AirQualityData {
+  current: {
+    pm2_5: number;
+    pm10: number;
+    carbon_monoxide: number;
+    nitrogen_dioxide: number;
+    sulphur_dioxide: number;
+    ozone: number;
+    european_aqi: number;
+    us_aqi: number;
+  };
+}
+
+export interface DisasterAlert {
+  id: string;
+  title: string;
+  category: string;
+  category_title: string;
+  date: string;
+  coordinates: [number, number];
+  distance_km: number;
+  sources: { id: string; url: string }[];
+}
+
+export interface DisasterAlertsResponse {
+  events: DisasterAlert[];
+  nearby: number;
+}
+
+export interface DeforestationAlert {
+  id: string;
+  date: string;
+  area_ha: number;
+  municipality: string;
+  state: string;
+  biome: string;
+  class: 'deforestation' | 'degradation';
+  coordinates: [number, number];
+  distance_km: number;
+}
+
+export interface DeforestationAlertsResponse {
+  alerts: DeforestationAlert[];
+  total_area_ha: number;
+  count: number;
+}
+
+export interface WeatherExtendedData {
+  current?: {
+    wind_speed_10m?: number;
+    wind_direction_10m?: number;
+    wind_gusts_10m?: number;
+  };
+  daily?: {
+    uv_index_max?: number[];
+    sunrise?: string[];
+    sunset?: string[];
+    daylight_duration?: number[];
+  };
+}
+
 export interface ESGExportData {
   region: string;
   coordinates: number[][][];

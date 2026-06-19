@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/ui/utils/createApiClient';
-import type { ImageResult, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk } from './types';
+import type { ImageResult, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, AirQualityData, DisasterAlertsResponse, DeforestationAlertsResponse } from './types';
 import { API_URL } from '$lib/config';
 import { logger } from '$lib/utils/logger';
 
@@ -118,4 +118,16 @@ export async function exportEsgCsv(data: { region: string; coordinates: number[]
   return api.postBlob('/export/esg-csv', data);
 }
 
-export type { ImageResult, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, Alert, AlertThreshold } from './types';
+export async function getAirQuality(lat: number, lon: number): Promise<AirQualityData> {
+  return api.get(`/air-quality/${lat}/${lon}`);
+}
+
+export async function getDisasterAlerts(lat: number, lon: number): Promise<DisasterAlertsResponse> {
+  return api.get(`/disasters/${lat}/${lon}`);
+}
+
+export async function getDeforestationAlerts(lat: number, lon: number): Promise<DeforestationAlertsResponse> {
+  return api.get(`/deforestation/${lat}/${lon}`);
+}
+
+export type { ImageResult, Bookmark, Monitor, AnalysisRecord, TaskStatus, SavedAnalysis, RegionProfile, LandCoverStats, CarbonStock, FireRisk, Alert, AlertThreshold, AirQualityData, DisasterAlert, DisasterAlertsResponse, DeforestationAlert, DeforestationAlertsResponse, WeatherExtendedData } from './types';
