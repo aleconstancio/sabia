@@ -7,7 +7,7 @@
   import { getWeather } from '$lib/api/client';
   import { Sparkline } from '$lib/charts';
   import Badge from '$lib/components/ui/badge/badge.svelte';
-  import type { WeatherApiResponse } from '$lib/api/types';
+  import type { WeatherApiResponse, WeatherExtendedData } from '$lib/api/types';
 
   let { avgNdvi, ndviTrendData, avgTemp }: {
     avgNdvi: number | null;
@@ -20,8 +20,23 @@
   let tempDisplay = $derived(avgTemp != null ? `${avgTemp}°C` : '—');
   let analysesCount = $derived(historyStore.all.length);
 
+  let uvDisplay = $derived.by(() => {
+    if (!gpsWeatherExtended?.daily?.uv_index_max?.[0]) return null;
+    const uv = gpsWeatherExtended.daily.uv_index_max[0];
+    return { value: uv, color: uv <= 2 ? 'text-emerald-400' : uv <= 5 ? 'text-yellow-400' : uv <= 7 ? 'text-orange-400' : 'text-red-400' };
+  });
+
+  let windDisplay = $derived.by(() => {
+    if (!gpsWeatherExtended?.current?.wind_speed_10m) return null;
+    return {
+      speed: gpsWeatherExtended.current.wind_speed_10m,
+      direction: gpsWeatherExtended.current.wind_direction_10m ?? 0,
+    };
+  });
+
   let gpsWeather = $state<WeatherApiResponse | null>(null);
   let gpsWeatherLoading = $state(false);
+  let gpsWeatherExtended = $state<WeatherExtendedData | null>(null);
 
   function weatherIcon(code: number | undefined): string {
     if (code == null) return '🌍';
@@ -39,9 +54,12 @@
     if (!gpsState.hasLocation) return;
     gpsWeatherLoading = true;
     try {
-      gpsWeather = await getWeather(gpsState.latitude!, gpsState.longitude!) as WeatherApiResponse;
+      const data = await getWeather(gpsState.latitude!, gpsState.longitude!);
+      gpsWeather = data;
+      gpsWeatherExtended = data as WeatherExtendedData;
     } catch {
       gpsWeather = null;
+      gpsWeatherExtended = null;
     } finally {
       gpsWeatherLoading = false;
     }
@@ -63,7 +81,7 @@
   });
 </script>
 
-<div class="grid grid-cols-2 lg:grid-cols-6 gap-2" aria-live="polite">
+<div class="grid grid-cols-2 lg:grid-cols-8 gap-2" aria-live="polite">
   <div class="glass-panel rounded-lg p-3 transition-all duration-300">
     <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Regions</div>
     <div class="font-mono font-bold text-lg text-primary">{dashboardState.total}</div>
@@ -118,6 +136,27 @@
       {:else}
         <div class="font-mono font-bold text-lg text-cyan-400">—</div>
       {/if}
+    </div>
+  {/if}
+
+  {#if gpsState.hasLocation && uvDisplay}
+    <div class="glass-panel rounded-lg p-3 transition-all duration-300">
+      <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">UV Index</div>
+      <div class="font-mono font-bold text-lg {uvDisplay.color}">{uvDisplay.value.toFixed(1)}</div>
+    </div>
+  {/if}
+
+  {#if gpsState.hasLocation && windDisplay}
+    <div class="glass-panel rounded-lg p-3 transition-all duration-300">
+      <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Wind</div>
+      <div class="flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="transform: rotate({windDisplay.direction}deg)">
+          <path d="M12 2v20M2 12l10-10 10 10"/>
+        </svg>
+        <span class="font-mono font-bold text-lg text-cyan-400">{windDisplay.speed.toFixed(1)}</span>
+        <span class="text-[10px] text-muted-foreground">km/h</span>
+      </div>
     </div>
   {/if}
 </div>
