@@ -21,6 +21,9 @@ async def get_weather(lat: float, lon: float):
             "precipitation",
             "weather_code",
             "soil_moisture_0_to_7cm",
+            "wind_speed_10m",
+            "wind_direction_10m",
+            "wind_gusts_10m",
         ],
     )
 

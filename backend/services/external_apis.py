@@ -43,6 +43,9 @@ async def fetch_weather(
             "precipitation",
             "weather_code",
             "soil_moisture_0_to_7cm",
+            "wind_speed_10m",
+            "wind_direction_10m",
+            "wind_gusts_10m",
         ]
 
     try:
@@ -53,7 +56,15 @@ async def fetch_weather(
                 "latitude": lat,
                 "longitude": lon,
                 "current": properties,
-                "daily": ["temperature_2m_max", "temperature_2m_min", "precipitation_sum"],
+                "daily": [
+                    "temperature_2m_max",
+                    "temperature_2m_min",
+                    "precipitation_sum",
+                    "uv_index_max",
+                    "sunrise",
+                    "sunset",
+                    "daylight_duration",
+                ],
                 "timezone": "America/Sao_Paulo",
                 "forecast_days": forecast_days,
             },
