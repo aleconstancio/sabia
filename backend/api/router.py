@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.air_quality import router as air_quality_router
 from backend.api.analyses import router as analyses_router
 from backend.api.deps import get_db
+from backend.api.disasters import router as disasters_router
 from backend.api.downloads import router as downloads_router
 from backend.api.esg import router as esg_router
 from backend.api.geocoding import router as geocoding_router
@@ -14,7 +16,6 @@ from backend.api.profiles import router as profiles_router
 from backend.api.reports import router as reports_router
 from backend.api.soil import router as soil_router
 from backend.api.tasks_api import router as tasks_api_router
-from backend.api.air_quality import router as air_quality_router
 from backend.api.weather import router as weather_router
 
 router = APIRouter()
@@ -30,6 +31,7 @@ router.include_router(weather_router, prefix="/weather", tags=["weather"])
 router.include_router(air_quality_router, prefix="/air-quality", tags=["air-quality"])
 router.include_router(soil_router, prefix="/soil", tags=["soil"])
 router.include_router(landcover_router, prefix="/landcover", tags=["landcover"])
+router.include_router(disasters_router, prefix="/disasters", tags=["disasters"])
 router.include_router(esg_router, prefix="", tags=["esg"])
 router.include_router(tasks_api_router, prefix="/tasks", tags=["tasks"])
 
