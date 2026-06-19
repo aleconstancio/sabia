@@ -39,11 +39,17 @@ export interface WeatherApiResponse {
     precipitation?: number;
     weather_code?: number;
     soil_moisture_0_to_7cm?: number;
+    wind_speed_10m?: number;
+    wind_direction_10m?: number;
   };
   daily?: {
     precipitation_sum?: number[];
     temperature_2m_max?: number[];
     temperature_2m_min?: number[];
+    sunrise?: string[];
+    sunset?: string[];
+    uv_index_max?: number[];
+    daylight_duration?: number[];
   };
 }
 
