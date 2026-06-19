@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.air_quality import router as air_quality_router
 from backend.api.analyses import router as analyses_router
+from backend.api.deforestation import router as deforestation_router
 from backend.api.deps import get_db
 from backend.api.disasters import router as disasters_router
 from backend.api.downloads import router as downloads_router
@@ -31,6 +32,7 @@ router.include_router(weather_router, prefix="/weather", tags=["weather"])
 router.include_router(air_quality_router, prefix="/air-quality", tags=["air-quality"])
 router.include_router(soil_router, prefix="/soil", tags=["soil"])
 router.include_router(landcover_router, prefix="/landcover", tags=["landcover"])
+router.include_router(deforestation_router, prefix="/deforestation", tags=["deforestation"])
 router.include_router(disasters_router, prefix="/disasters", tags=["disasters"])
 router.include_router(esg_router, prefix="", tags=["esg"])
 router.include_router(tasks_api_router, prefix="/tasks", tags=["tasks"])
