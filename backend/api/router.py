@@ -14,6 +14,7 @@ from backend.api.profiles import router as profiles_router
 from backend.api.reports import router as reports_router
 from backend.api.soil import router as soil_router
 from backend.api.tasks_api import router as tasks_api_router
+from backend.api.air_quality import router as air_quality_router
 from backend.api.weather import router as weather_router
 
 router = APIRouter()
@@ -26,6 +27,7 @@ router.include_router(reports_router, tags=["reports"])
 router.include_router(analyses_router, prefix="/analyses", tags=["analyses"])
 router.include_router(profiles_router, prefix="/profiles", tags=["profiles"])
 router.include_router(weather_router, prefix="/weather", tags=["weather"])
+router.include_router(air_quality_router, prefix="/air-quality", tags=["air-quality"])
 router.include_router(soil_router, prefix="/soil", tags=["soil"])
 router.include_router(landcover_router, prefix="/landcover", tags=["landcover"])
 router.include_router(esg_router, prefix="", tags=["esg"])
