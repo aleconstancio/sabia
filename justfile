@@ -8,7 +8,7 @@ setup:
     @echo "==> Installing Python dependencies..."
     uv sync --dev
     @echo "==> Installing frontend dependencies..."
-    cd apps/spaceeye-web && bun install --frozen-lockfile
+    cd apps/horus-web && bun install --frozen-lockfile
     @echo "==> Setting up environment..."
     test -f .env || cp .env.example .env
     @echo "==> Setting up database..."
@@ -19,7 +19,7 @@ setup:
 
 # Start all dev services in one terminal
 dev:
-    @echo "━━━ Starting SpaceEye dev environment ━━━"
+    @echo "━━━ Starting Horus dev environment ━━━"
     @echo ""
     @trap 'echo ""; echo "→ Stopping..."; kill $BACKEND_PID $WORKER_PID 2>/dev/null; pkill -f "postgres.*5432" 2>/dev/null; pkill -f "redis.*6379" 2>/dev/null; exit 0' INT TERM; \
     just dev-db; \
@@ -31,7 +31,7 @@ dev:
     echo "→ Backend (PID $BACKEND_PID) + Worker (PID $WORKER_PID) started"; \
     echo "→ Starting Vite..."; \
     echo ""; \
-    cd apps/spaceeye-web && bun run dev &  sleep 3 && xdg-open http://localhost:5173
+    cd apps/horus-web && bun run dev &  sleep 3 && xdg-open http://localhost:5173
 
 # Start Postgres + Redis via Docker
 dev-db:
@@ -47,7 +47,7 @@ dev-worker:
 
 # Start Vite dev server
 dev-frontend:
-    cd apps/spaceeye-web && bun run dev
+    cd apps/horus-web && bun run dev
 
 # Code Quality
 
@@ -57,7 +57,7 @@ lint:
     uv run ruff check .
     uv run ruff format --check .
     @echo "==> Frontend type checking..."
-    cd apps/spaceeye-web && bun run check
+    cd apps/horus-web && bun run check
 
 # Alias for lint
 check: lint
@@ -79,15 +79,15 @@ test-backend:
 
 # Run frontend tests
 test-frontend:
-    cd apps/spaceeye-web && bun run test -- --run
+    cd apps/horus-web && bun run test -- --run
 
 # Run frontend tests in watch mode
 test-frontend-watch:
-    cd apps/spaceeye-web && bun run test
+    cd apps/horus-web && bun run test
 
 # Run end-to-end tests
 test-e2e:
-    cd apps/spaceeye-web && bunx playwright test
+    cd apps/horus-web && bunx playwright test
 
 # Run all tests (backend + frontend + e2e)
 test-all: test-backend test-frontend test-e2e
@@ -124,12 +124,12 @@ docker-logs:
 
 # Remove build artifacts
 clean:
-    rm -rf apps/spaceeye-web/build
-    rm -rf apps/spaceeye-web/.svelte-kit
-    rm -rf apps/spaceeye-web/node_modules
+    rm -rf apps/horus-web/build
+    rm -rf apps/horus-web/.svelte-kit
+    rm -rf apps/horus-web/node_modules
     rm -rf .venv
     find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
-    rm -rf .spaceeye/data
+    rm -rf .horus/data
 
 # Utilities
 
@@ -139,7 +139,7 @@ health:
 
 # Show project info
 info:
-    @echo "SpaceEye — Satellite imagery search & ESG monitoring"
+    @echo "Horus — Satellite imagery search & ESG monitoring"
     @echo ""
     @echo "Available commands:"
     @just --list

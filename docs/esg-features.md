@@ -1,10 +1,10 @@
 # ESG Features
 
-> Environmental, Social, and Governance monitoring capabilities in SpaceEye.
+> Environmental, Social, and Governance monitoring capabilities in Horus.
 
 ## Overview
 
-SpaceEye provides a comprehensive ESG monitoring platform built on satellite imagery, weather data, soil properties, and land cover analysis. The system is designed for ESG analysts and remote sensing specialists who need to monitor environmental conditions across multiple regions.
+Horus provides a comprehensive ESG monitoring platform built on satellite imagery, weather data, soil properties, and land cover analysis. The system is designed for ESG analysts and remote sensing specialists who need to monitor environmental conditions across multiple regions.
 
 ## ESG Dashboard
 
@@ -115,7 +115,7 @@ Five domain-specific modules, each accessible from the navigation bar:
 
 ## Multi-Source Data Fusion
 
-When a region is selected, SpaceEye fetches data from multiple sources in parallel:
+When a region is selected, Horus fetches data from multiple sources in parallel:
 
 ### Weather (Open-Meteo)
 

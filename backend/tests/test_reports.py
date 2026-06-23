@@ -12,7 +12,7 @@ def _generate_pdf(task_id: str, format: str, overlays: list[str]) -> bytes:
     width, height = A4
 
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, height - 50, "SpaceEye - Relatorio de Analise")
+    c.drawString(50, height - 50, "Horus - Relatorio de Analise")
 
     c.setFont("Helvetica", 11)
     y = height - 100
@@ -32,11 +32,11 @@ def _generate_pdf(task_id: str, format: str, overlays: list[str]) -> bytes:
     c.drawString(50, y, "Resumo da Analise")
     c.setFont("Helvetica", 10)
     y -= 20
-    c.drawString(50, y, "Este relatorio foi gerado automaticamente pelo SpaceEye.")
+    c.drawString(50, y, "Este relatorio foi gerado automaticamente pelo Horus.")
 
     c.setFont("Helvetica", 8)
     c.drawString(50, 30, f"Gerado em: {_dt.now().strftime('%d/%m/%Y %H:%M:%S')}")
-    c.drawString(width - 100, 30, "SpaceEye v0.2.0")
+    c.drawString(width - 100, 30, "Horus v0.2.0")
 
     c.showPage()
     c.save()

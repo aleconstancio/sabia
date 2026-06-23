@@ -1,8 +1,12 @@
-# SpaceEye Agent Instructions
+# Horus Agent Instructions
+
+> Part of the Oficina de Dédalo suite — the spatial intelligence layer.
 
 ## Project Overview
 
-SpaceEye is a satellite imagery search, analysis, and ESG monitoring platform for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.
+Horus is the spatial intelligence layer of Oficina de Dédalo — satellite imagery search, analysis, and environmental monitoring for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.
+
+The Eye of Horus watches over Brazilian land — protection, health, and restoration.
 
 ## Tech Stack
 
@@ -10,6 +14,15 @@ SpaceEye is a satellite imagery search, analysis, and ESG monitoring platform fo
 - **Frontend:** SvelteKit 2, Svelte 5 (runes), Tailwind CSS v4, Leaflet, LayerCake
 - **Database:** PostgreSQL 16 + PostGIS 3.4
 - **Package Management:** uv (Python), npm (Node.js)
+
+## Suite Integration
+
+Horus provides spatial intelligence to the Oficina de Dédalo suite:
+
+- **Vico** → property/land disputes, environmental compliance evidence
+- **Polaris** → agricultural workplace safety monitoring
+- **Forja** → location intelligence for SMBs
+- **Maze** → ESG monitoring dashboard
 
 ## Development Commands
 

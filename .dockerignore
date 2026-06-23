@@ -14,7 +14,7 @@ __pycache__
 docs/
 *.md
 !README.md
-.spaceeye/
+.horus/
 dump.rdb
 *.sqlite3
 *.tif
@@ -23,8 +23,8 @@ dump.rdb
 *.log
 build/
 dist/
-apps/spaceeye-web/build/
-apps/spaceeye-web/.svelte-kit/
+apps/horus-web/build/
+apps/horus-web/.svelte-kit/
 .coverage
 htmlcov/
 alembic/

@@ -9,10 +9,10 @@ pre-commit:
       run: uv run ruff format {staged_files}
     lint:frontend:
       glob: "*.{js,ts,svelte}"
-      run: cd apps/spaceeye-web && bun run lint
+      run: cd apps/horus-web && bun run lint
     typecheck:
       glob: "*.{ts,svelte}"
-      run: cd apps/spaceeye-web && bun run check
+      run: cd apps/horus-web && bun run check
 
 pre-push:
   commands:

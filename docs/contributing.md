@@ -1,6 +1,6 @@
-# Contributing to SpaceEye
+# Contributing to Horus
 
-Thank you for your interest in contributing to SpaceEye! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Horus! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -29,8 +29,8 @@ Be respectful, constructive, and inclusive. We're building tools for environment
 ### Setup
 
 ```bash
-git clone https://github.com/your-org/spaceeye
-cd spaceeye
+git clone https://github.com/your-org/horus
+cd horus
 cp .env.example .env
 just setup
 just dev
@@ -177,7 +177,7 @@ uv run pytest backend/tests/ -v
 ```bash
 just test-frontend
 # or
-cd apps/spaceeye-web && bun run test
+cd apps/horus-web && bun run test
 ```
 
 - Write tests for new utility functions
@@ -256,7 +256,7 @@ Include:
 
 ### Security Issues
 
-Report security vulnerabilities privately to [security@spaceeye.dev](mailto:security@spaceeye.dev). Do not open public issues for security bugs.
+Report security vulnerabilities privately to [security@horus.dev](mailto:security@horus.dev). Do not open public issues for security bugs.
 
 ## Architecture Decisions
 

@@ -27,7 +27,7 @@ todo.txt
 !package-lock.json
 
 # Project data
-.spaceeye/
+.horus/
 
 # IDE
 .idea/
@@ -44,9 +44,9 @@ dump.rdb
 .devcontainer/
 
 # Playwright
-apps/spaceeye-web/test-results/
-apps/spaceeye-web/playwright-report/
-apps/spaceeye-web/playwright/.cache/
+apps/horus-web/test-results/
+apps/horus-web/playwright-report/
+apps/horus-web/playwright/.cache/
 
 # direnv
 .direnv/

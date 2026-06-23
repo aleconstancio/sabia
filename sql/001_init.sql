@@ -1,4 +1,4 @@
--- SpaceEye database schema
+-- Horus database schema
 -- Uses PostGIS when available, falls back to JSON geometry otherwise.
 
 DO $$

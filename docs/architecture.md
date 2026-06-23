@@ -1,10 +1,11 @@
 # Architecture
 
+> Part of the Oficina de Dédalo suite — the spatial intelligence layer.
 > *This document reflects the current codebase state. Last updated: June 2026.*
 
 ## Overview
 
-SpaceEye is a single-page application with a Python backend and SvelteKit frontend. The distinguishing architectural choices are:
+Horus is the spatial intelligence layer of Oficina de Dédalo — the eye that sees all. It is a single-page application with a Python backend and SvelteKit frontend. The distinguishing architectural choices are:
 
 1. **All geospatial processing happens server-side** — the browser only displays results
 2. **All map interaction happens client-side** — no server-rendered maps
@@ -97,10 +98,10 @@ backend/
 └── exceptions.py                 # Custom exception hierarchy
 ```
 
-### Frontend (`apps/spaceeye-web/`)
+### Frontend (`apps/horus-web/`)
 
 ```
-apps/spaceeye-web/src/
+apps/horus-web/src/
 ├── lib/
 │   ├── api/                      # API client & processing logic
 │   │   ├── client.ts             # Typed API client (createApiClient)

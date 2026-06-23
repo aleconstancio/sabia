@@ -47,7 +47,7 @@ async def export_esg_csv(req: PolygonRequest):
         return Response(
             content=csv_data,
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=spaceeye-esg-export.csv"},
+            headers={"Content-Disposition": "attachment; filename=horus-esg-export.csv"},
         )
     except Exception as e:
         logger.warning("ESG CSV export failed: %s", e)

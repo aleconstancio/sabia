@@ -19,7 +19,7 @@ async def export_pdf(data: ExportPdfRequest):
     width, height = A4
 
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, height - 50, "SpaceEye - Relatorio de Analise")
+    c.drawString(50, height - 50, "Horus - Relatorio de Analise")
 
     c.setFont("Helvetica", 11)
     y = height - 100
@@ -39,13 +39,13 @@ async def export_pdf(data: ExportPdfRequest):
     c.drawString(50, y, "Resumo da Analise")
     c.setFont("Helvetica", 10)
     y -= 20
-    c.drawString(50, y, "Este relatorio foi gerado automaticamente pelo SpaceEye.")
+    c.drawString(50, y, "Este relatorio foi gerado automaticamente pelo Horus.")
     y -= 20
     c.drawString(50, y, "Os dados de遥感 sao processados via Celery workers assincronos.")
 
     c.setFont("Helvetica", 8)
     c.drawString(50, 30, f"Gerado em: {_dt.now().strftime('%d/%m/%Y %H:%M:%S')}")
-    c.drawString(width - 100, 30, "SpaceEye v0.2.0")
+    c.drawString(width - 100, 30, "Horus v0.2.0")
 
     c.showPage()
     c.save()
@@ -54,5 +54,5 @@ async def export_pdf(data: ExportPdfRequest):
     return Response(
         content=buffer.getvalue(),
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=spaceeye-report.pdf"},
+        headers={"Content-Disposition": "attachment; filename=horus-report.pdf"},
     )

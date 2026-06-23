@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: biome
         name: biome
-        entry: bash -c 'cd apps/spaceeye-web && bunx biome check "$@"' --
+        entry: bash -c 'cd apps/horus-web && bunx biome check "$@"' --
         language: system
         files: \.(js|ts|svelte|css|json)$
         types: [file]

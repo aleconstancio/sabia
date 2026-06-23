@@ -1,6 +1,6 @@
 # Deployment Guide
 
-> Production deployment, configuration, and operations for SpaceEye.
+> Production deployment, configuration, and operations for Horus.
 
 ## Docker Deployment (Recommended)
 
@@ -13,8 +13,8 @@
 
 ```bash
 # 1. Clone and configure
-git clone https://github.com/your-org/spaceeye
-cd spaceeye
+git clone https://github.com/your-org/horus
+cd horus
 cp .env.example .env
 
 # 2. Edit .env with production values
@@ -69,7 +69,7 @@ docker compose exec backend alembic upgrade head
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection (async) | `postgresql+asyncpg://user:pass@host:5432/spaceeye` |
+| `DATABASE_URL` | PostgreSQL connection (async) | `postgresql+asyncpg://user:pass@host:5432/horus` |
 | `REDIS_URL` | Redis connection | `redis://localhost:6379/0` |
 | `CELERY_BROKER_URL` | Celery broker | `redis://localhost:6379/0` |
 | `CELERY_RESULT_BACKEND` | Celery result store | `redis://localhost:6379/0` |
@@ -81,7 +81,7 @@ docker compose exec backend alembic upgrade head
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `VITE_API_URL` | `http://localhost:8000/api` | Frontend API base URL |
-| `TEMP_DIR` | `/tmp/spaceeye` | Temporary file storage |
+| `TEMP_DIR` | `/tmp/horus` | Temporary file storage |
 | `CACHE_TTL_DAYS` | `7` | Days to keep processed rasters |
 
 ### Frontend Variables
@@ -101,8 +101,8 @@ docker compose exec backend alembic upgrade head
 uv sync --prod
 
 # Database setup
-createdb spaceeye
-psql spaceeye -c "CREATE EXTENSION postgis"
+createdb horus
+psql horus -c "CREATE EXTENSION postgis"
 uv run alembic upgrade head
 
 # Run API server
@@ -120,7 +120,7 @@ uv run celery -A backend.tasks.celery_app worker \
 ### Frontend
 
 ```bash
-cd apps/spaceeye-web
+cd apps/horus-web
 
 # Build
 bun install --frozen-lockfile
@@ -141,7 +141,7 @@ server {
 
     # Frontend
     location / {
-        root /path/to/apps/spaceeye-web/build;
+        root /path/to/apps/horus-web/build;
         try_files $uri $uri/ /index.html;
     }
 
@@ -165,7 +165,7 @@ server {
 
 ### Alembic Setup
 
-SpaceEye uses Alembic for schema management:
+Horus uses Alembic for schema management:
 
 ```bash
 # Run all pending migrations
@@ -205,20 +205,20 @@ For fresh databases, the migration `001_initial_schema` creates:
 
 ```bash
 # Docker
-docker compose exec postgres pg_dump -U postgres spaceeye > backup_$(date +%Y%m%d).sql
+docker compose exec postgres pg_dump -U postgres horus > backup_$(date +%Y%m%d).sql
 
 # Manual
-pg_dump -U postgres spaceeye > backup_$(date +%Y%m%d).sql
+pg_dump -U postgres horus > backup_$(date +%Y%m%d).sql
 ```
 
 ### Database Restore
 
 ```bash
 # Docker
-cat backup_20250101.sql | docker compose exec -T postgres psql -U postgres spaceeye
+cat backup_20250101.sql | docker compose exec -T postgres psql -U postgres horus
 
 # Manual
-psql -U postgres spaceeye < backup_20250101.sql
+psql -U postgres horus < backup_20250101.sql
 ```
 
 ### Automated Backups
@@ -226,7 +226,7 @@ psql -U postgres spaceeye < backup_20250101.sql
 Add to crontab (daily at 3 AM):
 
 ```cron
-0 3 * * * cd /opt/spaceeye && docker compose exec -T postgres pg_dump -U postgres spaceeye | gzip > /backups/spaceeye_$(date +\%Y\%m\%d).sql.gz
+0 3 * * * cd /opt/horus && docker compose exec -T postgres pg_dump -U postgres horus | gzip > /backups/horus_$(date +\%Y\%m\%d).sql.gz
 ```
 
 ## Data Ingestion
@@ -250,7 +250,7 @@ docker compose exec backend python pipeline/ingest.py --collection landsat9
 Add to crontab (daily at 2 AM):
 
 ```cron
-0 2 * * * cd /opt/spaceeye && docker compose exec -T backend python pipeline/ingest.py --collection cbers4a >> /var/log/spaceeye-ingest.log 2>&1
+0 2 * * * cd /opt/horus && docker compose exec -T backend python pipeline/ingest.py --collection cbers4a >> /var/log/horus-ingest.log 2>&1
 ```
 
 ### Cache Cleanup
@@ -258,7 +258,7 @@ Add to crontab (daily at 2 AM):
 Processed rasters are cached with a 7-day TTL. Run cleanup daily:
 
 ```cron
-0 4 * * * cd /opt/spaceeye && docker compose exec -T backend python pipeline/cleanup.py >> /var/log/spaceeye-cleanup.log 2>&1
+0 4 * * * cd /opt/horus && docker compose exec -T backend python pipeline/cleanup.py >> /var/log/horus-cleanup.log 2>&1
 ```
 
 ## Resource Requirements
@@ -363,7 +363,7 @@ docker compose ps postgres
 docker compose logs postgres
 
 # Verify connection
-docker compose exec postgres psql -U postgres -d spaceeye -c "SELECT 1;"
+docker compose exec postgres psql -U postgres -d horus -c "SELECT 1;"
 ```
 
 ### "Worker not processing tasks"
@@ -383,7 +383,7 @@ docker compose restart worker
 
 ```bash
 # Check cache size
-docker compose exec backend du -sh /tmp/spaceeye/cache/
+docker compose exec backend du -sh /tmp/horus/cache/
 
 # Clean old files
 docker compose exec backend python pipeline/cleanup.py

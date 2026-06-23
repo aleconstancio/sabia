@@ -15,7 +15,7 @@ from backend.exceptions import (
     DownloadError,
     ExternalAPIError,
     ProcessingError,
-    SpaceEyeError,
+    HorusError,
 )
 from backend.logging_config import setup_structured_logging
 
@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SpaceEye API",
+    title="Horus API",
     version="0.2.0",
     description="Satellite imagery search & processing for INPE catalog",
     lifespan=lifespan,
@@ -75,8 +75,8 @@ except ImportError:
     pass
 
 
-@app.exception_handler(SpaceEyeError)
-async def spaceeye_error_handler(request: Request, exc: SpaceEyeError):
+@app.exception_handler(HorusError)
+async def horus_error_handler(request: Request, exc: HorusError):
     if isinstance(exc, ExternalAPIError):
         return JSONResponse(
             status_code=502, content={"error": "External service error", "detail": str(exc)}

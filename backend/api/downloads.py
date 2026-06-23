@@ -42,7 +42,7 @@ def _download_file(task_id: str, path_key: str, extension: str, media_type: str)
         raise HTTPException(status_code=404, detail="File not found or expired.")
     cache_dir = os.path.join(get_settings().temp_dir, "cache")
     _validate_path_in_cache(path, cache_dir)
-    filename = f"spaceeye_{task_id[:8]}.{extension}"
+    filename = f"horus_{task_id[:8]}.{extension}"
     return FileResponse(path, filename=filename, media_type=media_type)
 
 
@@ -102,5 +102,5 @@ async def download_batch(
     return Response(
         content=buffer.getvalue(),
         media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=spaceeye-batch.zip"},
+        headers={"Content-Disposition": "attachment; filename=horus-batch.zip"},
     )

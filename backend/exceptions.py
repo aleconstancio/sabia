@@ -1,22 +1,22 @@
-class SpaceEyeError(Exception):
-    """Base exception for SpaceEye application errors."""
+class HorusError(Exception):
+    """Base exception for Horus application errors."""
 
     pass
 
 
-class ProcessingError(SpaceEyeError):
+class ProcessingError(HorusError):
     """Raised when image processing fails."""
 
     pass
 
 
-class DownloadError(SpaceEyeError):
+class DownloadError(HorusError):
     """Raised when band download fails."""
 
     pass
 
 
-class ExternalAPIError(SpaceEyeError):
+class ExternalAPIError(HorusError):
     """Raised when an external API call fails."""
 
     pass

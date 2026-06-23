@@ -1,6 +1,6 @@
 # Development Guide
 
-> Setting up, running, and contributing to SpaceEye locally.
+> Setting up, running, and contributing to Horus locally.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@
 
 ```bash
 # 1. Clone and bootstrap
-git clone https://github.com/spaceeye/spaceeye && cd spaceeye
+git clone https://github.com/oficina-de-dedalo/horus && cd horus
 cp .env.example .env
 just setup
 
@@ -56,8 +56,8 @@ just dev
 ## Project Structure
 
 ```
-spaceeye/
-├── apps/spaceeye-web/       # SvelteKit SPA
+horus/
+├── apps/horus-web/          # SvelteKit SPA
 │   └── src/
 │       ├── lib/              # Reusable modules
 │       │   ├── api/          # API client & processing
@@ -111,7 +111,7 @@ The `uv.lock` file is committed for reproducible builds.
 ## Frontend Package Management
 
 ```bash
-cd apps/spaceeye-web
+cd apps/horus-web
 
 # Install dependencies
 bun install
@@ -137,7 +137,7 @@ uv run pytest backend/tests/ -v
 # Frontend only
 just test-frontend
 # or
-cd apps/spaceeye-web && bun run test
+cd apps/horus-web && bun run test
 
 # With coverage
 uv run pytest backend/tests/ --cov=backend --cov-report=term-missing
@@ -145,7 +145,7 @@ uv run pytest backend/tests/ --cov=backend --cov-report=term-missing
 
 ## Database Migrations
 
-SpaceEye uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations.
+Horus uses [Alembic](https://alembic.sqlalchemy.org/) for database migrations.
 
 ```bash
 # Run all pending migrations
@@ -287,7 +287,7 @@ uv run uvicorn backend.main:app --reload --log-level debug
 
 ```bash
 # Run with debug
-cd apps/spaceeye-web
+cd apps/horus-web
 bun run dev --inspect
 
 # Chrome DevTools
@@ -298,7 +298,7 @@ bun run dev --inspect
 
 ```bash
 # Connect directly
-psql postgresql://postgres:postgres@localhost:5432/spaceeye
+psql postgresql://postgres:postgres@localhost:5432/horus
 
 # Check spatial indexes
 SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'images';
@@ -317,7 +317,7 @@ uv run python -c "from backend.main import app; print('OK')"
 
 Ensure PostGIS is installed:
 ```bash
-docker compose exec postgres psql -U postgres -d spaceeye -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+docker compose exec postgres psql -U postgres -d horus -c "CREATE EXTENSION IF NOT EXISTS postgis;"
 ```
 
 ### "Celery worker not processing"
@@ -331,7 +331,7 @@ docker compose logs worker
 
 Clear node_modules and reinstall:
 ```bash
-cd apps/spaceeye-web
+cd apps/horus-web
 rm -rf node_modules .svelte-kit
 bun install
 bun run build

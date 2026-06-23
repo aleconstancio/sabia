@@ -1,11 +1,10 @@
-# SpaceEye
+# Horus
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Svelte 5](https://img.shields.io/badge/svelte-5-ff3e00.svg)](https://svelte.dev)
-[![PostGIS](https://img.shields.io/badge/postgis-3.4-336791.svg)](https://postgis.net/)
+> Part of the Oficina de Dédalo suite — the spatial intelligence layer.
 
-> Satellite imagery search, analysis, and ESG monitoring for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.
+**Satellite imagery search, analysis, and environmental monitoring for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.**
+
+Horus is the eye that sees all — the spatial intelligence layer of Oficina de Dédalo. It provides satellite-powered observation, environmental monitoring, and spatial analysis that enriches every product in the suite.
 
 [Quick Start](#quick-start) · [Architecture](./docs/architecture.md) · [API Reference](./docs/api.md) · [ESG Features](./docs/esg-features.md) · [Development](./docs/development.md) · [Deployment](./docs/deployment.md) · [Contributing](./docs/contributing.md)
 
@@ -48,7 +47,7 @@
 **Prerequisites**: Docker 24+ · docker compose v2 · [INPE registered email](http://queimadas.dgi.inpe.br/catalogo/explore)
 
 ```bash
-git clone https://github.com/spaceeye/spaceeye && cd spaceeye
+git clone https://github.com/oficina-de-dedalo/horus && cd horus
 cp .env.example .env   # Set EMAIL_INPE in .env
 docker compose up -d --build
 docker compose --profile setup run --rm seed
@@ -61,7 +60,7 @@ Open **http://localhost** — you're ready to analyze satellite imagery.
 **Prerequisites**: `uv` · `node` 20+ · PostgreSQL 16+PostGIS · Redis 7
 
 ```bash
-git clone https://github.com/spaceeye/spaceeye && cd spaceeye
+git clone https://github.com/oficina-de-dedalo/horus && cd horus
 just setup     # Installs deps, creates .env
 just dev       # Starts Postgres, Redis, backend, worker, frontend
 ```
@@ -78,7 +77,7 @@ See [docs/deployment.md](./docs/deployment.md) for step-by-step manual setup inc
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SpaceEye Architecture                  │
+│                    Horus Architecture                    │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  ┌──────────────┐     ┌──────────────┐                 │
@@ -142,8 +141,8 @@ For detailed architecture, see [docs/architecture.md](./docs/architecture.md).
 ## Project Structure
 
 ```
-spaceeye/
-├── apps/spaceeye-web/           # SvelteKit SPA
+horus/
+├── apps/horus-web/              # SvelteKit SPA
 │   └── src/
 │       ├── lib/
 │       │   ├── api/             # API client & processing logic
@@ -244,3 +243,14 @@ See [docs/api.md](./docs/api.md) for the full endpoint reference.
 ## License
 
 [MIT](LICENSE)
+
+## Part of Oficina de Dédalo
+
+Horus is the spatial intelligence layer of the Oficina de Dédalo suite — agentic AI for the Brazilian market. It provides satellite-powered observation and spatial analysis that enriches every product in the suite:
+
+- **Vico** → property/land disputes, environmental compliance evidence
+- **Polaris** → agricultural workplace safety monitoring
+- **Forja** → location intelligence for SMBs
+- **Maze** → ESG monitoring dashboard
+
+The Eye of Horus watches over Brazilian land — protection, health, and restoration.
