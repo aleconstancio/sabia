@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str = "redis://localhost:6379/0"
     email_inpe: str = ""
-    temp_dir: str = "/tmp/horus"
+    temp_dir: str = "/tmp/sabia"
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/0"

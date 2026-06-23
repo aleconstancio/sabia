@@ -1,22 +1,22 @@
-class HorusError(Exception):
-    """Base exception for Horus application errors."""
+class SabiáError(Exception):
+    """Base exception for Sabiá application errors."""
 
     pass
 
 
-class ProcessingError(HorusError):
+class ProcessingError(SabiáError):
     """Raised when image processing fails."""
 
     pass
 
 
-class DownloadError(HorusError):
+class DownloadError(SabiáError):
     """Raised when band download fails."""
 
     pass
 
 
-class ExternalAPIError(HorusError):
+class ExternalAPIError(SabiáError):
     """Raised when an external API call fails."""
 
     pass

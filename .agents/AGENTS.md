@@ -1,12 +1,12 @@
-# Horus Agent Instructions
+# Sabiá Agent Instructions
 
 > Part of the Oficina de Dédalo suite — the spatial intelligence layer.
 
 ## Project Overview
 
-Horus is the spatial intelligence layer of Oficina de Dédalo — satellite imagery search, analysis, and environmental monitoring for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.
+Sabiá is the spatial intelligence layer of Oficina de Dédalo — satellite imagery search, analysis, and environmental monitoring for Brazil's INPE catalog and global Sentinel-2/Landsat constellations.
 
-The Eye of Horus watches over Brazilian land — protection, health, and restoration.
+The Eye of Sabiá watches over Brazilian land — protection, health, and restoration.
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ The Eye of Horus watches over Brazilian land — protection, health, and restora
 
 ## Suite Integration
 
-Horus provides spatial intelligence to the Oficina de Dédalo suite:
+Sabiá provides spatial intelligence to the Oficina de Dédalo suite:
 
 - **Vico** → property/land disputes, environmental compliance evidence
 - **Polaris** → agricultural workplace safety monitoring

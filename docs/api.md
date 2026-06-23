@@ -1,6 +1,6 @@
 # API Reference
 
-> Complete endpoint reference for the Horus backend. Interactive docs available at `/docs` when running.
+> Complete endpoint reference for the Sabiá backend. Interactive docs available at `/docs` when running.
 
 **Base URL**: `http://localhost:8000/api`
 
@@ -242,7 +242,7 @@ Poll the status of an async processing task.
   "phase": "done",
   "result": {
     "bounds": [[-20.5, -50.5], [-19.5, -49.5]],
-    "path": "/tmp/horus/cache/NDVI_CBERS4A_2025...png",
+    "path": "/tmp/sabia/cache/NDVI_CBERS4A_2025...png",
     "statistics": { "mean": 0.72, "std": 0.15, "min": 0.1, "max": 0.95 }
   }
 }
@@ -580,11 +580,11 @@ Generate a downloadable ESG PDF report.
   "date": "2025-01-01T00:00:00Z",
   "cloud_cover": 12.5,
   "weather": { "temperature": 27.5, "humidity": 65, "precipitation": 0 },
-  "overlay_path": "/tmp/horus/cache/NDVI_CBERS4A_...png"
+  "overlay_path": "/tmp/sabia/cache/NDVI_CBERS4A_...png"
 }
 ```
 
-**Response 200:** PDF file download (`horus-esg-report.pdf`)
+**Response 200:** PDF file download (`sabia-esg-report.pdf`)
 
 ---
 

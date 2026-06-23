@@ -9,7 +9,7 @@ COPY pipeline/ pipeline/
 # Runtime stage
 FROM python:3.12.8-slim AS runtime
 ENV PYTHONUNBUFFERED=1
-RUN groupadd -r horus && useradd -r -g horus -d /app -s /sbin/nologin horus
+RUN groupadd -r sabia && useradd -r -g sabia -d /app -s /sbin/nologin sabia
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 # Copy specific binaries instead of entire /usr/local/bin to minimize attack surface
@@ -18,8 +18,8 @@ COPY --from=builder /usr/local/bin/celery /usr/local/bin/celery
 COPY --from=builder /app/backend /app/backend
 COPY --from=builder /app/pipeline /app/pipeline
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml
-RUN chown -R horus:horus /app
-USER horus
+RUN chown -R sabia:sabia /app
+USER sabia
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"

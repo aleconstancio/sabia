@@ -5,7 +5,7 @@
 
 ## Overview
 
-Horus is the spatial intelligence layer of Oficina de Dédalo — the eye that sees all. It is a single-page application with a Python backend and SvelteKit frontend. The distinguishing architectural choices are:
+Sabiá is the spatial intelligence layer of Oficina de Dédalo — the eye that sees all. It is a single-page application with a Python backend and SvelteKit frontend. The distinguishing architectural choices are:
 
 1. **All geospatial processing happens server-side** — the browser only displays results
 2. **All map interaction happens client-side** — no server-rendered maps
@@ -98,10 +98,10 @@ backend/
 └── exceptions.py                 # Custom exception hierarchy
 ```
 
-### Frontend (`apps/horus-web/`)
+### Frontend (`apps/sabia-web/`)
 
 ```
-apps/horus-web/src/
+apps/sabia-web/src/
 ├── lib/
 │   ├── api/                      # API client & processing logic
 │   │   ├── client.ts             # Typed API client (createApiClient)

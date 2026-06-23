@@ -1,4 +1,4 @@
-"""Authentication middleware and dependencies for Horus API.
+"""Authentication middleware and dependencies for Sabiá API.
 
 Provides consistent API key authentication across all endpoints.
 Public routes are registered via register_no_auth_route() in main.py.

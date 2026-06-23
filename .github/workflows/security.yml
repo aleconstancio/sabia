@@ -30,23 +30,23 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
-        run: docker build -f Dockerfile.backend -t horus-backend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
+        run: docker build -f Dockerfile.backend -t sabia-backend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: horus-backend:scan
+          image-ref: sabia-backend:scan
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH
 
       - name: Build frontend image
-        run: docker build -f Dockerfile.frontend -t horus-frontend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
+        run: docker build -f Dockerfile.frontend -t sabia-frontend:scan --build-arg BUILDKIT_INLINE_CACHE=1 .
 
       - name: Scan frontend image
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: horus-frontend:scan
+          image-ref: sabia-frontend:scan
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH

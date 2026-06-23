@@ -48,21 +48,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('apps/horus-web/bun.lock') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('apps/sabia-web/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run biome lint
         run: bun run lint
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run biome format check
         run: bun run format:check
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
   type-check:
     runs-on: ubuntu-latest
@@ -96,11 +96,11 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run svelte-check
         run: bun run check
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
   test-backend:
     runs-on: ubuntu-latest
@@ -111,7 +111,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: horus_test
+          POSTGRES_DB: sabia_test
         ports:
           - 5432:5432
         options: >-
@@ -156,7 +156,7 @@ jobs:
           PGPORT: 5432
           PGUSER: postgres
           PGPASSWORD: postgres
-          PGDATABASE: horus_test
+          PGDATABASE: sabia_test
         run: |
           for f in sql/001_init.sql sql/003_analyses.sql sql/004_profiles.sql sql/005_triggers.sql; do
             psql -f "$f"
@@ -164,7 +164,7 @@ jobs:
 
       - name: Run backend tests with coverage
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/horus_test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/sabia_test
           REDIS_URL: redis://localhost:6379/0
         run: uv run pytest backend/tests/ -v --cov=backend --cov-report=xml --cov-report=term-missing
 
@@ -187,11 +187,11 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run frontend tests
         run: bun run test -- --run
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
   security:
     runs-on: ubuntu-latest
@@ -217,11 +217,11 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run npm audit
         run: bunx npm audit --audit-level=high
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
   docker-build:
     runs-on: ubuntu-latest
@@ -237,7 +237,7 @@ jobs:
           context: .
           file: ./Dockerfile.backend
           push: false
-          tags: horus-backend:test
+          tags: sabia-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -247,7 +247,7 @@ jobs:
           context: .
           file: ./Dockerfile.frontend
           push: false
-          tags: horus-frontend:test
+          tags: sabia-frontend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -260,7 +260,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: horus_test
+          POSTGRES_DB: sabia_test
         ports:
           - 5432:5432
         options: >-
@@ -304,7 +304,7 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Initialize database schema
         env:
@@ -312,7 +312,7 @@ jobs:
           PGPORT: 5432
           PGUSER: postgres
           PGPASSWORD: postgres
-          PGDATABASE: horus_test
+          PGDATABASE: sabia_test
         run: |
           for f in sql/001_init.sql sql/003_analyses.sql sql/004_profiles.sql sql/005_triggers.sql; do
             psql -f "$f"
@@ -320,7 +320,7 @@ jobs:
 
       - name: Start backend server
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/horus_test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/sabia_test
           REDIS_URL: redis://localhost:6379/0
           CELERY_BROKER_URL: redis://localhost:6379/0
           CELERY_RESULT_BACKEND: redis://localhost:6379/0
@@ -331,25 +331,25 @@ jobs:
 
       - name: Start frontend dev server
         run: |
-          cd apps/horus-web && bun run dev --host 0.0.0.0 --port 5173 &
+          cd apps/sabia-web && bun run dev --host 0.0.0.0 --port 5173 &
           sleep 5
           curl -sf http://localhost:5173 || exit 1
 
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Run E2E tests
         env:
           BASE_URL: http://localhost:5173
           API_URL: http://localhost:8000
         run: bunx playwright test
-        working-directory: apps/horus-web
+        working-directory: apps/sabia-web
 
       - name: Upload E2E test report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: apps/horus-web/playwright-report/
+          path: apps/sabia-web/playwright-report/
           retention-days: 7

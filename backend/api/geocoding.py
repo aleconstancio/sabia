@@ -72,7 +72,7 @@ async def geocode(q: str):
     resp = await client.get(
         "https://nominatim.openstreetmap.org/search",
         params={"format": "json", "q": q, "limit": 1},
-        headers={"User-Agent": "Horus/0.2.0"},
+        headers={"User-Agent": "Sabiá/0.2.0"},
     )
     return resp.json()
 
@@ -91,7 +91,7 @@ async def reverse_geocode(lat: float, lon: float):
     resp = await client.get(
         "https://nominatim.openstreetmap.org/reverse",
         params={"format": "json", "lat": lat, "lon": lon},
-        headers={"User-Agent": "Horus/0.2.0"},
+        headers={"User-Agent": "Sabiá/0.2.0"},
     )
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail="Upstream geocoding service error")

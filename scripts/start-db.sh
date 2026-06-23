@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-DATA_DIR="$PROJECT_ROOT/.horus/data"
+DATA_DIR="$PROJECT_ROOT/.sabia/data"
 PGDATA="$DATA_DIR/pgdata"
 mkdir -p "$DATA_DIR" "$PGDATA"
 
@@ -61,15 +61,15 @@ echo "→ Creating 'postgres' role if missing..."
   "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c \
   "CREATE ROLE postgres LOGIN SUPERUSER;" 2>/dev/null || true
 
-echo "→ Creating 'horus' database..."
+echo "→ Creating 'sabia' database..."
 "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -tc \
-  "SELECT 1 FROM pg_database WHERE datname='horus'" | grep -q 1 || \
-  "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c "CREATE DATABASE horus" 2>/dev/null || true
+  "SELECT 1 FROM pg_database WHERE datname='sabia'" | grep -q 1 || \
+  "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d postgres -c "CREATE DATABASE sabia" 2>/dev/null || true
 
 for sql_file in "$PROJECT_ROOT"/sql/001_init.sql "$PROJECT_ROOT"/sql/003_analyses.sql "$PROJECT_ROOT"/sql/004_profiles.sql "$PROJECT_ROOT"/sql/005_triggers.sql; do
   if [ -f "$sql_file" ]; then
     echo "→ Applying $(basename "$sql_file")..."
-    "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d horus -f "$sql_file" 2>&1 | tail -1
+    "$PSQL" -p "$PGPORT" -h 127.0.0.1 -U "$USER" -d sabia -f "$sql_file" 2>&1 | tail -1
   fi
 done
 
@@ -80,5 +80,5 @@ echo "→ Starting Redis on localhost:$REDIS_PORT..."
 
 echo ""
 echo "━━━ Services ready ━━━"
-echo "  Postgres: localhost:$PGPORT  (db: horus, user: $USER)"
+echo "  Postgres: localhost:$PGPORT  (db: sabia, user: $USER)"
 echo "  Redis:    localhost:$REDIS_PORT"

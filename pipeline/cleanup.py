@@ -3,7 +3,7 @@
 Clean up processed raster caches older than TTL days.
 
 Usage:
-    python pipeline/cleanup.py --ttl 7 --cache-dir /tmp/horus/cache
+    python pipeline/cleanup.py --ttl 7 --cache-dir /tmp/sabia/cache
     
 Run via cron/systemd timer daily.
 """
@@ -40,7 +40,7 @@ def cleanup_directory(cache_dir: str, ttl_days: int):
 def main():
     parser = argparse.ArgumentParser(description="Clean cached rasters")
     parser.add_argument("--ttl", type=int, default=7, help="Days to keep cached files")
-    parser.add_argument("--cache-dir", default="/tmp/horus/cache", help="Cache directory")
+    parser.add_argument("--cache-dir", default="/tmp/sabia/cache", help="Cache directory")
     
     args = parser.parse_args()
     

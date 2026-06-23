@@ -13,7 +13,7 @@ updates:
       prefix: "deps"
 
   - package-ecosystem: npm
-    directory: /apps/horus-web
+    directory: /apps/sabia-web
     schedule:
       interval: weekly
       day: monday
